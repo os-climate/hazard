@@ -5,6 +5,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Credentials
+credentials.env
+
 # Distribution / packaging
 .Python
 env/
@@ -23,6 +26,9 @@ var/
 .installed.cfg
 *.egg
 
+# Mac OS-specific storage files
+.DS_Store
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -33,12 +39,13 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-*test_output
 
 # Scratch pads
 pad.ipynb
 
-# Mac OS-specific storage files
-.DS_Store
+# Unit test / coverage reports
+*test_output
 
+# VS Code
+.vscode/launch.json
+.vscode/settings.json

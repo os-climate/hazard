@@ -108,7 +108,7 @@ def test_degree_days_mocked():
     #map_builder=MapBuilder(zarr_store, working_directory=working_dir)
 
 
-#@pytest.mark.skip(reason="inputs large and downloading slow")
+@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
@@ -167,6 +167,6 @@ def download_test_datasets(test_output_dir, gcm, scenario, years):
 def test_load_dataset(test_output_dir):    
     fs = local.LocalFileSystem()
     store = NexGddpCmip6(root=os.path.join(test_output_dir, "nex-gddp-cmip6"), fs=fs)
-    with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2030) as ds:
+    with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2029) as ds:
         print(ds)
     assert True

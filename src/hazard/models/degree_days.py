@@ -60,7 +60,7 @@ class DegreeDays:
 
 
     def _average_degree_days(self, client: Client, source: OpenDataset, target: WriteDataset, item: BatchItem):
-        """Caclulate average annual degree days for given window for the GCM and scenario specified."""
+        """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = range(item.central_year - self.window_years // 2, item.central_year + self.window_years // 2 + (self.window_years % 2))
         logging.info(f"Calculating average degree days, gcm={item.gcm}, scenario={item.scenario}, years={list(years)}")
         futures = []

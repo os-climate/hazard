@@ -72,5 +72,11 @@ An important and common case for raster datasets is that the transform to and fr
 
 ### Use with xarrays
 
+### Conventions for storage of hazard datasets
 
+The root for hazard datasets in a S3 bucket is 'hazard' or 'hazard_test' (for testing).
+within this, zarr hazards are in hazard/hazard.zarr
+
+Zarr arrays are stored in the path
+hazard/hazard.zarr/`<`path to array`>`/`<`version`>`
 

@@ -1,13 +1,15 @@
 import os
 from typing import MutableMapping, Tuple
+
 from affine import Affine
 import numpy as np
 import s3fs
-from hazard.protocols import OpenDataset, WriteDataset
-import hazard.utilities.xarray_utilities as xarray_utilities
-import hazard.utilities.zarr_utilities as zarr_utilities
 import xarray as xr
 import zarr
+
+from hazard.protocols import OpenDataset, WriteDataset
+import hazard.utilities.xarray_utilities as xarray_utilities
+
 
 class OscZarr(OpenDataset, WriteDataset):
     default_staging_bucket = "redhat-osc-physical-landing-647521352890"
@@ -33,7 +35,7 @@ class OscZarr(OpenDataset, WriteDataset):
         self.root = zarr.group(store=store) 
 
 
-    def read_numpy(self, path, index=0) -> Tuple[np.ndarray, Affine]:
+    def read_numpy(self, path: str, index=0) -> Tuple[np.ndarray, Affine]:
         """Read index as two dimensional numpy array and affine transform.
         This is intended for small datasets, otherwise recommended to 
         use xarray.open_zarr."""
@@ -51,7 +53,7 @@ class OscZarr(OpenDataset, WriteDataset):
     def write(self, path: str, da: xr.DataArray):
         """Write DataArray to provided relative path."""
         data, transform, crs = xarray_utilities.get_array_components(da)
-        z = self._zarr_create(path, da.shape, transform)
+        z = self._zarr_create(path, da.shape, transform, crs.to_string())
         z[0, :, :] = data[:,:]
 
 
@@ -80,11 +82,14 @@ class OscZarr(OpenDataset, WriteDataset):
         return frac_image_coords
 
 
-    def _zarr_create(self, path, shape, transform, overwrite=False, return_periods=None):
+    def _zarr_create(self, path: str, shape: np.ndarray, transform: Affine, crs: str, overwrite=False, return_periods=None):
         """
         Create Zarr array with given shape and affine transform.
         """
-
+        try:
+            self.root.pop(path)
+        except:
+            pass # if it already exists, remove it
         z = self.root.create_dataset(
             path,
             shape=(1 if return_periods is None else len(return_periods), shape[0], shape[1]),
@@ -101,7 +106,8 @@ class OscZarr(OpenDataset, WriteDataset):
             transform.f,
         ]
         mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
-        z.attrs["transform_mat3x3"] = mat3x3
+        z.attrs["crs"] = crs
+        z.attrs["transform_mat3x3"] = mat3x3 
         if return_periods is not None:
             z.attrs["index_values"] = return_periods
             z.attrs["index_name"] = "return period (years)"
