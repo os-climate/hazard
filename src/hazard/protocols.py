@@ -3,14 +3,19 @@ import typing
 import xarray as xr
 
 class OpenDataset(Protocol):
-    """Open XArray Dataset for Global Circulation Model (GCM), scenario and quantity for whole year specified"""
-    def gcms() -> Iterable[str]:
+    """Open XArray Dataset for Global Circulation Model (GCM), scenario and quantity for whole year specified."""
+    def gcms(self) -> Iterable[str]:
         ...
     def open_dataset_year(self, gcm: str, scenario: str, quantity: str, year: int, chunks=None) -> xr.Dataset:
         ...
 
+class WriteDataArray(Protocol):
+    """Write DataArray."""
+    def write(self, path: str, data_array: xr.DataArray):
+        ...
+
 class WriteDataset(Protocol):
-    """Open XArray Dataset for Global Circulation Model (GCM), scenario and quantity for whole year specified"""
+    """Write DataArray."""
     def write(self, path: str, dataset: xr.Dataset):
         ...
         

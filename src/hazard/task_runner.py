@@ -1,7 +1,7 @@
 import logging, logging.handlers
 import os
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 import dask
 from hazard.map_builder import MapBuilder
 from hazard.protocols import PTransform
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 class TaskRunner:
     """Runs transform tasks using dask."""
     def __init__(self, transform: PTransform,
-            store: OscZarr=None,
-            working_directory: str=None,
-            map_builder: MapBuilder=None
+            store: Optional[OscZarr]=None,
+            working_directory: Optional[str]=None,
+            map_builder: Optional[MapBuilder]=None
         ):
         zarr_utilities.set_credential_env_variables()
         self.map_builder = map_builder

@@ -1,10 +1,12 @@
 import os
+from typing import Iterable, Optional
 
-from fsspec import AbstractFileSystem
+from fsspec import AbstractFileSystem # type: ignore
 import numpy as np
 import xarray as xr
+from xarray import DataArray
 
-from hazard.protocols import WriteDataset
+from hazard.protocols import WriteDataArray, WriteDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import map_utilities, xarray_utilities
 from hazard.utilities.inventory import HazardModel, MapInfo, Scenario
@@ -12,12 +14,12 @@ from hazard.utilities.inventory import HazardModel, MapInfo, Scenario
 class OscChronicHeat:
     """On-boarding of LSEG-generated chronic heat sets.
     """
-    def __init__(self, fs: AbstractFileSystem=None, root: str=None):
+    def __init__(self, root: str, fs: Optional[AbstractFileSystem]=None):
         """Class to onboard chronic heat indicators from raw files.
 
         Args:
             fs (AbstractFileSystem, optional): if present, use to open inputs, otherwise assume local file system. Defaults to None.
-            root (str, optional): root path of input files. Defaults to None.
+            root (str): root path of input files. Defaults to None.
         """
         self.fs = fs
         self.historical_year = 2010
@@ -31,55 +33,82 @@ class OscChronicHeat:
         for source_path, target_path in self._generate_source_targets():
             self._onboard_single(source_path, target, target_path)
 
-    def inventory_entry(self) -> HazardModel:
-        return HazardModel(
+    def inventory_entry(self) -> Iterable[HazardModel]:
+        """Return the unexpanded inventory entry."""
+        yield HazardModel(
             event_type="ChronicHeat",
             path="chronic_heat/osc/v1",
-            id="mean_work_loss/high",
-            display_name="Mean work loss (high intensity)",
-            description="",
-            filename="mean_work_loss_high_{scenario}_{year}",
-            map=MapInfo(colormap="mean_work_loss/high"),
+            id="mean_work_loss/{intensity}",
+            params={"intensity" : ["high", "medium", "low"]},
+            display_name="Mean work loss ({intensity} intensity)",
+            description="file:///onboard/work_loss.md",
+            filename="mean_work_loss_{intensity}_{scenario}_{year}",
+            map=MapInfo(colormap="mean_work_loss/{intensity}"),
             units="fractional loss",
             scenarios=[
                     Scenario(id="ssp585", years=[2030, 2040, 2050]),
                     Scenario(id="ssp245", year=[2030, 2040, 2050]),
                     Scenario(id="historical", years=[2010]),
                 ],
-        )
-
-    def onboard(self, target: WriteDataset):
+            )
+        yield HazardModel(
+            event_type="ChronicHeat",
+            path="chronic_heat/osc/v1",
+            id="mean_degree_days/above/32c",
+            display_name="Mean degree days above 32°C",
+            description="file:///onboard/degree_days.md", 
+            filename="mean_degree_days_above_32c_{scenario}_{year}",
+            map=MapInfo(colormap="mean_degree_days/above/32c"),
+            units="degree days",
+            scenarios=[
+                    Scenario(id="ssp585", years=[2030, 2040, 2050]),
+                    Scenario(id="historical", years=[1980]),
+                ],
+            )
+    
+    def onboard(self, target: WriteDataArray):
         for source_path, target_path in self._generate_source_targets():
             self._onboard_single(source_path, target, target_path)
 
-    def onboard_maps(self, source: OscZarr, working_dir: str=None):
+    def onboard_maps(self, source: OscZarr, working_dir: Optional[str]=None):
         max_value = float("-inf")
         for _, path in self._generate_source_targets():
-            data, transform = source.read_numpy(path)
+            data, transform, crs = source.read_numpy(path)
             max_value = max(max_value, data.max())
+        
         for _, path in self._generate_source_targets():
-            data, transform = source.read_numpy(path)
-            profile = map_utilities.geotiff_profile()
-            map_utilities.write_map_geotiff_data(
-                data,
-                profile,
-                data.shape[1],
-                data.shape[0],
-                transform,
-                os.path.basename(path) + ".tif",
-                working_dir,
-                nodata_threshold=0,
-                zero_transparent=True,
-                max_intensity=max_value,  # float("inf"),
-                palette="heating",
-            )   
+            da = source.read(path)
+            reprojected = da.rio.reproject("EPSG:3857", shape=da.data.shape) # from EPSG:4326 to EPSG:3857 (Web Mercator)
+            head, tail = os.path.split(path)
+            target_path_map = os.path.join(head, tail + "_map")
+            source.write(target_path_map, reprojected)
+            
+            #data, transform, crs = xarray_utilities.get_array_components(da)
+            #print(reprojected)
 
-    def _fix_array(self, ds: xr.Dataset) -> xr.Dataset:
+            #for _, path in self._generate_source_targets():
+            #    data, transform = source.read_numpy(path)
+            # profile = map_utilities.geotiff_profile(3857)
+            # map_utilities.write_map_geotiff_data(
+            #     data, # .values # type: ignore
+            #     profile,
+            #     data.shape[1],
+            #     data.shape[0],
+            #     transform,
+            #     os.path.basename(path) + ".tif",
+            #     working_dir,
+            #     nodata_threshold=0,
+            #     zero_transparent=True,
+            #     max_intensity=max_value,  # float("inf"),
+            #     palette="heating",
+            # )   
+
+    def _fix_array(self, ds: xr.Dataset) -> xr.DataArray:
         """The convention is not quite right."""
         ds = ds.assign_coords(xarray_utilities.coords_from_extent(ds.dims['x'], ds.dims['y'], x_dim='x', y_dim='y')) 
         ds = ds.rename({"x": "lon", "y": "lat"})
         ds = ds.squeeze(dim='band')
-        da =ds.unknown # the name of the array we are interested in
+        da: DataArray = ds.unknown # the name of the array we are interested in
         if self.max_valid is not None:
             da = xr.where(da > self.max_valid, 0, da) 
         da = xr.where(np.isnan(da), 0, da)
@@ -120,15 +149,15 @@ class OscChronicHeat:
         else:
             raise ValueError("valid types are mean_degree_days and mean_work_loss")
 
-    def _onboard_single(self, source_path: str, target: WriteDataset, target_path: str):
+    def _onboard_single(self, source_path: str, target: WriteDataArray, target_path: str):
         try:
             filename_or_obj = self.fs.open(source_path) if self.fs is not None else source_path
             with xr.open_dataset(filename_or_obj, engine="rasterio", parse_coordinates=True, cache=True) as ds:
                 da = self._fix_array(ds)
                 # write the target to zarr
-                target.write(target_path, da)
-                point1 = da.sel(lat=15.625, lon=32.625, method="nearest")
-                point2 = target.read_floored(target_path, [32.625], [15.625])
+                target.write(target_path, da)                
+                #point1 = da.sel(lat=15.625, lon=32.625, method="nearest")
+                #point2 = target.read_floored(target_path, [32.625], [15.625])
         finally: 
             if not isinstance(filename_or_obj, str):
                 filename_or_obj.close()

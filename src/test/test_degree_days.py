@@ -5,7 +5,7 @@ from typing import Dict
 import pytest
 from pytest import approx
 
-import fsspec.implementations.local as local
+import fsspec.implementations.local as local # type: ignore
 from hazard.map_builder import MapBuilder
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
@@ -13,10 +13,10 @@ from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.models.degree_days import BatchItem, DegreeDays
 import numpy as np
-import pandas as pd
-import s3fs
+import pandas as pd # type: ignore
+import s3fs # type: ignore
 import xarray as xr
-import zarr
+import zarr # type: ignore
 
 
 class TestSource(OpenDataset):
@@ -44,6 +44,26 @@ def test_output_dir():
 
 def _create_test_datasets() -> Dict[int, xr.Dataset]:
     return { 2029: _create_test_dataset(2029), 2030: _create_test_dataset(2030, 0.5) }
+
+
+def _create_test_dataset_averaged() -> xr.Dataset:
+    temperature = np.array([
+        [293., 298., 310.], 
+        [304., 302., 300.],
+        [308., 290., 294.]])  
+    lat = np.arange(3., 0., -1.)
+    lon = np.arange(0., 3., 1.)
+    ds = xr.Dataset(
+        data_vars=dict(
+            tasmax=(["lat", "lon"], temperature),
+        ),
+        coords=dict(
+            lat=lat,
+            lon=lon
+        ),
+        attrs=dict(description="Test array"),
+    )
+    return ds
 
 
 def _create_test_dataset(year: int, offset: float=0) -> xr.Dataset:
@@ -107,13 +127,27 @@ def test_degree_days_mocked():
     #result.to_zarr()
     #map_builder=MapBuilder(zarr_store, working_directory=working_dir)
 
+def test_zarr_read_write(test_output_dir):
+    """Test that an xarray can be stored in xarray's native zarr format and then
+    read from the zarr array alone using attributes and ignoring coordinates.
+    """
+    ds = _create_test_dataset_averaged()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
+    source = OscZarr(store=store)
+    source.write("test", ds.tasmax)
+    #ds.to_zarr(store, compute=True, group="test", mode="w", consolidated=False)
+    res = source.read_floored("test/data", [0.0, 1.0], [1.0, 2.0])
+    #ds2 = xr.open_zarr(store=store, group="test")
+    print(ds2)
+    
 
-@pytest.mark.skip(reason="inputs large and downloading slow")
+
+#@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
-    years = [2029, 2030]
+    years = [2028, 2029, 2030]
     download_test_datasets(test_output_dir, gcm, scenario, years)
     # source: read downloaded datasets from local file system
     fs = local.LocalFileSystem()

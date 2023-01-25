@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os, logging
-from typing import Iterable
+from typing import Iterable, Optional
 
 from hazard.utilities.xarray_utilities import enforce_conventions
 from hazard.protocols import OpenDataset, WriteDataset
@@ -24,9 +24,9 @@ class DegreeDays:
     def __init__(self,
             theshold: float=32,
             window_years: int=20,
-            gcms: Iterable[str]=None,
-            scenarios: Iterable[str]=None,
-            central_years: Iterable[int]=None):
+            gcms: Optional[Iterable[str]]=None,
+            scenarios: Optional[Iterable[str]]=None,
+            central_years: Optional[Iterable[int]]=None):
         """Construct model to calculate degree days from temperature data sets.
 
         Args:
@@ -50,7 +50,7 @@ class DegreeDays:
         self.central_years = [2010, 2030, 2040, 2050] if central_years is None else central_years
 
 
-    def run(self, source: OpenDataset, target: WriteDataset, client: Client=None):
+    def run(self, source: OpenDataset, target: WriteDataset, client: Optional[Client]=None):
         if (client is None):
             cluster = LocalCluster(processes=False)
             client = Client(cluster)

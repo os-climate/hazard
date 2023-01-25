@@ -1,10 +1,11 @@
 
 import os
+from affine import Affine
 import fsspec.implementations.local as local
 from hazard.onboard.osc_chronic_heat import OscChronicHeat
 import pytest
 from pytest import approx
-import rasterio
+import rasterio, rasterio.warp
 import zarr
 
 from hazard.sources.osc_zarr import OscZarr
@@ -18,17 +19,20 @@ def test_output_dir():
 
 
 def test_onboard_chronic_heat_work_loss(test_output_dir):
-    #fs = local.LocalFileSystem()
-      
+    fs = local.LocalFileSystem()
+
     onboarder = OscChronicHeat(root=os.path.join(test_output_dir, "work_loss_inputs"))
-    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
-    #target = OscZarr(store=store)
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
+    target = OscZarr(store=store)
+
     zarr_utilities.set_credential_env_variables()
-    target = OscZarr(prefix="hazard") # hazard_test
+    #target = OscZarr(prefix="hazard_test") # hazard_test
     onboarder.onboard(target)
-    maps_dir = os.path.join(test_output_dir, "work_loss_maps")
-    os.makedirs(maps_dir, exist_ok=True)
-    onboarder.onboard_maps(target, maps_dir)
+    onboarder.onboard_maps(target)
+    
+    #maps_dir = os.path.join(test_output_dir, "work_loss_maps")
+    #os.makedirs(maps_dir, exist_ok=True)
+    #onboarder.onboard_maps(target, maps_dir)
 
 def test_check_result(test_output_dir):
     zarr_utilities.set_credential_env_variables()

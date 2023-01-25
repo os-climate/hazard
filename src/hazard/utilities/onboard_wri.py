@@ -4,14 +4,14 @@ import pathlib
 import time
 
 import numpy as np
-import rasterio
-import s3fs
-import zarr
-from affine import Affine
-from botocore import UNSIGNED
+import rasterio # type: ignore
+import s3fs # type: ignore
+import zarr # type: ignore
+from affine import Affine # type: ignore
+from botocore import UNSIGNED # type: ignore
 from dotenv import load_dotenv
-from map_utilities import write_map_geotiff
-from zarr_utilities import get_geotiff_meta_data, zarr_create, zarr_write
+from map_utilities import write_map_geotiff # type: ignore
+from zarr_utilities import get_geotiff_meta_data, zarr_create, zarr_write # type: ignore
 
 LOG = logging.getLogger("Hazard onboarding")
 LOG.setLevel(logging.INFO)

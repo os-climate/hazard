@@ -1,8 +1,8 @@
-from typing import Dict, Generator, Tuple
+from typing import Any, Dict, Generator, Tuple
 
-from affine import Affine
+from affine import Affine # type: ignore
 import numpy as np
-import rasterio
+import rasterio, rioxarray # type: ignore
 import xarray as xr
 
 
@@ -55,11 +55,18 @@ def enforce_conventions(da: xr.DataArray) -> xr.DataArray:
     return da
 
 
-def get_array_components(array: xr.DataArray) -> Tuple[np.ndarray, Affine, any]:
-    renamed = array.rename({ "lat": "latitude", "lon": "longitude" })
-    data = renamed.data
-    transform = renamed.rio.transform(recalc = True)
-    crs = renamed.rio.crs   
+def get_array_components(da: xr.DataArray) -> Tuple[Any, Affine, Any]:
+    data = da.data
+    if 'lat' in da.dims and 'lon' in da.dims:
+        renamed = da.rename({ "lat": "y", "lon": "x" })
+    elif 'latitude' in da.dims and 'longitude' in da.dims:
+        renamed = da.rename({ "latitude": "y", "longitude": "x" })
+    elif 'x' not in da.dims or 'y' not in da.dims:
+        raise ValueError('dimensions not recognised,')
+    else:
+        renamed = da
+    transform = renamed.rio.transform(recalc=True)
+    crs = da.rio.crs   
     if crs is None:
         # assumed default
         crs = rasterio.CRS.from_epsg(4326)

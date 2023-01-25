@@ -7,14 +7,14 @@ from os import listdir
 from os.path import isfile, join
 from time import sleep
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 import numpy as np
-import rasterio
-import seaborn as sns
-from affine import Affine
-from mapbox import Uploader
-from rasterio import CRS, profiles
-from rasterio.enums import Resampling
+import rasterio # type: ignore
+import seaborn as sns # type: ignore
+from affine import Affine # type: ignore
+from mapbox import Uploader # type: ignore
+from rasterio import CRS, profiles # type: ignore
+from rasterio.enums import Resampling # type: ignore
 
 LOG = logging.getLogger("Mapbox onboarding")
 LOG.setLevel(logging.INFO)
@@ -91,7 +91,14 @@ def load_dataset(dataset, target_width=None):
     return (data, dataset.profile, width, height, transform)
 
 
-def geotiff_profile():
+def geotiff_profile(epsg: int=4326) -> profiles.Profile:
+    """Create GeoTiff Profile from EPSG.
+    Args:
+        epsg (int, optional): For Web Mercator use 3857. Defaults to 4326.
+
+    Returns:
+        profiles.Profile: Profile
+    """
     crs = CRS.from_epsg(4326)
     profile = profiles.Profile(crs=crs)
     return profile
