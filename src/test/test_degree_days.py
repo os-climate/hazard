@@ -47,6 +47,7 @@ def _create_test_datasets() -> Dict[int, xr.Dataset]:
 
 
 def _create_test_dataset_averaged() -> xr.Dataset:
+    """An example 3x3 array that might result from some operation averaging over time."""
     temperature = np.array([
         [293., 298., 310.], 
         [304., 302., 300.],
@@ -85,7 +86,7 @@ def _create_test_dataset(year: int, offset: float=0) -> xr.Dataset:
     # stack to give 3 time points
     temperature = np.stack((temperature_t1, temperature_t2, temperature_t3), axis=0)
     #time = pd.date_range("2030-06-01", periods=3) 
-    time = pd.date_range(datetime(year, 6, 1), periods=3)    
+    time = pd.date_range(datetime(year, 1, 1), periods=3)    
     lat = np.arange(3., 0., -1.)
     lon = np.arange(0., 3., 1.)
     ds = xr.Dataset(
@@ -111,7 +112,7 @@ def test_degree_days_mocked():
     target = TestTarget()
     # cut down the transform
     model = DegreeDays(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year])  
-    model.run(source, target)
+    model.run_all(source, target)
     with source.open_dataset_year(gcm, scenario, "tasmax", 2029) as y0:
         with source.open_dataset_year(gcm, scenario, "tasmax", 2030) as y1:
             scale = 365.0 / len(y0.time)
@@ -120,12 +121,6 @@ def test_degree_days_mocked():
             expected = (deg0 + deg1) / 2 
     assert expected.values == approx(target.dataset.values)
 
-    #with source.open_dataset_year(gcm, scenario, "tasmax", year) as ds:
-    #    store = zarr.DirectoryStore(os.path.join(working_dir, 'hazard_test2', 'hazard.zarr'))
-    #    ds.to_zarr(store, compute=True, group="test_name", mode="w")
-
-    #result.to_zarr()
-    #map_builder=MapBuilder(zarr_store, working_directory=working_dir)
 
 def test_zarr_read_write(test_output_dir):
     """Test that an xarray can be stored in xarray's native zarr format and then
@@ -136,13 +131,11 @@ def test_zarr_read_write(test_output_dir):
     source = OscZarr(store=store)
     source.write("test", ds.tasmax)
     #ds.to_zarr(store, compute=True, group="test", mode="w", consolidated=False)
-    res = source.read_floored("test/data", [0.0, 1.0], [1.0, 2.0])
-    #ds2 = xr.open_zarr(store=store, group="test")
-    print(ds2)
+    res = source.read_floored("test", [0.0, 1.0], [1.0, 2.0])
+    np.testing.assert_array_equal(res, [308., 302.])
     
 
-
-#@pytest.mark.skip(reason="inputs large and downloading slow")
+@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"

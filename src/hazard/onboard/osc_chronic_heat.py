@@ -9,7 +9,7 @@ from xarray import DataArray
 from hazard.protocols import WriteDataArray, WriteDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import map_utilities, xarray_utilities
-from hazard.utilities.inventory import HazardModel, MapInfo, Scenario
+from hazard.inventory import HazardModel, MapInfo, Scenario
 
 class OscChronicHeat:
     """On-boarding of LSEG-generated chronic heat sets.
@@ -77,8 +77,8 @@ class OscChronicHeat:
             max_value = max(max_value, data.max())
         
         for _, path in self._generate_source_targets():
-            da = source.read(path)
-            reprojected = da.rio.reproject("EPSG:3857", shape=da.data.shape) # from EPSG:4326 to EPSG:3857 (Web Mercator)
+            da = source.read(path).sel(latitude=slice(85, -85))
+            reprojected = da.rio.reproject("EPSG:3857") #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
             head, tail = os.path.split(path)
             target_path_map = os.path.join(head, tail + "_map")
             source.write(target_path_map, reprojected)
@@ -88,20 +88,20 @@ class OscChronicHeat:
 
             #for _, path in self._generate_source_targets():
             #    data, transform = source.read_numpy(path)
-            # profile = map_utilities.geotiff_profile(3857)
-            # map_utilities.write_map_geotiff_data(
-            #     data, # .values # type: ignore
-            #     profile,
-            #     data.shape[1],
-            #     data.shape[0],
-            #     transform,
-            #     os.path.basename(path) + ".tif",
-            #     working_dir,
-            #     nodata_threshold=0,
-            #     zero_transparent=True,
-            #     max_intensity=max_value,  # float("inf"),
-            #     palette="heating",
-            # )   
+            #profile = map_utilities.geotiff_profile(3857)
+            #map_utilities.write_map_geotiff_data(
+            #    reprojected.data, # .values # type: ignore
+            #    profile,
+            #    reprojected.shape[1],
+            #    reprojected.shape[0],
+            #    transform,
+            #    os.path.basename(path) + ".tif",
+            #    working_dir,
+            #    nodata_threshold=0,
+            #    zero_transparent=True,
+            #    max_intensity=max_value,  # float("inf"),
+            #    palette="heating",
+            #)   
 
     def _fix_array(self, ds: xr.Dataset) -> xr.DataArray:
         """The convention is not quite right."""

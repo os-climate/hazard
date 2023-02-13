@@ -56,7 +56,7 @@ class TaskRunner:
         return path
 
 
-    def _set_logger(log_dir: str):
+    def _set_logger(self, log_dir: str):
         handler = logging.handlers.WatchedFileHandler(filename=os.path.join(log_dir, "log.txt"), mode='a')
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
