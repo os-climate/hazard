@@ -6,9 +6,9 @@ from pathlib import PurePosixPath
 from typing import List, Tuple
 
 import numpy as np
-import s3fs
-import zarr
-from affine import Affine
+import s3fs # type: ignore
+import zarr # type: ignore
+from affine import Affine # type: ignore
 from dotenv import load_dotenv
 
 
@@ -30,7 +30,7 @@ def get_coordinates(longitudes, latitudes, transform):
 
 
 def get_geotiff_meta_data(path, s3):
-    from tifffile.tifffile import TiffFile
+    from tifffile.tifffile import TiffFile # type: ignore
 
     with s3.open(path) as f:
         with TiffFile(f) as tif:

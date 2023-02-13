@@ -1,9 +1,10 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
 import logging, os
-from typing import Dict, Generator, List
+import posixpath
+from typing import Dict, Generator, List, Optional
 
-import s3fs, fsspec
+import s3fs, fsspec # type: ignore
 import xarray as xr
 
 from hazard.protocols import OpenDataset
@@ -24,7 +25,7 @@ class NexGddpCmip6(OpenDataset):
     
     bucket: str = "nex-gddp-cmip6"
 
-    def __init__(self, fs: fsspec.spec.AbstractFileSystem=None, root: str=None):
+    def __init__(self, root: Optional[str]=None, fs: Optional[fsspec.spec.AbstractFileSystem]=None):
         """
         Args:
             fs: Optional existing filesystem to use for accessing data.
@@ -48,24 +49,34 @@ class NexGddpCmip6(OpenDataset):
         component = self.subset[gcm]
         variantId = component["variantId"]
         filename = f"{quantity}_day_{gcm}_{scenario}_{variantId}_gn_{year}.nc"
-        return (os.path.join(self.root, f"NEX-GDDP-CMIP6/{gcm}/{scenario}/{variantId}/{quantity}/") + filename, filename)
+        return (posixpath.join(self.root, f"NEX-GDDP-CMIP6/{gcm}/{scenario}/{variantId}/{quantity}/") + filename, filename)
 
 
     def gcms(self) -> List[str]:
-        return self.subset.keys()
+        return list(self.subset.keys())
 
-
-    @contextmanager
-    def open_dataset_year(self,
+    def open_dataset(self,
         gcm: str,
         scenario: str,
         quantity: str,
         year: int,
-        chunks=None) -> Generator[xr.Dataset, None, None]:
+        chunks=None):
+        pass
+        #xr.open_dataset()
+        #xr.open_mfdataset()
+
+
+    @contextmanager
+    def open_dataset_year(self, # type: ignore
+        gcm: str,
+        scenario: str,
+        quantity: str,
+        year: int,
+        chunks=None) -> Generator[xr.Dataset, None, None]: 
         # use "s3://bucket/root" ?
         path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
-        ds: xr.Dataset = None
+        ds: Optional[xr.Dataset] = None
         f = None
         try:
             f = self.fs.open(path, 'rb')

@@ -1,10 +1,10 @@
 import logging
 import os
 
-import s3fs
-from onboard_osc_heat import create_map_geotiffs_chronic_heat, onboard_chronic_heat
-from onboard_wri import create_map_geotiffs_riverine, onboard_wri_coastal_inundation, onboard_wri_riverine_inundation
-from zarr_utilities import add_logging_output_to_stdout, set_credential_env_variables
+import s3fs # type: ignore
+from onboard_osc_heat import create_map_geotiffs_chronic_heat, onboard_chronic_heat # type: ignore
+from onboard_wri import create_map_geotiffs_riverine, onboard_wri_coastal_inundation, onboard_wri_riverine_inundation # type: ignore
+from zarr_utilities import add_logging_output_to_stdout, set_credential_env_variables # type: ignore
 
 LOG = logging.getLogger("Hazard onboarding")
 add_logging_output_to_stdout(LOG)
