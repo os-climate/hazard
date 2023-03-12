@@ -17,6 +17,10 @@ matplotlib = "*"
 seaborn = "*"
 mapbox = "*"
 rioxarray = "*"
+fsspec = "*"
+pydantic = "*"
+mkdocs = "*"
+pymdown-extensions = "*"
 
 [dev-packages]
 isort = "*"

@@ -42,3 +42,6 @@ pad.ipynb
 # Mac OS-specific storage files
 .DS_Store
 
+credentials.env
+.vscode/launch.json
+.vscode/settings.json

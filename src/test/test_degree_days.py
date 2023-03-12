@@ -5,7 +5,7 @@ from typing import Dict
 import pytest
 from pytest import approx
 
-import fsspec.implementations.local as local
+import fsspec.implementations.local as local # type: ignore
 from hazard.map_builder import MapBuilder
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
@@ -13,10 +13,10 @@ from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.models.degree_days import BatchItem, DegreeDays
 import numpy as np
-import pandas as pd
-import s3fs
+import pandas as pd # type: ignore
+import s3fs # type: ignore
 import xarray as xr
-import zarr
+import zarr # type: ignore
 
 
 class TestSource(OpenDataset):
@@ -46,6 +46,27 @@ def _create_test_datasets() -> Dict[int, xr.Dataset]:
     return { 2029: _create_test_dataset(2029), 2030: _create_test_dataset(2030, 0.5) }
 
 
+def _create_test_dataset_averaged() -> xr.Dataset:
+    """An example 3x3 array that might result from some operation averaging over time."""
+    temperature = np.array([
+        [293., 298., 310.], 
+        [304., 302., 300.],
+        [308., 290., 294.]])  
+    lat = np.arange(3., 0., -1.)
+    lon = np.arange(0., 3., 1.)
+    ds = xr.Dataset(
+        data_vars=dict(
+            tasmax=(["lat", "lon"], temperature),
+        ),
+        coords=dict(
+            lat=lat,
+            lon=lon
+        ),
+        attrs=dict(description="Test array"),
+    )
+    return ds
+
+
 def _create_test_dataset(year: int, offset: float=0) -> xr.Dataset:
     """Create test xarray Dataset.
     Convention is that data is arranged in image-like way:
@@ -65,7 +86,7 @@ def _create_test_dataset(year: int, offset: float=0) -> xr.Dataset:
     # stack to give 3 time points
     temperature = np.stack((temperature_t1, temperature_t2, temperature_t3), axis=0)
     #time = pd.date_range("2030-06-01", periods=3) 
-    time = pd.date_range(datetime(year, 6, 1), periods=3)    
+    time = pd.date_range(datetime(year, 1, 1), periods=3)    
     lat = np.arange(3., 0., -1.)
     lon = np.arange(0., 3., 1.)
     ds = xr.Dataset(
@@ -91,7 +112,7 @@ def test_degree_days_mocked():
     target = TestTarget()
     # cut down the transform
     model = DegreeDays(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year])  
-    model.run(source, target)
+    model.run_all(source, target)
     with source.open_dataset_year(gcm, scenario, "tasmax", 2029) as y0:
         with source.open_dataset_year(gcm, scenario, "tasmax", 2030) as y1:
             scale = 365.0 / len(y0.time)
@@ -100,20 +121,26 @@ def test_degree_days_mocked():
             expected = (deg0 + deg1) / 2 
     assert expected.values == approx(target.dataset.values)
 
-    #with source.open_dataset_year(gcm, scenario, "tasmax", year) as ds:
-    #    store = zarr.DirectoryStore(os.path.join(working_dir, 'hazard_test2', 'hazard.zarr'))
-    #    ds.to_zarr(store, compute=True, group="test_name", mode="w")
 
-    #result.to_zarr()
-    #map_builder=MapBuilder(zarr_store, working_directory=working_dir)
+def test_zarr_read_write(test_output_dir):
+    """Test that an xarray can be stored in xarray's native zarr format and then
+    read from the zarr array alone using attributes and ignoring coordinates.
+    """
+    ds = _create_test_dataset_averaged()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
+    source = OscZarr(store=store)
+    source.write("test", ds.tasmax)
+    #ds.to_zarr(store, compute=True, group="test", mode="w", consolidated=False)
+    res = source.read_floored("test", [0.0, 1.0], [1.0, 2.0])
+    np.testing.assert_array_equal(res, [308., 302.])
+    
 
-
-#@pytest.mark.skip(reason="inputs large and downloading slow")
+@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
-    years = [2029, 2030]
+    years = [2028, 2029, 2030]
     download_test_datasets(test_output_dir, gcm, scenario, years)
     # source: read downloaded datasets from local file system
     fs = local.LocalFileSystem()
@@ -167,6 +194,6 @@ def download_test_datasets(test_output_dir, gcm, scenario, years):
 def test_load_dataset(test_output_dir):    
     fs = local.LocalFileSystem()
     store = NexGddpCmip6(root=os.path.join(test_output_dir, "nex-gddp-cmip6"), fs=fs)
-    with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2030) as ds:
+    with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2029) as ds:
         print(ds)
     assert True

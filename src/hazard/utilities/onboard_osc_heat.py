@@ -4,12 +4,12 @@ import os
 from dataclasses import dataclass
 
 import numpy as np
-import rasterio
-import s3fs
-import zarr
-from affine import Affine
-from map_utilities import geotiff_profile, upload_geotiff, write_map_geotiff_data
-from zarr_utilities import zarr_create, zarr_get_transform, zarr_read
+import rasterio # type: ignore
+import s3fs # type: ignore
+import zarr # type: ignore
+from affine import Affine # type: ignore
+from map_utilities import geotiff_profile, upload_geotiff, write_map_geotiff_data # type: ignore
+from zarr_utilities import zarr_create, zarr_get_transform, zarr_read # type: ignore
 
 LOG = logging.getLogger("Hazard onboarding")
 LOG.setLevel(logging.INFO)

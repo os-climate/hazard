@@ -11,13 +11,19 @@ We recommend using [pipenv](https://pipenv.pypa.io/en/latest/) for a
 consistent working environment.
 ```
 pip install pipenv
-pipenv install
+pipenv install --dev
 pipenv shell
 ```
 
 When adding a package for use in new or improved functionality,
 `pipenv install <package-name>`. Or, when adding something helpful for
 testing or development, `pipenv install -d <package-name>`.
+
+### JupyterHub and requirements.txt
+It may be useful to generate a requirements.txt file:  
+```
+pipenv requirements > requirements.txt
+```
 
 ## Development
 Patches may be contributed via pull requests to
