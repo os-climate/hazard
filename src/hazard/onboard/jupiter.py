@@ -2,12 +2,12 @@ from dataclasses import dataclass
 import os
 from pathlib import PosixPath
 from dask.distributed import Client
-from fsspec.spec import AbstractFileSystem
+from fsspec.spec import AbstractFileSystem # type: ignore
 import numpy as np # type: ignore
-import pandas as pd
+import pandas as pd # type: ignore
 import rasterio # type: ignore
 from rasterio.crs import CRS # type: ignore
-import rasterio.enums
+import rasterio.enums # type: ignore
 import rioxarray
 import xarray as xr
 from typing import Dict, Iterable
@@ -101,6 +101,7 @@ other months, the hazard indicator value is 20%.
                     array_name="fire_probability_{scenario}_{year}_map",
                     source="map_array"
                 ),
+                params = None,
                 units="none",
                 scenarios=[
                     Scenario(

@@ -2,10 +2,12 @@ from datetime import datetime
 import logging, os, sys
 import logging.handlers
 from typing import Dict
+from dask.distributed import Client, LocalCluster
 import pytest
 from pytest import approx
 
 import fsspec.implementations.local as local # type: ignore
+from hazard.docs_store import DocStore # type: ignore
 from hazard.map_builder import MapBuilder
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
@@ -167,8 +169,17 @@ def test_degree_days(test_output_dir):
     assert calculated == approx(expected)
 
 
-def example_run_degree_days():
-    zarr_utilities.set_credential_env_variables()  
+def test_example_run_degree_days():
+    zarr_utilities.set_credential_env_variables() 
+
+    docs_store = DocStore(prefix="hazard_test")
+    json = docs_store.read_inventory_json()
+    #local_fs = local.LocalFileSystem()
+    #docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+
+    cluster = LocalCluster(processes=False)
+    client = Client(cluster)
+
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
@@ -176,7 +187,11 @@ def example_run_degree_days():
     target = OscZarr(prefix="hazard_test") # test prefix is "hazard_test"; main one "hazard"
     # cut down the transform
     model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[year])
-    model.run(source, target)
+
+    docs_store.update_inventory(model.inventory())
+
+    items = list(model.batch_items())
+    model.run_single(items[0], source, target, client=client)
     assert True
 
 

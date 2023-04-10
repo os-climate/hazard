@@ -21,8 +21,6 @@ from hazard.protocols import OpenDataset, WriteDataArray
 import hazard.utilities.xarray_utilities as xarray_utilities
 
 
-
-class OscZarr(WriteDataArray):
 class OscZarr(WriteDataArray):
     default_staging_bucket = "redhat-osc-physical-landing-647521352890"
      
@@ -55,16 +53,7 @@ class OscZarr(WriteDataArray):
 
         Args:
             path (str): relative path to zarr array.
-    def read(self, path: str) -> xr.DataArray:
-        """Read an OS-Climate array as an xarray DataArray. Coordinates are inferred from the 
-        coordinate reference system (CRS) and affine transform stored as zarr attributes. 
 
-        Args:
-            path (str): relative path to zarr array.
-
-        Returns:
-            xr.DataArray: xarray DataArray.
-        """
         Returns:
             xr.DataArray: xarray DataArray.
         """
@@ -83,20 +72,7 @@ class OscZarr(WriteDataArray):
         else:
             da = da.rename({ "dim_1": "y", "dim_2": "x" })
         return da
-        coords = xarray_utilities.affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
-        #data = dask.array.from_zarr(self.root.store, path)
-        #array = xr.DataArray(data=a)
-        da = xr.DataArray(data=z, coords=coords)
-        da = da.squeeze("dim_0")
-        if crs.upper() == "EPSG:4326":
-            da = da.rename({ "dim_1": "latitude", "dim_2": "longitude" })
-        else:
-            da = da.rename({ "dim_1": "y", "dim_2": "x" })
-        return da
 
-    def read_dataset(self, path: str, index=0) -> xr.DataArray:
-        da = xr.open_zarr(store=self.root.store, group=path)
-        return da
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
         da = xr.open_zarr(store=self.root.store, group=path)
         return da
@@ -173,57 +149,7 @@ class OscZarr(WriteDataArray):
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
         renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
-            
-    def read_numpy(self, path: str, index=0) -> Tuple[np.ndarray, Affine, str]:
-        """Read index as two dimensional numpy array and affine transform.
-        This is intended for small datasets, otherwise recommended to 
-        use xarray.open_zarr."""
-        z = self.root[path]
-        t = z.attrs["transform_mat3x3"]  # type: ignore
-        crs: str = z.attrs["crs"]  # type: ignore
-        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        return z[index, :, :], transform, crs
-
-    def if_exists_remove(self, path):
-        if path in self.root:
-            self.root.pop(path)
-
-    def write(self, path: str, da: xr.DataArray):
-        """Write DataArray according to the standard OS-Climate conventions. 
-
-        Args:
-            path (str): Relative path.
-            da (xr.DataArray): The DataArray.
-        """
-        data, transform, crs = xarray_utilities.get_array_components(da)
-        z = self._zarr_create(path, da.shape, transform, crs.to_string())
-        z[0, :, :] = data[:,:]
-
-    def write_data_array(self, path: str, da: xr.DataArray):
-        """[Probably you should be using write method instead!] Write DataArray to provided relative path.
-        The array is saved as a dataset in the xarray native manner (xarray's to_zarr), with coordinates as separate arrays,
-        but with extra attributes providing the coordinate reference system and affine transform. 
-        These extra attributes serve to make use of co-ordinate arrays optional. 
-
-        Args:
-            path (str): Relative path.
-            da (xr.DataArray): The DataArray.
-        """
-        # we expect the data to be called 'data'
-        if 'lon' not in da.dims and 'longitude' not in da.dims:
-            raise ValueError('longitude dimension not found.')
-        if 'lat' not in da.dims and 'latitude' not in da.dims:
-            raise ValueError('latitude dimension not found.')
-        try:
-            renamed = da.rename({ "lat": "latitude", "lon": "longitude" })
-        except:
-            renamed = da
-        renamed.name = 'data'
-        renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
-        _, transform, crs = xarray_utilities.get_array_components(renamed)
-        self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
-            
+          
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))  # type: ignore
@@ -232,7 +158,6 @@ class OscZarr(WriteDataArray):
         frac_image_coords = mat @ coords
         return frac_image_coords
 
-    def _zarr_create(self, path: str, shape: Union[np.ndarray, Tuple[int, ...]], transform: Affine, crs: str, overwrite=False, return_periods=None):
     def _zarr_create(self, path: str, shape: Union[np.ndarray, Tuple[int, ...]], transform: Affine, crs: str, overwrite=False, return_periods=None):
         """
         Create Zarr array with given shape and affine transform.
@@ -252,10 +177,6 @@ class OscZarr(WriteDataArray):
             dtype="f4",
             overwrite=overwrite,
         )  # array_path interpreted as path within group
-        self._add_attributes(z.attrs, transform, crs, return_periods)
-        return z
-
-    def _add_attributes(self, attrs: Dict[str, Any], transform: Affine, crs: str, return_periods=None):
         self._add_attributes(z.attrs, transform, crs, return_periods)
         return z
 

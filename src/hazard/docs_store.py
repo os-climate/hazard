@@ -3,8 +3,8 @@ import os
 from pathlib import PurePosixPath
 from typing import Callable, Dict, Iterable, List, Optional
 
-import s3fs
-from fsspec import AbstractFileSystem
+import s3fs # type: ignore
+from fsspec import AbstractFileSystem # type: ignore
 from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import OscZarr

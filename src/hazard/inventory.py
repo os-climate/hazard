@@ -55,7 +55,7 @@ class Scenario(BaseModel):
 
     id: str
     years: List[int]
-    periods: Optional[List[Period]]
+    #periods: Optional[List[Period]]
 
 
 def expanded(item: str, key: str, param: str):
