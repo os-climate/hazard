@@ -80,7 +80,7 @@ of the medium over a reference temperature.
                         nodata_index=0,
                         min_index=1,
                         min_value=0.0,
-                        max_value=12.0,
+                        max_value=4000.0,
                         max_index=255,
                         units="degree days"),
                     array_name="mean_degree_days_v2_above_32c_NorESM2-MM_{scenario}_{year}_map",

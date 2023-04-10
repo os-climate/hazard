@@ -137,7 +137,7 @@ def test_zarr_read_write(test_output_dir):
     np.testing.assert_array_equal(res, [308., 302.])
     
 
-@pytest.mark.skip(reason="inputs large and downloading slow")
+#@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
@@ -151,8 +151,8 @@ def test_degree_days(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
     target = OscZarr(store=store)
     # cut down the model and run
-    model = DegreeDays(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
-    model.run(source, target)
+    model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    model.run_all(source, target)
     # check one point...
     path = model._item_path(BatchItem(gcm, scenario, years[1]))
     calculated = target.read_floored(path, [32.625], [15.625])
