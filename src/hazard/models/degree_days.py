@@ -106,10 +106,15 @@ of the medium over a reference temperature.
     
     def run_single(self, item: BatchItem, source: OpenDataset, target: WriteDataArray, client: Client):
         average_deg_days = self._average_degree_days(client, source, target, item)
+        average_deg_days.attrs["crs"] = CRS.from_epsg(4326)
+        logger.info(f"Writing array...")
         pp = self._item_path(item)
         target.write(str(pp), average_deg_days)
-        reprojected = average_deg_days.sel(lat=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
+        logger.info(f"Reprojecting...")
+        average_deg_days = average_deg_days.rename({ "lat": "latitude", "lon": "longitude" })
+        reprojected = average_deg_days.sel(latitude=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
         pp_map = pp.with_name(pp.name + "_map")
+        logger.info(f"Writing map...")
         target.write(str(pp_map), reprojected)
 
     def _average_degree_days(self, client: Client, source: OpenDataset, target: WriteDataArray, item: BatchItem):
