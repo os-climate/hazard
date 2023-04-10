@@ -108,14 +108,14 @@ of the medium over a reference temperature.
         average_deg_days = self._average_degree_days(client, source, target, item)
         pp = self._item_path(item)
         target.write(str(pp), average_deg_days)
-        reprojected = average_deg_days.sel(latitude=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
+        reprojected = average_deg_days.sel(lat=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
         pp_map = pp.with_name(pp.name + "_map")
         target.write(str(pp_map), reprojected)
 
     def _average_degree_days(self, client: Client, source: OpenDataset, target: WriteDataArray, item: BatchItem):
         """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = range(item.central_year - self.window_years // 2, item.central_year + self.window_years // 2 + (self.window_years % 2))
-        logging.info(f"Calculating average degree days, gcm={item.gcm}, scenario={item.scenario}, years={list(years)}")
+        logger.info(f"Calculating average degree days, gcm={item.gcm}, scenario={item.scenario}, years={list(years)}")
         futures = []
         for year in years:
             future = client.submit(self._degree_days, source, item.gcm, item.scenario, year)
