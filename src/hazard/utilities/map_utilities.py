@@ -45,7 +45,7 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     _, width, height = rasterio.warp.calculate_default_transform(src_crs, dst_crs,
                                               width=src_width, height=src_height,
                                               left=src_left, bottom=src_bottom, right=src_right, top=src_top)
-    dst_width, dst_height = src_width, src_height * 2
+    dst_width, dst_height = src_width, max(src_height, height)
     ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top])
     dst_transform = rasterio.transform.from_bounds(dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height)
     reprojected = src.rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)

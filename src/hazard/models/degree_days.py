@@ -34,7 +34,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             gcms: Iterable[str]=["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1",
                 "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"],
             scenarios: Iterable[str]=["historical", "ssp126", "ssp245", "ssp585"],
-            central_year_historical: int = 2010,
+            central_year_historical: int = 2009,
             central_years: Iterable[int]=[2030, 2040, 2050]):
         """Construct model to calculate degree days from temperature data sets.
 
