@@ -71,8 +71,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 type="ChronicHeat",
                 id="mean_degree_days_v2/above/32c",
                 path="chronic_heat/osc/v2",
-                display_name="Mean degree days above 32°C (NorESM2-MM)",
-                array_name="mean_degree_days_v2_above_32c_NorESM2-MM_{scenario}_{year}",
+                display_name="Mean degree days above 32°C (" + gcm + ")",
+                array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}",
                 description="""
 Degree days indicators are calculated by integrating over time the absolute difference in temperature
 of the medium over a reference temperature.
@@ -88,7 +88,7 @@ of the medium over a reference temperature.
                         max_index=255,
                         units="degree days"),
                     bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                    array_name="mean_degree_days_v2_above_32c_NorESM2-MM_{scenario}_{year}_map",
+                    array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="degree days",
@@ -107,6 +107,7 @@ of the medium over a reference temperature.
                         years=list(self.central_years)),
                     ]
             )
+            for gcm in self.gcms
         ]
     
     def run_single(self, item: BatchItem, source: OpenDataset, target: ReadWriteDataArray, client: Client):
