@@ -30,7 +30,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
 
     def __init__(self,
             threshold: float=32,
-            window_years: int=20,
+            window_years: int=11,
             gcms: Iterable[str]=["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1",
                 "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"],
             scenarios: Iterable[str]=["historical", "ssp126", "ssp245", "ssp585"],
