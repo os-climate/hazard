@@ -29,10 +29,10 @@ def test_jupiter(test_output_dir, s3_credentials):
     # hazard/src/test/test_output/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv
     local_fs = local.LocalFileSystem()
     source = JupiterOscFileSource(test_output_dir, local_fs)
-    target = OscZarr(prefix='hazard') # hazard_test
-    docs_store = DocStore(prefix="hazard")
-    #target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr')))
-    #docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+    #target = OscZarr(prefix='hazard') # hazard_test
+    #docs_store = DocStore(prefix="hazard")
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr')))
+    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
 
     jupiter = Jupiter()
     docs_store.update_inventory(jupiter.inventory(), remove_existing=True)

@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, Iterable, List, Optional, TypeVar
 from dask.distributed import Client, LocalCluster
 from pydantic import BaseModel, Field
-from hazard.inventory import HazardModel
-from hazard.protocols import OpenDataset, WriteDataArray, WriteDataset
+from hazard.inventory import HazardResource
+from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray, WriteDataset
 
 T = TypeVar('T')      # Declare type variable
 
@@ -25,11 +25,11 @@ class IndicatorModel(ABC, Generic[T]):
         ...
 
     @abstractmethod
-    def inventory(self) -> Iterable[HazardModel]:
+    def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
         ...
     
     @abstractmethod
-    def run_single(self, item: T, source: Any, target: WriteDataArray, client: Client):
+    def run_single(self, item: T, source: Any, target: ReadWriteDataArray, client: Client):
         """Run a single item of the batch."""
         ...

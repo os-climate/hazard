@@ -9,10 +9,18 @@ class OpenDataset(Protocol):
     def open_dataset_year(self, gcm: str, scenario: str, quantity: str, year: int, chunks=None) -> xr.Dataset:
         ...
 
+class ReadDataArray(Protocol):
+    """Read DataArray."""
+    def read(self, path: str) -> xr.DataArray:
+        ...
+
 class WriteDataArray(Protocol):
     """Write DataArray."""
     def write(self, path: str, data_array: xr.DataArray):
         ...
+
+class ReadWriteDataArray(ReadDataArray, WriteDataArray):
+    ...
 
 class WriteDataset(Protocol):
     """Write DataArray."""

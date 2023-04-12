@@ -62,7 +62,7 @@ def expanded(item: str, key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
 
-class HazardModel(BaseModel):
+class HazardResource(BaseModel):
     """Provides scenarios associated with a hazard model."""
 
     type: str = Field(description="Type of hazard.")
@@ -103,11 +103,11 @@ class HazardModel(BaseModel):
 
 
 class HazardInventory(BaseModel):
-    models: List[HazardModel]
+    models: List[HazardResource]
     colormaps: dict
 
 
-def inventory_json(models: Iterable[HazardModel]) -> str:
+def inventory_json(models: Iterable[HazardResource]) -> str:
     response = HazardInventory(models=models)  # type: ignore
     return json.dumps(response.dict())
 

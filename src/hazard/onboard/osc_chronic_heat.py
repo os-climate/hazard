@@ -9,7 +9,7 @@ from xarray import DataArray
 from hazard.protocols import WriteDataArray, WriteDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import map_utilities, xarray_utilities
-from hazard.inventory import HazardModel, MapInfo, Scenario
+from hazard.inventory import HazardResource, MapInfo, Scenario
 
 class OscChronicHeat:
     """On-boarding of LSEG-generated chronic heat sets.
@@ -33,9 +33,9 @@ class OscChronicHeat:
         for source_path, target_path in self._generate_source_targets():
             self._onboard_single(source_path, target, target_path)
 
-    def inventory_entry(self) -> Iterable[HazardModel]:
+    def inventory_entry(self) -> Iterable[HazardResource]:
         """Return the unexpanded inventory entry."""
-        yield HazardModel(
+        yield HazardResource(
             event_type="ChronicHeat",
             path="chronic_heat/osc/v1",
             id="mean_work_loss/{intensity}",
@@ -51,7 +51,7 @@ class OscChronicHeat:
                     Scenario(id="historical", years=[2010]),
                 ],
             )
-        yield HazardModel(
+        yield HazardResource(
             event_type="ChronicHeat",
             path="chronic_heat/osc/v1",
             id="mean_degree_days/above/32c",

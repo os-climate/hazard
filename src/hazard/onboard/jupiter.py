@@ -12,13 +12,14 @@ import rioxarray
 import xarray as xr
 from typing import Dict, Iterable
 from hazard.indicator_model import IndicatorModel
-from hazard.inventory import Colormap, HazardModel, MapInfo, Scenario
+from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, WriteDataArray, WriteDataset
 from hazard.utilities import xarray_utilities
+from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
 
 @dataclass
 class BatchItem:
-    model: HazardModel # type of hazard
+    model: HazardResource # type of hazard
     csv_filename: str
     jupiter_array_name: str
 
@@ -76,10 +77,10 @@ class Jupiter(IndicatorModel):
             (csv_filename, jupiter_array_name) = csv_info[model.id]
             yield BatchItem(model=model, csv_filename=csv_filename, jupiter_array_name=jupiter_array_name)
 
-    def inventory(self) -> Iterable[HazardModel]:
+    def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
         return [
-            HazardModel(
+            HazardResource(
                 type="Fire",
                 id="fire_probability",
                 path="fire/jupiter/v1",
@@ -111,7 +112,7 @@ other months, the hazard indicator value is 20%.
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="Drought",
                 id="months/spei3m/below/-2",
                 path="drought/jupiter/v1",
@@ -140,7 +141,7 @@ is below -2.
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="Precipitation",
                 id="max/daily/water_equivalent",
                 path="precipitation/jupiter/v1",
@@ -168,7 +169,7 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="Hail",
                 id="days/above/5cm",
                 path="hail/jupiter/v1",
@@ -196,7 +197,7 @@ Number of days per year where large hail (> 5cm diameter) is possible.
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="ChronicHeat",
                 id="days/above/35c",
                 path="chronic_heat/jupiter/v1",
@@ -224,7 +225,7 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="Wind",
                 id="max/1min",
                 path="wind/jupiter/v1",
@@ -252,7 +253,7 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
                         id="ssp585",
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
-            HazardModel(
+            HazardResource(
                 type="CombinedInundation",
                 id="flooded_fraction",
                 path="combined_flood/jupiter/v1",
@@ -292,7 +293,10 @@ The fraction of land within a 30-km grid cell that experiences flooding at diffe
                 (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())
                 pp = PosixPath(item.model.path, item.model.array_name.format(scenario=scenario.id, year=year))
                 target.write(str(pp), da)
+
+                reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
                 reprojected = da.sel(latitude=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
+                bounds = check_map_bounds(reprojected)
                 pp_map = pp.with_name(pp.name + "_map")
                 target.write(str(pp_map), reprojected)
         print(min, max)

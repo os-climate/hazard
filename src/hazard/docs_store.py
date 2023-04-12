@@ -9,7 +9,7 @@ from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import OscZarr
 
-from .inventory import HazardModel
+from .inventory import HazardResource
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -23,7 +23,7 @@ def get_env(key: str, default: Optional[str] = None) -> str:
 
 
 class HazardModels(BaseModel):
-    hazard_models: List[HazardModel]
+    hazard_models: List[HazardResource]
 
 
 class DocStore:
@@ -65,7 +65,7 @@ class DocStore:
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
-    def read_inventory(self) -> List[HazardModel]:
+    def read_inventory(self) -> List[HazardResource]:
         """Read inventory at path provided and return HazardModels."""
         path = self._full_path_inventory()
         if not self._fs.exists(path):
@@ -80,7 +80,7 @@ class DocStore:
             json_str = f.read()
         return json_str
 
-    def update_inventory(self, hazard_models: Iterable[HazardModel], remove_existing: bool=False):
+    def update_inventory(self, hazard_models: Iterable[HazardResource], remove_existing: bool=False):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
         path = self._full_path_inventory()
