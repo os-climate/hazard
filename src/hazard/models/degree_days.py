@@ -69,7 +69,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         return [
             HazardResource(
                 type="ChronicHeat",
-                id="mean_degree_days_v2/above/32c",
+                id="mean_degree_days_v2/above/32c/" + gcm,
                 path="chronic_heat/osc/v2",
                 display_name="Mean degree days above 32°C (" + gcm + ")",
                 array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}",
