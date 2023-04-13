@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 from pathlib import PosixPath
-from typing import Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
@@ -57,17 +57,21 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def batch_items(self) -> Iterable[BatchItem]:
         """Items to process."""
         # just one for now
-        resource = list(self.inventory())[0]
+        resources = self._resources_by_gcm()
         for gcm in self.gcms:
             for scenario in self.scenarios:
                 central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
                 for central_year in central_years:
-                    yield BatchItem(resource=resource, gcm=gcm, scenario=scenario, central_year=central_year)    
+                    yield BatchItem(resource=resources[gcm], gcm=gcm, scenario=scenario, central_year=central_year)    
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-        return [
-            HazardResource(
+        return self._resources_by_gcm().values()
+    
+    def _resources_by_gcm(self):
+        resources: Dict[str, HazardResource] = {}
+        for gcm in self.gcms:
+            resource = HazardResource(
                 type="ChronicHeat",
                 id="mean_degree_days_v2/above/32c/" + gcm,
                 path="chronic_heat/osc/v2",
@@ -107,9 +111,9 @@ of the medium over a reference temperature.
                         years=list(self.central_years)),
                     ]
             )
-            for gcm in self.gcms
-        ]
-    
+            resources[gcm] = resource
+        return resources
+
     def run_single(self, item: BatchItem, source: OpenDataset, target: ReadWriteDataArray, client: Client):
         average_deg_days = self._average_degree_days(client, source, target, item)
         average_deg_days.attrs["crs"] = CRS.from_epsg(4326)
