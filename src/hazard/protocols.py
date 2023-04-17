@@ -2,6 +2,10 @@ from typing import Iterable, List, Protocol
 import typing
 import xarray as xr
 
+class Averageable(Protocol):
+    """Write DataArray."""
+    central_year: int
+
 class OpenDataset(Protocol):
     """Open XArray Dataset for Global Circulation Model (GCM), scenario and quantity for whole year specified."""
     def gcms(self) -> Iterable[str]:

@@ -35,7 +35,7 @@ class MapInfo(BaseModel):
     array_name: Optional[str] = Field(
         description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to array_name."  # noqa
     )
-    bounds: Optional[List[Tuple[float, float]]] = Field(
+    bounds: List[Tuple[float, float]] = Field(
         [[-180.0, 85.0], [180.0, 85.0], [180.0, -85.0], [-180.0, -85.0]],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
@@ -69,11 +69,11 @@ class HazardResource(BaseModel):
     group_id: Optional[str] = Field("public")
     path: str
     id: str
-    params: Optional[Dict[str, List[str]]]
+    params: Dict[str, List[str]]
     display_name: str
     description: str
     array_name: str 
-    map: Optional[MapInfo]
+    map: MapInfo
     scenarios: List[Scenario]
     units: str
 

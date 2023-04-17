@@ -9,6 +9,7 @@ from pytest import approx
 import fsspec.implementations.local as local # type: ignore
 from hazard.docs_store import DocStore # type: ignore
 from hazard.map_builder import MapBuilder
+from hazard.models.work_loss import WorkLossIndicator
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr
@@ -169,6 +170,23 @@ def test_degree_days(test_output_dir):
     assert calculated == approx(expected)
 
 
+def test_work_loss(test_output_dir):
+    """Cut-down but still *slow* test that performs downloading of real datasets."""
+    gcm = "NorESM2-MM"
+    scenario = "ssp585"
+    years = [2028, 2029, 2030]
+    download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tas", "hurs"])
+    # source: read downloaded datasets from local file system
+    fs = local.LocalFileSystem()
+    source = NexGddpCmip6(root=os.path.join(test_output_dir, NexGddpCmip6.bucket), fs=fs)
+    # target: write zarr to load fine system
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
+    target = OscZarr(store=store)
+    # cut down the model and run
+    model = WorkLossIndicator(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    model.run_all(source, target)
+
+
 def test_example_run_degree_days():
     zarr_utilities.set_credential_env_variables() 
 
@@ -195,13 +213,14 @@ def test_example_run_degree_days():
     assert True
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years):
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tasmax"]):
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:
-        path, _ = store.path(gcm, scenario, "tasmax", year)
-        if not os.path.exists(os.path.join(test_output_dir, path)):
-            s3.download(path, os.path.join(test_output_dir, path))
+        for indicator in indicators:
+            path, _ = store.path(gcm, scenario, indicator, year)
+            if not os.path.exists(os.path.join(test_output_dir, path)):
+                s3.download(path, os.path.join(test_output_dir, path))
     assert True
 
 
