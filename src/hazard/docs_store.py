@@ -79,6 +79,12 @@ class DocStore:
         with self._fs.open(self._full_path_inventory(), "r") as f:
             json_str = f.read()
         return json_str
+    
+    def write_inventory_json(self, json_str: str):
+        """Write inventory."""
+        path = self._full_path_inventory()
+        with self._fs.open(path, "w") as f:
+            f.write(json_str)
 
     def update_inventory(self, hazard_models: Iterable[HazardResource], remove_existing: bool=False):
         """Add the hazard models provided to the inventory. If a model with the same key
