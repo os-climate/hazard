@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import logging, os, sys
 import logging.handlers
 from typing import Dict
@@ -7,7 +8,7 @@ import pytest
 from pytest import approx
 
 import fsspec.implementations.local as local # type: ignore
-from hazard.docs_store import DocStore # type: ignore
+from hazard.docs_store import DocStore, HazardModels # type: ignore
 from hazard.map_builder import MapBuilder
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.protocols import OpenDataset, WriteDataset
@@ -183,7 +184,10 @@ def test_work_loss(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
     target = OscZarr(store=store)
     # cut down the model and run
-    model = WorkLossIndicator(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    model = WorkLossIndicator(window_years=3, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
+    resources = list(model.inventory())
+    models = HazardModels(hazard_models=resources)
+    json_str = json.dumps(models.dict(), indent=4) # pretty print
     model.run_all(source, target)
 
 

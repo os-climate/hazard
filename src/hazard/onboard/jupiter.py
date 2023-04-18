@@ -257,6 +257,7 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
                 type="CombinedInundation",
                 id="flooded_fraction",
                 path="combined_flood/jupiter/v1",
+                params={},
                 display_name="Flooded fraction",
                 array_name="fraction_{scenario}_{year}",
                 description="""

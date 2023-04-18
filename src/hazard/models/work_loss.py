@@ -26,9 +26,9 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
                 central_year_historical=MultiYearAverageIndicator._default_central_year_historical,
                 central_years=MultiYearAverageIndicator._default_central_years):
         super().__init__(window_years=window_years, gcms=gcms, scenarios=scenarios, central_year_historical=central_year_historical, central_years=central_years)
-        self.alpha_light = (24.64, 22.72)
+        self.alpha_light = (30.94, 16.64)
         self.alpha_medium = (32.98, 17.81)
-        self.alpha_heavy = (30.94, 16.64)
+        self.alpha_heavy = (24.64, 22.72)
     
     def batch_items(self) -> Iterable[WorkLossBatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
@@ -62,7 +62,7 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
                     max_index=255,
                     units="fractional loss"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                array_name="mean_work_loss_{gcm}_{scenario}_{year}_map",
+                array_name="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
             units="fractional loss",

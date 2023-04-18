@@ -32,7 +32,7 @@ class MapInfo(BaseModel):
     """Provides information about map layer."""
 
     colormap: Optional[Colormap] = Field(description="Details of colormap.")
-    array_name: Optional[str] = Field(
+    array_name: str = Field(
         description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to array_name."  # noqa
     )
     bounds: List[Tuple[float, float]] = Field(
@@ -58,10 +58,6 @@ class Scenario(BaseModel):
     #periods: Optional[List[Period]]
 
 
-def expanded(item: str, key: str, param: str):
-    return item and item.replace("{" + key + "}", param)
-
-
 class HazardResource(BaseModel):
     """Provides scenarios associated with a hazard model."""
 
@@ -78,26 +74,33 @@ class HazardResource(BaseModel):
     units: str
 
     def expand(self):
-        # should be only one key
-        if not self.params:
-            yield self
-            return
-        key = list(self.params.keys())[0]
-        params = self.params[key]
-        for param in params:
-            yield self.copy(
-                deep=True,
-                update={
-                    "id": expanded(self.id, key, param),
-                    "display_name": expanded(self.display_name, key, param),
-                    "array_name": expanded(self.array_name, key, param),
-                    "map": self.map.copy(deep=True, update={"array_name": expanded(self.map.array_name, key, param)}),
-                },
-            )
+        keys = list(self.params.keys())
+        return expand_resource(self, keys, self.params)
 
     def key(self):
         return str(PosixPath(self.path, self.id))
         
+
+def expand(item: str, key: str, param: str):
+    return item and item.replace("{" + key + "}", param)
+
+def expand_resource(resource: HazardResource, keys: List[str], params: Dict[str, List[str]]) -> Iterable[HazardResource]:
+    if len(keys) == 0:
+        yield resource
+    else:
+        keys = keys.copy()
+        key = keys.pop()
+        for item in expand_resource(resource, keys, params):
+            for param in params[key]:
+                yield item.copy(
+                    deep=True,
+                    update={
+                        "id": expand(item.id, key, param),
+                        "display_name": expand(item.display_name, key, param),
+                        "array_name": expand(item.array_name, key, param),
+                        "map": item.map.copy(deep=True, update={"array_name": expand(item.map.array_name, key, param)}),
+                    }
+                )
 
 # endregion
 
