@@ -89,7 +89,7 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
             hurs = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "hurs", year)).hurs
             results = self._work_loss_indicators(tas, hurs)
         resource = item.resource
-        paths = [item.resource.array_name.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=year)
+        paths = [item.resource.array_name.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                  for intensity in resource.params["intensity"]]      
         return [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
 
