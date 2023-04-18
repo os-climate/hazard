@@ -22,6 +22,9 @@ class WorkLossBatchItem():
     scenario: str
     central_year: int
 
+    def __str__(self):
+        return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
+
 class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
     def __init__(self, 
                 window_years=MultiYearAverageIndicator._default_window_years,
