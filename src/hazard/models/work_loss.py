@@ -33,8 +33,8 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
                 central_year_historical=MultiYearAverageIndicator._default_central_year_historical,
                 central_years=MultiYearAverageIndicator._default_central_years):
         super().__init__(window_years=window_years, gcms=gcms, scenarios=scenarios, central_year_historical=central_year_historical, central_years=central_years)
-        self.alpha_light = (30.94, 16.64)
-        self.alpha_medium = (32.98, 17.81)
+        self.alpha_light = (32.98, 17.81)
+        self.alpha_medium = (30.94, 16.64)
         self.alpha_heavy = (24.64, 22.72)
     
     def batch_items(self) -> Iterable[WorkLossBatchItem]:
