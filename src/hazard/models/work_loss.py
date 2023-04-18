@@ -1,5 +1,6 @@
 from contextlib import ExitStack
 from dataclasses import dataclass
+import logging
 from pathlib import PurePosixPath
 from typing import Iterable, List
 
@@ -10,6 +11,9 @@ from hazard.protocols import OpenDataset
 
 import numpy as np
 import xarray as xr
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class WorkLossBatchItem():
@@ -84,6 +88,7 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
         return resource
 
     def _calculate_single_year_indicators(self, source: OpenDataset, item: WorkLossBatchItem, year: int) -> List[Indicator]:
+        logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
             tas = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "tas", year)).tas
             hurs = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "hurs", year)).hurs
@@ -91,7 +96,9 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
         resource = item.resource
         paths = [item.resource.array_name.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                  for intensity in resource.params["intensity"]]      
-        return [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
+        result = [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
+        logger.info(f"Calculation complete for year {year}")
+        return result
 
     def _work_loss_indicators(self, tas: xr.DataArray, hurs: xr.DataArray) -> List[xr.DataArray]:
         tas_c = tas - 273.15 # convert from K to C
