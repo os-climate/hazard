@@ -1,6 +1,7 @@
 from contextlib import ExitStack
 from dataclasses import dataclass
 import logging
+import os
 from pathlib import PurePosixPath
 from typing import Iterable, List
 
@@ -50,14 +51,18 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
         return self._resource().expand()
 
     def _resource(self) -> HazardResource:
+        with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:
+            description = f.read()
         resource = HazardResource(
             type="ChronicHeat",
             id="mean_work_loss/{intensity}/{gcm}",
             params={"intensity": ["low", "medium", "high"], "gcm": list(self.gcms)},
             path="chronic_heat/osc/v2",
-            display_name="Mean work loss, {intensity} intensity ({gcm})",
+            display_name="Mean work loss, {intensity} intensity/{gcm}",
             array_name="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
-            description="",
+            description=description,
+            display_groups=["Mean work loss"], # display names of groupings
+            # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
             group_id = "",
             map = MapInfo( 
                 colormap=Colormap(
@@ -98,7 +103,8 @@ class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
             results = self._work_loss_indicators(tas, hurs)
         resource = item.resource
         paths = [item.resource.array_name.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
-                 for intensity in resource.params["intensity"]]      
+                 for intensity in resource.params["intensity"]]
+        assert isinstance(resource.map, MapInfo)      
         result = [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
         logger.info(f"Calculation complete for year {year}")
         return result

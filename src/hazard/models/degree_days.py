@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+import os
 from pathlib import PosixPath
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -70,18 +71,19 @@ class DegreeDays(IndicatorModel[BatchItem]):
     
     def _resources_by_gcm(self):
         resources: Dict[str, HazardResource] = {}
+        with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
+            description = f.read()
         for gcm in self.gcms:
             resource = HazardResource(
                 type="ChronicHeat",
                 id="mean_degree_days_v2/above/32c/" + gcm,
                 path="chronic_heat/osc/v2",
-                display_name="Mean degree days above 32°C (" + gcm + ")",
+                display_name="Mean degree days above 32°C/" + gcm,
                 array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}",
-                description="""
-Degree days indicators are calculated by integrating over time the absolute difference in temperature
-of the medium over a reference temperature.
-                """,
+                description=description,
+                params = {},
                 group_id = "",
+                display_groups=["Mean degree days"],
                 map = MapInfo( # type:ignore
                     colormap=Colormap(
                         name="heating",

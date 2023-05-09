@@ -67,9 +67,10 @@ class HazardResource(BaseModel):
     id: str
     params: Dict[str, List[str]]
     display_name: str
+    display_groups: List[str]
     description: str
     array_name: str 
-    map: MapInfo
+    map: Optional[MapInfo]
     scenarios: List[Scenario]
     units: str
 

@@ -84,6 +84,7 @@ class Jupiter(IndicatorModel):
                 type="Fire",
                 id="fire_probability",
                 path="fire/jupiter/v1",
+                params={},
                 display_name="Fire probability",
                 array_name="fire_probability_{scenario}_{year}",
                 description="""
@@ -93,6 +94,7 @@ of occurrence of a wildfire is 5% for July, 20% in August, 10% in September and 
 other months, the hazard indicator value is 20%.
                 """,
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -102,7 +104,6 @@ other months, the hazard indicator value is 20%.
                     array_name="fire_probability_{scenario}_{year}_map",
                     source="map_array"
                 ),
-                params = None,
                 units="none",
                 scenarios=[
                     Scenario(
@@ -116,6 +117,7 @@ other months, the hazard indicator value is 20%.
                 type="Drought",
                 id="months/spei3m/below/-2",
                 path="drought/jupiter/v1",
+                params={},
                 display_name="Drought",
                 array_name="months_spei3m_below_-2_{scenario}_{year}",
                 description="""
@@ -123,6 +125,7 @@ Months per year where the rolling 3-month averaged Standardized Precipitation Ev
 is below -2.
                 """,
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -145,12 +148,14 @@ is below -2.
                 type="Precipitation",
                 id="max/daily/water_equivalent",
                 path="precipitation/jupiter/v1",
+                params={},
                 display_name="Precipitation",
                 array_name="max_daily_water_equivalent_{scenario}_{year}",
                 description="""
 Maximum daily total water equivalent precipitation experienced at a return period of 100 years.
                 """, 
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -173,12 +178,14 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                 type="Hail",
                 id="days/above/5cm",
                 path="hail/jupiter/v1",
+                params={},
                 display_name="Large hail days per year",
                 array_name="days_above_5cm_{scenario}_{year}",
                 description="""
 Number of days per year where large hail (> 5cm diameter) is possible.
                 """, 
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -201,12 +208,14 @@ Number of days per year where large hail (> 5cm diameter) is possible.
                 type="ChronicHeat",
                 id="days/above/35c",
                 path="chronic_heat/jupiter/v1",
+                params={},
                 display_name="Days per year above 35°C",
                 array_name="days_above_35c_{scenario}_{year}",
                 description="""
 Maximum daily total water equivalent precipitation experienced at a return period of 200 years.
                 """, 
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -229,12 +238,14 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                 type="Wind",
                 id="max/1min",
                 path="wind/jupiter/v1",
+                params={},
                 display_name="Max 1 minute sustained wind speed",
                 array_name="max_1min_{scenario}_{year}",
                 description="""
 Maximum 1-minute sustained wind speed in km/hour experienced at different return periods.
                 """, 
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",
@@ -264,6 +275,7 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
 The fraction of land within a 30-km grid cell that experiences flooding at different return periods.
                 """, 
                 group_id = "jupiter_osc",
+                display_groups=[],
                 map = MapInfo(
                     colormap=Colormap(
                         name="heating",

@@ -188,6 +188,14 @@ def test_work_loss(test_output_dir):
     resources = list(model.inventory())
     models = HazardModels(hazard_models=resources)
     json_str = json.dumps(models.dict(), indent=4) # pretty print
+
+    local_fs = local.LocalFileSystem()
+    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+    #json_str = docs_store.read_inventory_json()
+    #json_str2 = json_str.replace("\"params\": null", "\"params\": {}")
+    #docs_store.write_inventory_json(json_str2)
+
+    docs_store.update_inventory(model.inventory())
     model.run_all(source, target)
 
 
