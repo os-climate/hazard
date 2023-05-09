@@ -3,7 +3,16 @@ from typing import Any, Dict, MutableMapping, Optional, Tuple, Union
 
 from affine import Affine # type: ignore
 import dask
+from typing import Any, Dict, MutableMapping, Optional, Tuple, Union
+
+from affine import Affine # type: ignore
+import dask
 import numpy as np
+import s3fs # type: ignore
+import xarray as xr
+import zarr # type: ignore
+
+from hazard.protocols import OpenDataset, WriteDataArray
 import s3fs # type: ignore
 import xarray as xr
 import zarr # type: ignore
@@ -15,8 +24,11 @@ import hazard.utilities.xarray_utilities as xarray_utilities
 class OscZarr(WriteDataArray):
     default_staging_bucket = "redhat-osc-physical-landing-647521352890"
      
-    def __init__(self, bucket: str=default_staging_bucket, prefix: str="hazard",
-        s3: Optional[s3fs.S3File]=None, store: Optional[MutableMapping]=None):
+    def __init__(self, 
+        bucket: str=default_staging_bucket,
+        prefix: str="hazard",
+        s3: Optional[s3fs.S3File]=None,
+        store: Optional[MutableMapping]=None):
         """For reading and writing to OSC Climate Zarr storage. If store is provided this is used, otherwise if S3File is provided, this is used.
         Otherwise, store is created using credentials in environment variables.
         
@@ -48,6 +60,7 @@ class OscZarr(WriteDataArray):
         z = self.root[path]
         t = z.attrs["transform_mat3x3"]  # type: ignore
         crs: str = z.attrs["crs"]  # type: ignore
+        crs: str = z.attrs["crs"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         coords = xarray_utilities.affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
         #data = dask.array.from_zarr(self.root.store, path)
@@ -75,6 +88,11 @@ class OscZarr(WriteDataArray):
         image_coords = np.floor(image_coords).astype(int)
         iy = np.repeat(image_coords[1, :], len(index_values))
         ix = np.repeat(image_coords[0, :], len(index_values))
+        if len(z.shape)==3:
+            iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
+            data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
+        else:
+            data = z.get_coordinate_selection((iy, ix))
         if len(z.shape)==3:
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
@@ -131,7 +149,7 @@ class OscZarr(WriteDataArray):
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
         renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
-            
+          
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))  # type: ignore
@@ -144,6 +162,10 @@ class OscZarr(WriteDataArray):
         """
         Create Zarr array with given shape and affine transform.
         """
+        try:
+            self.root.pop(path)
+        except:
+            pass # if it already exists, remove it
         try:
             self.root.pop(path)
         except:
@@ -170,7 +192,11 @@ class OscZarr(WriteDataArray):
         mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
         attrs["crs"] = crs
         attrs["transform_mat3x3"] = mat3x3 
+        attrs["crs"] = crs
+        attrs["transform_mat3x3"] = mat3x3 
         if return_periods is not None:
+            attrs["index_values"] = return_periods
+            attrs["index_name"] = "return period (years)"
             attrs["index_values"] = return_periods
             attrs["index_name"] = "return period (years)"
 

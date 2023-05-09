@@ -1,12 +1,16 @@
 from datetime import datetime
+import json
 import logging, os, sys
 import logging.handlers
 from typing import Dict
+from dask.distributed import Client, LocalCluster
 import pytest
 from pytest import approx
 
 import fsspec.implementations.local as local # type: ignore
+from hazard.docs_store import DocStore, HazardModels # type: ignore
 from hazard.map_builder import MapBuilder
+from hazard.models.work_loss import WorkLossIndicator
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr
@@ -135,7 +139,7 @@ def test_zarr_read_write(test_output_dir):
     np.testing.assert_array_equal(res, [308., 302.])
     
 
-@pytest.mark.skip(reason="inputs large and downloading slow")
+#@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
@@ -149,8 +153,8 @@ def test_degree_days(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
     target = OscZarr(store=store)
     # cut down the model and run
-    model = DegreeDays(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
-    model.run(source, target)
+    model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    model.run_all(source, target)
     # check one point...
     path = model._item_path(BatchItem(gcm, scenario, years[1]))
     calculated = target.read_floored(path, [32.625], [15.625])
@@ -167,8 +171,45 @@ def test_degree_days(test_output_dir):
     assert calculated == approx(expected)
 
 
-def example_run_degree_days():
-    zarr_utilities.set_credential_env_variables()  
+def test_work_loss(test_output_dir):
+    """Cut-down but still *slow* test that performs downloading of real datasets."""
+    gcm = "NorESM2-MM"
+    scenario = "ssp585"
+    years = [2028, 2029, 2030]
+    download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tas", "hurs"])
+    # source: read downloaded datasets from local file system
+    fs = local.LocalFileSystem()
+    source = NexGddpCmip6(root=os.path.join(test_output_dir, NexGddpCmip6.bucket), fs=fs)
+    # target: write zarr to load fine system
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
+    target = OscZarr(store=store)
+    # cut down the model and run
+    model = WorkLossIndicator(window_years=3, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
+    resources = list(model.inventory())
+    models = HazardModels(hazard_models=resources)
+    json_str = json.dumps(models.dict(), indent=4) # pretty print
+
+    local_fs = local.LocalFileSystem()
+    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+    #json_str = docs_store.read_inventory_json()
+    #json_str2 = json_str.replace("\"params\": null", "\"params\": {}")
+    #docs_store.write_inventory_json(json_str2)
+
+    docs_store.update_inventory(model.inventory())
+    model.run_all(source, target)
+
+
+def test_example_run_degree_days():
+    zarr_utilities.set_credential_env_variables() 
+
+    docs_store = DocStore(prefix="hazard_test")
+    json = docs_store.read_inventory_json()
+    #local_fs = local.LocalFileSystem()
+    #docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+
+    cluster = LocalCluster(processes=False)
+    client = Client(cluster)
+
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
@@ -176,17 +217,22 @@ def example_run_degree_days():
     target = OscZarr(prefix="hazard_test") # test prefix is "hazard_test"; main one "hazard"
     # cut down the transform
     model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[year])
-    model.run(source, target)
+
+    docs_store.update_inventory(model.inventory())
+
+    items = list(model.batch_items())
+    model.run_single(items[0], source, target, client=client)
     assert True
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years):
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tasmax"]):
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:
-        path, _ = store.path(gcm, scenario, "tasmax", year)
-        if not os.path.exists(os.path.join(test_output_dir, path)):
-            s3.download(path, os.path.join(test_output_dir, path))
+        for indicator in indicators:
+            path, _ = store.path(gcm, scenario, indicator, year)
+            if not os.path.exists(os.path.join(test_output_dir, path)):
+                s3.download(path, os.path.join(test_output_dir, path))
     assert True
 
 

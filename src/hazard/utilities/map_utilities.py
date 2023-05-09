@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import logging
+from math import atan, exp, log, pi, tan
 import os
 from os import listdir
 from os.path import isfile, join
@@ -13,12 +14,51 @@ import rasterio # type: ignore
 import seaborn as sns # type: ignore
 from affine import Affine # type: ignore
 from mapbox import Uploader # type: ignore
+import rasterio.warp, rasterio.transform
 from rasterio import CRS, profiles # type: ignore
 from rasterio.enums import Resampling # type: ignore
+import xarray as xr
+
 
 LOG = logging.getLogger("Mapbox onboarding")
 LOG.setLevel(logging.INFO)
 
+def epsg3857_to_epsg4326(x, y):
+    lon = (x / 20037508.34) * 180.0
+    lat = (y / 20037508.34) * 180.0
+    lat = (180.0 / pi) * (2.0 * atan(exp(lat * pi / 180.0)) - pi / 2)
+    return lon, lat
+
+def epsg4326_to_epsg3857(lon, lat):
+    x = lon * 20037508.34 / 180
+    y = log(tan((90.0 + lat) * pi / 360.0)) / (pi / 180.0)
+    y = y * 20037508.34 / 180.0
+    return x, y
+
+def transform_epsg4326_to_epsg3857(src: xr.DataArray):
+    src_crs = CRS.from_epsg(4326)
+    dst_crs = CRS.from_epsg(3857)
+    src_left, src_bottom, src_right, src_top = src.rio.bounds()
+    # we have to truncate into range -85 to 85 
+    src_bottom, src_top = max(src_bottom, -85.0), min(src_top, 85.0), 
+    src_width, src_height = src.sizes['longitude'], src.sizes['latitude']
+    _, width, height = rasterio.warp.calculate_default_transform(src_crs, dst_crs,
+                                              width=src_width, height=src_height,
+                                              left=src_left, bottom=src_bottom, right=src_right, top=src_top)
+    dst_width, dst_height = src_width, max(src_height, height)
+    ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top])
+    dst_transform = rasterio.transform.from_bounds(dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height)
+    reprojected = src.rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)
+    return reprojected
+
+def check_map_bounds(da: xr.DataArray):
+    transform: Affine = da.rio.transform(recalc=True)
+    x_min, y_max = transform * (0, 0)
+    x_max, y_min = transform * (da.sizes['x'], da.sizes['y'])
+    #(left, bottom, top, right) = da.rio.bounds()
+    (left, top) = epsg3857_to_epsg4326(x_min, y_max)
+    (right, bottom) = epsg3857_to_epsg4326(x_max, y_min)
+    return (top, right, bottom, left)
 
 def alphanumeric(text):
     """Return alphanumeric hash from supplied string."""
