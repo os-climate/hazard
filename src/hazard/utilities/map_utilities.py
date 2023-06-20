@@ -51,6 +51,10 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     reprojected = src.rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)
     return reprojected
 
+def highest_zoom_slippy_maps(src: xr.DataArray):
+    ...
+
+
 def check_map_bounds(da: xr.DataArray):
     transform: Affine = da.rio.transform(recalc=True)
     x_min, y_max = transform * (0, 0)

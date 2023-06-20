@@ -15,7 +15,7 @@ import zarr # type: ignore
 from hazard.protocols import OpenDataset, WriteDataArray
 import s3fs # type: ignore
 import xarray as xr
-import zarr # type: ignore
+import zarr, zarr.core # type: ignore
 
 from hazard.protocols import OpenDataset, WriteDataArray
 import hazard.utilities.xarray_utilities as xarray_utilities
@@ -58,19 +58,7 @@ class OscZarr(WriteDataArray):
             xr.DataArray: xarray DataArray.
         """
         z = self.root[path]
-        t = z.attrs["transform_mat3x3"]  # type: ignore
-        crs: str = z.attrs["crs"]  # type: ignore
-        crs: str = z.attrs["crs"]  # type: ignore
-        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        coords = xarray_utilities.affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
-        #data = dask.array.from_zarr(self.root.store, path)
-        #array = xr.DataArray(data=a)
-        da = xr.DataArray(data=z, coords=coords)
-        da = da.squeeze("dim_0")
-        if crs.upper() == "EPSG:4326":
-            da = da.rename({ "dim_1": "latitude", "dim_2": "longitude" })
-        else:
-            da = da.rename({ "dim_1": "y", "dim_2": "x" })
+        da = self._data_array_from_zarr(z)
         return da
 
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
@@ -110,6 +98,9 @@ class OscZarr(WriteDataArray):
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         return z[index, :, :], transform, crs
 
+    def read_zarr(self, path):
+        return self.root[path]
+
     def if_exists_remove(self, path):
         if path in self.root:
             self.root.pop(path)
@@ -124,6 +115,20 @@ class OscZarr(WriteDataArray):
         data, transform, crs = xarray_utilities.get_array_components(da)
         z = self._zarr_create(path, da.shape, transform, crs.to_string())
         z[0, :, :] = data[:,:]
+
+    def new_empty_like(self, path: str, da: xr.DataArray) -> xr.DataArray:
+        """Write a new empty Zarr array like the one supplied and return array.
+
+        Args:
+            path (str): _description_
+            da (xr.DataArray): _description_
+
+        Returns:
+            xr.DataArray: New array.
+        """
+        _, transform, crs = xarray_utilities.get_array_components(da)
+        z = self._zarr_create(path, da.shape, transform, crs.to_string(), overwrite=True, return_periods=da.coords["index"].data)
+        return self._data_array_from_zarr(z)
 
     def write_data_array(self, path: str, da: xr.DataArray):
         """[Probably you should be using write method instead!] Write DataArray to provided relative path.
@@ -158,6 +163,21 @@ class OscZarr(WriteDataArray):
         frac_image_coords = mat @ coords
         return frac_image_coords
 
+    def _data_array_from_zarr(self, z: zarr.core.Array) -> xr.DataArray:
+        t = z.attrs["transform_mat3x3"]  # type: ignore
+        crs: str = z.attrs.get("crs", "EPSG:4326") # type: ignore
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        coords = xarray_utilities.affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
+        coords["dim_0"] = z.attrs.get("index_values", [0.0])
+        da = xr.DataArray(data=dask.array.from_zarr(z), dims=["dim_0", "dim_1", "dim_2"], coords=coords)
+        da.rio.write_crs(4326, inplace=True)
+        #da = da.squeeze("dim_0")
+        if crs.upper() == "EPSG:4326":
+            da = da.rename({ "dim_0": "index", "dim_1": "latitude", "dim_2": "longitude" })
+        else:
+            da = da.rename({ "dim_0": "index", "dim_1": "y", "dim_2": "x" })
+        return da
+
     def _zarr_create(self, path: str, shape: Union[np.ndarray, Tuple[int, ...]], transform: Affine, crs: str, overwrite=False, return_periods=None):
         """
         Create Zarr array with given shape and affine transform.
@@ -166,13 +186,16 @@ class OscZarr(WriteDataArray):
             self.root.pop(path)
         except:
             pass # if it already exists, remove it
-        try:
-            self.root.pop(path)
-        except:
-            pass # if it already exists, remove it
+        if len(shape) == 3:
+            zarr_shape = shape
+        elif len(shape) == 2:
+            zarr_shape = (1 if return_periods is None else len(return_periods), shape[0], shape[1])
+        else:
+            raise ValueError("shape of DataArray must have length of 2 or 3.")
+
         z = self.root.create_dataset(
             path,
-            shape=(1 if return_periods is None else len(return_periods), shape[0], shape[1]),
+            shape=zarr_shape,
             chunks=(1 if return_periods is None else len(return_periods), 1000, 1000),
             dtype="f4",
             overwrite=overwrite,
@@ -192,12 +215,8 @@ class OscZarr(WriteDataArray):
         mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
         attrs["crs"] = crs
         attrs["transform_mat3x3"] = mat3x3 
-        attrs["crs"] = crs
-        attrs["transform_mat3x3"] = mat3x3 
         if return_periods is not None:
-            attrs["index_values"] = return_periods
-            attrs["index_name"] = "return period (years)"
-            attrs["index_values"] = return_periods
+            attrs["index_values"] = list(return_periods)
             attrs["index_name"] = "return period (years)"
 
 
