@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 from typing import Iterable, List
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import Indicator, MultiYearAverageIndicator
+from hazard.models.multi_year_average import Indicator, MultiYearAverageIndicatorBase
 
 from hazard.protocols import OpenDataset
 
@@ -26,13 +26,13 @@ class WorkLossBatchItem():
     def __str__(self):
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
-class WorkLossIndicator(MultiYearAverageIndicator[WorkLossBatchItem]):
+class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
     def __init__(self, 
-                window_years=MultiYearAverageIndicator._default_window_years,
-                gcms=MultiYearAverageIndicator._default_gcms,
-                scenarios=MultiYearAverageIndicator._default_scenarios,
-                central_year_historical=MultiYearAverageIndicator._default_central_year_historical,
-                central_years=MultiYearAverageIndicator._default_central_years):
+                window_years=MultiYearAverageIndicatorBase._default_window_years,
+                gcms=MultiYearAverageIndicatorBase._default_gcms,
+                scenarios=MultiYearAverageIndicatorBase._default_scenarios,
+                central_year_historical=MultiYearAverageIndicatorBase._default_central_year_historical,
+                central_years=MultiYearAverageIndicatorBase._default_central_years):
         super().__init__(window_years=window_years, gcms=gcms, scenarios=scenarios, central_year_historical=central_year_historical, central_years=central_years)
         self.alpha_light = (32.98, 17.81)
         self.alpha_medium = (30.94, 16.64)

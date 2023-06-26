@@ -16,95 +16,14 @@ import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.models.degree_days import BatchItem, DegreeDays
+from .utilities import test_output_dir
 import numpy as np
 import pandas as pd # type: ignore
 import s3fs # type: ignore
 import xarray as xr
 import zarr # type: ignore
 
-
-class TestSource(OpenDataset):
-    """Mocked source for testing."""
-    def __init__(self, datasets: Dict[int, xr.Dataset]):
-        self.datasets = datasets
-    
-    def open_dataset_year(self, gcm: str, scenario: str, quantity: str, year: int, chunks=None) -> xr.Dataset:
-        return self.datasets[year]
-
-class TestTarget(WriteDataset):
-    """Mocked target for testing."""
-    def write(self, path: str, dataset: xr.Dataset):
-        self.dataset = dataset
-
-
-@pytest.fixture
-def test_output_dir():
-    """Provides directory for (for example) testing (file-based) storage of datasets."""
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_output")
-    yield output_dir
-    # if we want to clean-up (most likely not)
-    #shutil.rmtree(output_dir)
-
-
-def _create_test_datasets() -> Dict[int, xr.Dataset]:
-    return { 2029: _create_test_dataset(2029), 2030: _create_test_dataset(2030, 0.5) }
-
-
-def _create_test_dataset_averaged() -> xr.Dataset:
-    """An example 3x3 array that might result from some operation averaging over time."""
-    temperature = np.array([
-        [293., 298., 310.], 
-        [304., 302., 300.],
-        [308., 290., 294.]])  
-    lat = np.arange(3., 0., -1.)
-    lon = np.arange(0., 3., 1.)
-    ds = xr.Dataset(
-        data_vars=dict(
-            tasmax=(["lat", "lon"], temperature),
-        ),
-        coords=dict(
-            lat=lat,
-            lon=lon
-        ),
-        attrs=dict(description="Test array"),
-    )
-    return ds
-
-
-def _create_test_dataset(year: int, offset: float=0) -> xr.Dataset:
-    """Create test xarray Dataset.
-    Convention is that data is arranged in image-like way:
-    - dimensions are ('latitude', 'longitude')
-    or, for time-series-type data: ('time', 'latitude', 'longitude')
-    - latitude is decreasing
-
-    Returns:
-       xr.Dataset : test Dataset
-    """
-    temperature_t1 = np.array([
-        [293., 298., 310.], 
-        [304., 302., 300.],
-        [308., 290., 294.]]) + offset 
-    temperature_t2 = temperature_t1 + 1. # temp at t1 + 1 degree 
-    temperature_t3 = temperature_t2 + 2.
-    # stack to give 3 time points
-    temperature = np.stack((temperature_t1, temperature_t2, temperature_t3), axis=0)
-    #time = pd.date_range("2030-06-01", periods=3) 
-    time = pd.date_range(datetime(year, 1, 1), periods=3)    
-    lat = np.arange(3., 0., -1.)
-    lon = np.arange(0., 3., 1.)
-    ds = xr.Dataset(
-        data_vars=dict(
-            tasmax=(["time", "lat", "lon"], temperature),
-        ),
-        coords=dict(
-            time=time,
-            lat=lat,
-            lon=lon
-        ),
-        attrs=dict(description="Test array"),
-    )
-    return ds
+from test.utilities import TestSource, TestTarget, _create_test_dataset_averaged, _create_test_datasets 
 
 
 def test_degree_days_mocked():
@@ -139,7 +58,7 @@ def test_zarr_read_write(test_output_dir):
     np.testing.assert_array_equal(res, [308., 302.])
     
 
-#@pytest.mark.skip(reason="inputs large and downloading slow")
+@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
@@ -171,6 +90,7 @@ def test_degree_days(test_output_dir):
     assert calculated == approx(expected)
 
 
+@pytest.mark.skip(reason="inputs large and downloading slow")
 def test_work_loss(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
@@ -191,21 +111,17 @@ def test_work_loss(test_output_dir):
 
     local_fs = local.LocalFileSystem()
     docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
-    #json_str = docs_store.read_inventory_json()
-    #json_str2 = json_str.replace("\"params\": null", "\"params\": {}")
-    #docs_store.write_inventory_json(json_str2)
 
     docs_store.update_inventory(model.inventory())
     model.run_all(source, target)
 
 
+@pytest.mark.skip(reason="just example")
 def test_example_run_degree_days():
     zarr_utilities.set_credential_env_variables() 
 
     docs_store = DocStore(prefix="hazard_test")
     json = docs_store.read_inventory_json()
-    #local_fs = local.LocalFileSystem()
-    #docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
 
     cluster = LocalCluster(processes=False)
     client = Client(cluster)

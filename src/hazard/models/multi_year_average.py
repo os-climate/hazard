@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 from typing import Iterable, List, Optional, Tuple, TypeVar
 
 from hazard.indicator_model import IndicatorModel
-from hazard.inventory import HazardResource
+from hazard.inventory import HazardResource, MapInfo
 from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
 
 from hazard.utilities.xarray_utilities import enforce_conventions
@@ -26,7 +26,8 @@ class Indicator:
     path: PurePosixPath
     bounds: List[Tuple[float, float]]
 
-class MultiYearAverageIndicator(IndicatorModel[T]):  
+
+class MultiYearAverageIndicatorBase(IndicatorModel[T]):  
     """Indicator which is the average of indicators produced for a number of individual years.
     Such calculations can be split by year and run in parallel.
     """
@@ -117,3 +118,51 @@ class MultiYearAverageIndicator(IndicatorModel[T]):
         """Calculate indicators for a single year for a single batch item. If just a single indicator per batch, a list
         of length one is expected."""
         ...
+
+
+@dataclass
+class BatchItem():
+    resource: HazardResource
+    gcm: str
+    scenario: str
+    central_year: int
+
+    def __str__(self):
+        return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
+
+
+class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
+    
+    def batch_items(self) -> Iterable[BatchItem]:
+        """Get batch items (batch items can be calculated independently from one another)."""
+        resource = self._resource()
+        for gcm in self.gcms:
+            for scenario in self.scenarios:
+                central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
+                for central_year in central_years:
+                    yield BatchItem(resource=resource, gcm=gcm, scenario=scenario, central_year=central_year)    
+    
+    def inventory(self) -> Iterable[HazardResource]:
+        """Get the inventory item(s)."""
+        return self._resource().expand()
+
+    def _get_indicators(self, item: BatchItem, data_arrays: List[xr.DataArray], param: str) -> List[Indicator]:
+        """Find the 
+
+        Args:
+            item (BatchItem): _description_
+            data_arrays (List[xr.DataArray]): _description_
+            param (str): _description_
+
+        Returns:
+            List[Indicator]: _description_
+        """
+        resource = item.resource
+        paths = [item.resource.array_name.format(threshold=threshold, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+                 for threshold in resource.params[param]]
+        assert isinstance(resource.map, MapInfo)      
+        return [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(data_arrays)]
+
+    @abstractmethod
+    def _resource(self) -> HazardResource:
+       ...
