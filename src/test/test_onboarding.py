@@ -1,6 +1,6 @@
 
 import os
-import fsspec.implementations.local as local
+import fsspec.implementations.local as local # type: ignore
 from hazard.docs_store import DocStore # type: ignore
 from hazard.onboard.jupiter import Jupiter, JupiterOscFileSource # type: ignore
 from hazard.onboard.osc_chronic_heat import OscChronicHeat
