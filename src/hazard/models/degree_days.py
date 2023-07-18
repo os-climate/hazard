@@ -8,7 +8,7 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
 
-from hazard.utilities.xarray_utilities import enforce_conventions
+from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
 
 from dask.distributed import Client
@@ -33,7 +33,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             threshold: float=32,
             window_years: int=20,
             gcms: Iterable[str]=["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1",
-                "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"],
+                "MIROC6", "MPI-ESM1-2-LR", "NorESM2-MM"],
             scenarios: Iterable[str]=["historical", "ssp126", "ssp245", "ssp585"],
             central_year_historical: int = 2005,
             central_years: Iterable[int]=[2030, 2040, 2050]): 
@@ -67,54 +67,51 @@ class DegreeDays(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-        return self._resources_by_gcm().values()
+        return [self._resource()]
     
-    def _resources_by_gcm(self):
-        resources: Dict[str, HazardResource] = {}
+    def _resource(self):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
             description = f.read()
-        for gcm in self.gcms:
-            resource = HazardResource(
-                type="ChronicHeat",
-                id="mean_degree_days_v2/above/32c/" + gcm,
-                path="chronic_heat/osc/v2",
-                display_name="Mean degree days above 32°C/" + gcm,
-                array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}",
-                description=description,
-                params = {},
-                group_id = "",
-                display_groups=["Mean degree days"],
-                map = MapInfo( # type:ignore
-                    colormap=Colormap(
-                        name="heating",
-                        nodata_index=0,
-                        min_index=1,
-                        min_value=0.0,
-                        max_value=4000.0,
-                        max_index=255,
-                        units="degree days"),
-                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                    array_name="mean_degree_days_v2_above_32c_" + gcm + "_{scenario}_{year}_map",
-                    source="map_array"
-                ),
-                units="degree days",
-                scenarios=[
-                    Scenario(
-                        id="historical",
-                        years=[self.central_year_historical]),
-                    Scenario(
-                        id="ssp126",
-                        years=list(self.central_years)),
-                    Scenario(
-                        id="ssp245",
-                        years=list(self.central_years)),
-                    Scenario(
-                        id="ssp585",
-                        years=list(self.central_years)),
-                    ]
-            )
-            resources[gcm] = resource
-        return resources
+        resource = HazardResource(
+            type="ChronicHeat",
+            id="mean_degree_days_v2/above/32c/{gcm}",
+            path="chronic_heat/osc/v2",
+            display_name="Mean degree days above 32°C/{gcm}",
+            array_name="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
+            description=description,
+            params={"gcm": list(self.gcms)},
+            group_id = "",
+            display_groups=["Mean degree days"],
+            map = MapInfo( # type:ignore
+                colormap=Colormap(
+                    name="heating",
+                    nodata_index=0,
+                    min_index=1,
+                    min_value=0.0,
+                    max_value=4000.0,
+                    max_index=255,
+                    units="degree days"),
+                bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                array_name="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                source="map_array"
+            ),
+            units="degree days",
+            scenarios=[
+                Scenario(
+                    id="historical",
+                    years=[self.central_year_historical]),
+                Scenario(
+                    id="ssp126",
+                    years=list(self.central_years)),
+                Scenario(
+                    id="ssp245",
+                    years=list(self.central_years)),
+                Scenario(
+                    id="ssp585",
+                    years=list(self.central_years)),
+                ]
+        )
+        return resource
 
     def run_single(self, item: BatchItem, source: OpenDataset, target: ReadWriteDataArray, client: Client):
         average_deg_days = self._average_degree_days(client, source, target, item)
@@ -151,7 +148,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             futures.append(future)
         deg_days = client.gather(futures)
         average = sum(deg_days) / float(len(years))
-        return enforce_conventions(average)
+        return enforce_conventions_lat_lon(average)
 
     def _degree_days(self, source: OpenDataset, gcm: str, scenario: str, year: int) -> xr.DataArray:
         """Calculate degree days for Dataset provided."""

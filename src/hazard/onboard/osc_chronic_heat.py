@@ -112,7 +112,7 @@ class OscChronicHeat:
         if self.max_valid is not None:
             da = xr.where(da > self.max_valid, 0, da) 
         da = xr.where(np.isnan(da), 0, da)
-        return xarray_utilities.enforce_conventions(da)     
+        return xarray_utilities.enforce_conventions_lat_lon(da)     
 
     def _generate_source_targets(self):
         for model in self.models:

@@ -57,3 +57,4 @@ pad.ipynb
 credentials.env
 .vscode/launch.json
 .vscode/settings.json
+src/inventories/hazard/inventory_live.json

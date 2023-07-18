@@ -84,7 +84,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 array_name="days_tas_above_{threshold}c_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
-            units="fractional loss",
+            units="days",
             scenarios=[
                 Scenario(
                     id="historical",

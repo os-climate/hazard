@@ -48,7 +48,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     yield WorkLossBatchItem(resource=resource, gcm=gcm, scenario=scenario, central_year=central_year)    
     
     def inventory(self) -> Iterable[HazardResource]:
-        return self._resource().expand()
+        return [self._resource()]
 
     def _resource(self) -> HazardResource:
         with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:

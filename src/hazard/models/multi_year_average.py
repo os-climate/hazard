@@ -9,7 +9,7 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
 from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
 
-from hazard.utilities.xarray_utilities import enforce_conventions
+from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 from hazard.protocols import Averageable, OpenDataset, ReadWriteDataArray, WriteDataArray
 
 from dask.distributed import Client
@@ -98,7 +98,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         for i in range(indics_per_year):
             average = sum(set[i].array for set in single_year_sets) / float(len(years))
             assert isinstance(average, xr.DataArray) # must be non-zero
-            res.append(Indicator(array=enforce_conventions(average), 
+            res.append(Indicator(array=enforce_conventions_lat_lon(average), 
                                  path=single_year_sets[0][i].path,
                                  bounds=single_year_sets[0][i].bounds))
         return res

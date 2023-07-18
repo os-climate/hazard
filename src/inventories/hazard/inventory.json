@@ -1,0 +1,672 @@
+{
+    "hazard_models": [
+        {
+            "type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2",
+            "id": "mean_degree_days_v2/above/32c/{gcm}",
+            "params": {
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MIROC6",
+                    "MPI-ESM1-2-LR",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean degree days above 32\u00b0C/{gcm}",
+            "display_groups": [
+                "Mean degree days"
+            ],
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n$$\nI^\\text{dd} = \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C. The OS-Climate-generated indicators are inferred\nfrom CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).",
+            "array_name": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 4000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "degree days"
+                },
+                "array_name": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "degree days"
+        },
+        {
+            "type": "Fire",
+            "group_id": "jupiter_osc",
+            "path": "fire/jupiter/v1",
+            "id": "fire_probability",
+            "params": {},
+            "display_name": "Fire probability",
+            "display_groups": [],
+            "description": "\nThe maximum value, found across all months, of the probability of a wildfire occurring\nat some point in an individual month within 100km of the location. For example, if the probability\nof occurrence of a wildfire is 5% for July, 20% in August, 10% in September and 0% for\nother months, the hazard indicator value is 20%.\n                ",
+            "array_name": "fire_probability_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 0.7,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "none"
+                },
+                "array_name": "fire_probability_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "type": "Drought",
+            "group_id": "jupiter_osc",
+            "path": "drought/jupiter/v1",
+            "id": "months/spei3m/below/-2",
+            "params": {},
+            "display_name": "Drought",
+            "display_groups": [],
+            "description": "\nMonths per year where the rolling 3-month averaged Standardized Precipitation Evapotranspiration Index \nis below -2.\n                ",
+            "array_name": "months_spei3m_below_-2_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 12.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "months/year"
+                },
+                "array_name": "months_spei3m_below_-2_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "months/year"
+        },
+        {
+            "type": "Precipitation",
+            "group_id": "jupiter_osc",
+            "path": "precipitation/jupiter/v1",
+            "id": "max/daily/water_equivalent",
+            "params": {},
+            "display_name": "Precipitation",
+            "display_groups": [],
+            "description": "\nMaximum daily total water equivalent precipitation experienced at a return period of 100 years.\n                ",
+            "array_name": "max_daily_water_equivalent_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "mm"
+                },
+                "array_name": "max_daily_water_equivalent_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "mm"
+        },
+        {
+            "type": "Hail",
+            "group_id": "jupiter_osc",
+            "path": "hail/jupiter/v1",
+            "id": "days/above/5cm",
+            "params": {},
+            "display_name": "Large hail days per year",
+            "display_groups": [],
+            "description": "\nNumber of days per year where large hail (> 5cm diameter) is possible.\n                ",
+            "array_name": "days_above_5cm_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 10.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "days/year"
+                },
+                "array_name": "days_above_5cm_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "days/year"
+        },
+        {
+            "type": "ChronicHeat",
+            "group_id": "jupiter_osc",
+            "path": "chronic_heat/jupiter/v1",
+            "id": "days/above/35c",
+            "params": {},
+            "display_name": "Days per year above 35\u00b0C",
+            "display_groups": [],
+            "description": "\nMaximum daily total water equivalent precipitation experienced at a return period of 200 years.\n                ",
+            "array_name": "days_above_35c_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 365.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "mm"
+                },
+                "array_name": "days_above_35c_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "days/year"
+        },
+        {
+            "type": "Wind",
+            "group_id": "jupiter_osc",
+            "path": "wind/jupiter/v1",
+            "id": "max/1min",
+            "params": {},
+            "display_name": "Max 1 minute sustained wind speed",
+            "display_groups": [],
+            "description": "\nMaximum 1-minute sustained wind speed in km/hour experienced at different return periods.\n                ",
+            "array_name": "max_1min_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "km/hour"
+                },
+                "array_name": "max_1min_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "km/hour"
+        },
+        {
+            "type": "CombinedInundation",
+            "group_id": "jupiter_osc",
+            "path": "combined_flood/jupiter/v1",
+            "id": "flooded_fraction",
+            "params": {},
+            "display_name": "Flooded fraction",
+            "display_groups": [],
+            "description": "\nThe fraction of land within a 30-km grid cell that experiences flooding at different return periods.\n                ",
+            "array_name": "fraction_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "none"
+                },
+                "array_name": "fraction_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2",
+            "id": "mean_work_loss/{intensity}/{gcm}",
+            "params": {
+                "intensity": [
+                    "low",
+                    "medium",
+                    "high"
+                ],
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean work loss, {intensity} intensity/{gcm}",
+            "display_groups": [
+                "Mean work loss"
+            ],
+            "description": "The mean work loss indicator is calculated from the 'Wet Bulb Globe Temperature' (WBGT) indicator:\n$$\nI^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times p^\\text{vapour}_i + 3.94\n$$\n$I^\\text{WBGT}_i$ is the WBGT indicator, $T^\\text{avg}_i$ is the average daily near-surface surface temperature (in degress Celsius) on day index, $i$, and $p^\\text{vapour}$\nis the water vapour partial pressure (in kPa). $p^\\text{vapour}$ is calculated from relative humidity $h_r$ via:\n$$\np^\\text{vapour}_i = \\frac{h_r}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)\n$$\nThe work ability indicator, $I^{\\text{WA}}$ is finally calculated via:\n$$\nI^{\\text{WA}}_i = 0.1 + 0.9 / \\left( 1 + (I^\\text{WBGT}_i / \\alpha_1)^{\\alpha_2} \\right)\n$$\nAn annual average work loss indicator, $I^{\\text{WL}}$ is calculated via:\n$$\nI^{\\text{WL}} = 1 - \\frac{1}{n_y} \\sum_{i = 1}^{n_y} I^{\\text{WA}}_i,\n$$\n$n_y$ being the number of days in the year. The OS-Climate-generated indicators are inferred from CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050) and 2050 (2041-2060).",
+            "array_name": "mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 0.8,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "fractional loss"
+                },
+                "array_name": "mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ],
+                    "periods": null
+                }
+            ],
+            "units": "fractional loss"
+        }
+    ]
+}

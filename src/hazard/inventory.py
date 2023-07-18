@@ -65,9 +65,9 @@ class HazardResource(BaseModel):
     group_id: Optional[str] = Field("public")
     path: str
     id: str
-    params: Dict[str, List[str]]
+    params: Dict[str, List[str]] = Field({})
     display_name: str
-    display_groups: List[str]
+    display_groups: List[str] = Field([])
     description: str
     array_name: str 
     map: Optional[MapInfo]
@@ -87,7 +87,10 @@ def expand(item: str, key: str, param: str):
 
 def expand_resource(resource: HazardResource, keys: List[str], params: Dict[str, List[str]]) -> Iterable[HazardResource]:
     if len(keys) == 0:
-        yield resource
+        yield resource.copy(
+                    deep=True,
+                    update={ "params": {} }
+                )
     else:
         keys = keys.copy()
         key = keys.pop()
