@@ -76,7 +76,7 @@ class STORMIndicator(IndicatorModel[BatchItem]):
             with ExitStack() as stack:
                 for basin_id in self._basin_ids:
                     file_name = f'STORM_FIXED_RETURN_PERIODS_{item.gcm}_{basin_id}_{return_period}_YR_RP.tif'
-                    da: xr.DataArray = stack.enter_context(rioxarray.open_rasterio(os.path.join(self._temp_dir, file_name)))
+                    da: xr.DataArray = stack.enter_context(rioxarray.open_rasterio(os.path.join(self._temp_dir, file_name))) # type: ignore
                     # TODO: enforce that da follows standard conventions
                     data_arrays[basin_id] = da
             
@@ -149,10 +149,10 @@ class STORMIndicator(IndicatorModel[BatchItem]):
 
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
-        ...
+        raise NotImplementedError()
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-        ...
+        raise NotImplementedError()
 
 

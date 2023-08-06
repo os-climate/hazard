@@ -22,8 +22,8 @@ def get_env(key: str, default: Optional[str] = None) -> str:
         return value
 
 
-class HazardModels(BaseModel):
-    hazard_models: List[HazardResource]
+class HazardResources(BaseModel):
+    resources: List[HazardResource]
 
 
 class DocStore:
@@ -59,19 +59,19 @@ class DocStore:
             fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
         self._fs = fs
-        if fs is s3fs.S3FileSystem:
+        if type(self._fs) == s3fs.S3FileSystem:
             bucket = get_env(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
     def read_inventory(self) -> List[HazardResource]:
-        """Read inventory at path provided and return HazardModels."""
+        """Read inventory at path provided and return HazardResources."""
         path = self._full_path_inventory()
         if not self._fs.exists(path):
             return []
         json_str = self.read_inventory_json()
-        models = parse_obj_as(HazardModels, json.loads(json_str)).hazard_models
+        models = parse_obj_as(HazardResources, json.loads(json_str)).resources
         return models
 
     def read_inventory_json(self) -> str:
@@ -90,19 +90,19 @@ class DocStore:
         """Write inventory."""
         path = self._full_path_inventory()
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        models = HazardModels(hazard_models=[])
+        models = HazardResources(resources=[])
         json_str = json.dumps(models.dict(), indent=4) # pretty print
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(self, hazard_models: Iterable[HazardResource], remove_existing: bool=False):
+    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool=False):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
         path = self._full_path_inventory()
         combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory()) 
-        for model in hazard_models:
-            combined[model.key()] = model
-        models = HazardModels(hazard_models=list(combined.values()))
+        for resource in resources:
+            combined[resource.key()] = resource
+        models = HazardResources(resources=list(combined.values()))
         json_str = json.dumps(models.dict(), indent=4) # pretty print
         with self._fs.open(path, "w") as f:
             f.write(json_str)

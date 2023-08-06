@@ -50,7 +50,7 @@ def set_credential_env_variables():
         load_dotenv(dotenv_path=dotenv_path, override=True)
 
 
-def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
+def zarr_create(group_path, path, s3, shape, transform, return_periods):
     """
     Create zarr with given shape and affine transform
     """
@@ -58,12 +58,12 @@ def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
     root = zarr.group(store=store)  # open group as root
 
     z = root.create_dataset(
-        array_path,
+        path,
         shape=(1 if return_periods is None else len(return_periods), shape[0], shape[1]),
         chunks=(1 if return_periods is None else len(return_periods), 1000, 1000),
         dtype="f4",
         overwrite=True,
-    )  # array_path interpreted as path within group
+    )  # path interpreted as path within group
     trans_members = [
         transform.a,
         transform.b,
@@ -86,22 +86,22 @@ def zarr_get_transform(zarr_array):
     return transform
 
 
-def zarr_remove(group_path, array_path, s3):
+def zarr_remove(group_path, path, s3):
     """
     Remove zarr array
     """
     store = s3fs.S3Map(root=group_path, s3=s3, check=False)
     root = zarr.open(store=store, mode="w")  # open group as root
-    root.pop(array_path)
+    root.pop(path)
 
 
-def zarr_read(group_path, array_path, s3, index):
+def zarr_read(group_path, path, s3, index):
     """
     Read data and transform from zarr
     """
     store = s3fs.S3Map(root=group_path, s3=s3, check=False)
     root = zarr.open(store, mode="r")
-    z = root[array_path]
+    z = root[path]
     t = z.attrs["transform_mat3x3"]  # type: ignore
     transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
     return z[index, :, :], transform

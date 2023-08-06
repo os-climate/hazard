@@ -36,7 +36,7 @@ class MapInfo(BaseModel):
         description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to array_name."  # noqa
     )
     bounds: List[Tuple[float, float]] = Field(
-        [[-180.0, 85.0], [180.0, 85.0], [180.0, -85.0], [-180.0, -85.0]],
+        [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
     # note that the bounds should be consistent with the array attributes
@@ -59,27 +59,30 @@ class Scenario(BaseModel):
 
 
 class HazardResource(BaseModel):
-    """Provides scenarios associated with a hazard model."""
+    """Provides information about a set of hazard indicators, including available scenarios and years."""
 
-    type: str = Field(description="Type of hazard.")
-    group_id: Optional[str] = Field("public")
-    path: str
-    id: str
-    params: Dict[str, List[str]] = Field({})
-    display_name: str
-    display_groups: List[str] = Field([])
-    description: str
-    array_name: str 
-    map: Optional[MapInfo]
-    scenarios: List[Scenario]
-    units: str
+    hazard_type: str = Field(description="Type of hazard.")
+    group_id: Optional[str] = Field("public", description="Identifier of the resource group (used for authentication).")
+    path: str = Field(description="Full path to the indicator array.")
+    indicator_id: str = Field(description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'.")
+    indicator_model_gcm: str = Field(description="Identifier of general circulation model(s) used in the derivation of the indicator.") 
+    params: Dict[str, List[str]] = Field({}, description="Parameters used to expand wild-carded fields.")
+    display_name: str = Field(description="Text used to display indicator.")
+    display_groups: List[str] = Field([], description="Text used to group the (expanded) indicators for display.")
+    description: str = Field(description="Brief description in mark down of the indicator and model that generated the indicator.")
+    map: Optional[MapInfo] = Field(description="Optional information used for display of the indicator in a map.")
+    scenarios: List[Scenario] = Field(description="Climate change scenarios for which the indicator is available.") 
+    units: str = Field(description="Units of the hazard indicator.") 
 
     def expand(self):
         keys = list(self.params.keys())
         return expand_resource(self, keys, self.params)
 
     def key(self):
-        return str(PosixPath(self.path, self.id))
+        """Unique key for the resource. array_path should be unique, although indicator_id is typically not.
+        Vulnerability models request a hazard indicator by indicator_id from the Hazard Model. The Hazard Model
+        selects based on its own logic (e.g. selects a particular General Circulation Model)."""
+        return self.path
         
 
 def expand(item: str, key: str, param: str):
@@ -99,10 +102,10 @@ def expand_resource(resource: HazardResource, keys: List[str], params: Dict[str,
                 yield item.copy(
                     deep=True,
                     update={
-                        "id": expand(item.id, key, param),
+                        "id": expand(item.indicator_id, key, param),
                         "display_name": expand(item.display_name, key, param),
-                        "array_name": expand(item.array_name, key, param),
-                        "map": item.map.copy(deep=True, update={"array_name": expand(item.map.array_name, key, param)}),
+                        "path": expand(item.path, key, param),
+                        "map": None if item.map is None else item.map.copy(deep=True, update={"array_name": expand(item.map.array_name, key, param)}),
                     }
                 )
 

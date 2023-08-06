@@ -58,12 +58,12 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def batch_items(self) -> Iterable[BatchItem]:
         """Items to process."""
         # just one for now
-        resources = self._resources_by_gcm()
+        resource = self._resource()
         for gcm in self.gcms:
             for scenario in self.scenarios:
                 central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
                 for central_year in central_years:
-                    yield BatchItem(resource=resources[gcm], gcm=gcm, scenario=scenario, central_year=central_year)    
+                    yield BatchItem(resource=resource, gcm=gcm, scenario=scenario, central_year=central_year)    
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
@@ -73,11 +73,11 @@ class DegreeDays(IndicatorModel[BatchItem]):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
             description = f.read()
         resource = HazardResource(
-            type="ChronicHeat",
-            id="mean_degree_days_v2/above/32c/{gcm}",
-            path="chronic_heat/osc/v2",
+            hazard_type="ChronicHeat",
+            indicator_id="mean_degree_days/above/32c",
+            indicator_model_gcm="{gcm}",
+            path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}", 
             display_name="Mean degree days above 32°C/{gcm}",
-            array_name="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
             description=description,
             params={"gcm": list(self.gcms)},
             group_id = "",
@@ -88,8 +88,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=4000.0,
                     max_index=255,
+                    max_value=4000.0,
                     units="degree days"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 array_name="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
@@ -170,11 +170,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         return scale * xr.where(ds.tasmax > self.threshold, ds.tasmax - self.threshold, 0).sum(dim=["time"])
 
     def _item_path(self, item: BatchItem) -> PosixPath:
-        return PosixPath(item.resource.path, item.resource.array_name.format(scenario=item.scenario, year=item.central_year))
-        #path = "chronic_heat/osc/v2" # v2 uses downscaled data
-        #typ = "mean_degree_days_v2" # need v2 in filename to make unique
-        #levels = ['above', '32c']
-        #return PosixPath(path, f"{typ}_{levels[0]}_{levels[1]}_{item.gcm}_{item.scenario}_{item.central_year}")
+        return PosixPath(item.resource.path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year))
 
 
 

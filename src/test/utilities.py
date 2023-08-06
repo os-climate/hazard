@@ -1,8 +1,7 @@
-
 import os
 import pytest
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Tuple
 import pytest
 from pytest import approx
 
@@ -27,21 +26,31 @@ def test_output_dir():
 
 class TestSource(OpenDataset):
     """Mocked source for testing."""
-    def __init__(self, datasets: Dict[int, xr.Dataset]):
+    def __init__(self, datasets: Dict[Tuple[str, int], xr.Dataset]):
         self.datasets = datasets
     
     def open_dataset_year(self, gcm: str, scenario: str, quantity: str, year: int, chunks=None) -> xr.Dataset:
-        return self.datasets[year]
+        return self.datasets[(quantity, year)] # ignore scenario and gcm: we test just a single one
 
 
 class TestTarget(WriteDataset):
     """Mocked target for testing."""
+    def __init__(self):
+        self.datasets = {}
+
     def write(self, path: str, dataset: xr.Dataset):
-        self.dataset = dataset
+        self.datasets[path] = dataset
+
+    def read(self, path: str):
+        return self.datasets[path].rename({ "lat": "latitude", "lon": "longitude" })
 
 
-def _create_test_datasets(data: str = "tasmax") -> Dict[int, xr.Dataset]:
-    return { 2029: _create_test_dataset(2029, 0, data), 2030: _create_test_dataset(2030, 0.5, data) }
+def _create_test_datasets_hurs(quantity: str = "hurs") -> Dict[Tuple[str, int], xr.Dataset]:
+    return { (quantity, 2029): _create_test_dataset_hurs(2029, 0, quantity), (quantity, 2030): _create_test_dataset_hurs(2030, 0.5, quantity) }
+
+
+def _create_test_datasets_tas(quantity: str = "tasmax") -> Dict[Tuple[str, int], xr.Dataset]:
+    return { (quantity, 2029): _create_test_dataset_tas(2029, 0, quantity), (quantity, 2030): _create_test_dataset_tas(2030, 0.5, quantity) }
 
 
 def _create_test_dataset_averaged() -> xr.Dataset:
@@ -65,7 +74,7 @@ def _create_test_dataset_averaged() -> xr.Dataset:
     return ds
 
 
-def _create_test_dataset(year: int, offset: float=0, data: str = "tasmax") -> xr.Dataset:
+def _create_test_dataset_tas(year: int, offset: float=0, quantity: str = "tasmax") -> xr.Dataset:
     """Create test xarray Dataset.
     Convention is that data is arranged in image-like way:
     - dimensions are ('latitude', 'longitude')
@@ -89,7 +98,42 @@ def _create_test_dataset(year: int, offset: float=0, data: str = "tasmax") -> xr
     lon = np.arange(0., 3., 1.)
     ds = xr.Dataset(
         data_vars={
-            data: (["time", "lat", "lon"], temperature),
+            quantity: (["time", "lat", "lon"], temperature),
+        },
+        coords=dict(
+            time=time,
+            lat=lat,
+            lon=lon
+        ),
+        attrs=dict(description="Test array"),
+    )
+    return ds
+
+def _create_test_dataset_hurs(year: int, offset: float=0, quantity="hurs") -> xr.Dataset:
+    """Create test xarray Dataset.
+    Convention is that data is arranged in image-like way:
+    - dimensions are ('latitude', 'longitude')
+    or, for time-series-type data: ('time', 'latitude', 'longitude')
+    - latitude is decreasing
+
+    Returns:
+       xr.Dataset : test Dataset
+    """
+    hurs_t1 = np.array([
+        [70., 72., 69.], 
+        [72., 71., 70.],
+        [80., 74., 68.]]) + offset 
+    hurs_t2 = hurs_t1 + 5. # hurs at t1 + 5% 
+    hurs_t3 = hurs_t2 + 10.
+    # stack to give 3 time points
+    temperature = np.stack((hurs_t1, hurs_t2, hurs_t3), axis=0)
+    #time = pd.date_range("2030-06-01", periods=3) 
+    time = pd.date_range(datetime(year, 1, 1), periods=3)    
+    lat = np.arange(3., 0., -1.)
+    lon = np.arange(0., 3., 1.)
+    ds = xr.Dataset(
+        data_vars={
+            quantity: (["time", "lat", "lon"], temperature),
         },
         coords=dict(
             time=time,

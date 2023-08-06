@@ -14,7 +14,7 @@ import rasterio # type: ignore
 import seaborn as sns # type: ignore
 from affine import Affine # type: ignore
 from mapbox import Uploader # type: ignore
-import rasterio.warp, rasterio.transform
+import rasterio.warp, rasterio.transform # type: ignore
 from rasterio import CRS, profiles # type: ignore
 from rasterio.enums import Resampling # type: ignore
 import xarray as xr

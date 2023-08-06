@@ -144,7 +144,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
     
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
-        return self._resource().expand()
+        return [self._resource()] #.expand()
 
     def _get_indicators(self, item: BatchItem, data_arrays: List[xr.DataArray], param: str) -> List[Indicator]:
         """Find the 
@@ -158,10 +158,10 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
             List[Indicator]: _description_
         """
         resource = item.resource
-        paths = [item.resource.array_name.format(threshold=threshold, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+        paths = [item.resource.path.format(temp_c=threshold, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                  for threshold in resource.params[param]]
         assert isinstance(resource.map, MapInfo)      
-        return [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(data_arrays)]
+        return [Indicator(array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds) for i, array in enumerate(data_arrays)]
 
     @abstractmethod
     def _resource(self) -> HazardResource:
