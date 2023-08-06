@@ -9,7 +9,7 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
 from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
 
-from hazard.utilities.xarray_utilities import enforce_conventions
+from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 from hazard.protocols import Averageable, OpenDataset, ReadWriteDataArray, WriteDataArray
 
 from dask.distributed import Client
@@ -98,7 +98,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         for i in range(indics_per_year):
             average = sum(set[i].array for set in single_year_sets) / float(len(years))
             assert isinstance(average, xr.DataArray) # must be non-zero
-            res.append(Indicator(array=enforce_conventions(average), 
+            res.append(Indicator(array=enforce_conventions_lat_lon(average), 
                                  path=single_year_sets[0][i].path,
                                  bounds=single_year_sets[0][i].bounds))
         return res
@@ -144,7 +144,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
     
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
-        return self._resource().expand()
+        return [self._resource()] #.expand()
 
     def _get_indicators(self, item: BatchItem, data_arrays: List[xr.DataArray], param: str) -> List[Indicator]:
         """Find the 
@@ -158,10 +158,10 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
             List[Indicator]: _description_
         """
         resource = item.resource
-        paths = [item.resource.array_name.format(threshold=threshold, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+        paths = [item.resource.path.format(temp_c=threshold, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                  for threshold in resource.params[param]]
         assert isinstance(resource.map, MapInfo)      
-        return [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(data_arrays)]
+        return [Indicator(array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds) for i, array in enumerate(data_arrays)]
 
     @abstractmethod
     def _resource(self) -> HazardResource:

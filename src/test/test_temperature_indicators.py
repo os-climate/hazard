@@ -10,7 +10,7 @@ import zarr # type: ignore
 
 from hazard.sources.osc_zarr import OscZarr # type: ignore
 
-from .utilities import TestSource, TestTarget, _create_test_datasets, test_output_dir
+from .utilities import TestSource, TestTarget, _create_test_datasets_tas, test_output_dir
 
 
 def test_days_tas_above_mocked():
@@ -18,7 +18,7 @@ def test_days_tas_above_mocked():
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
-    source = TestSource(_create_test_datasets("tas"))
+    source = TestSource(_create_test_datasets_tas("tas"))
     target = TestTarget()
     # cut down the transform
     model = DaysTasAboveIndicator(threshold_temps_c = [27], window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year])  
@@ -29,7 +29,7 @@ def test_days_tas_above_mocked():
             ind0 = scale * xr.where(y0.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             ind1 = scale * xr.where(y1.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             expected = (ind0 + ind1) / 2 
-    assert expected.values == pytest.approx(target.dataset.values)
+    assert expected.values == pytest.approx(target.datasets["chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"].values)
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
