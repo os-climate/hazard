@@ -29,7 +29,7 @@ def test_days_tas_above_mocked():
             ind0 = scale * xr.where(y0.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             ind1 = scale * xr.where(y1.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             expected = (ind0 + ind1) / 2 
-    assert expected.values == pytest.approx(target.dataset.values)
+    assert expected.values == pytest.approx(target.datasets["chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"].values)
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
