@@ -72,21 +72,21 @@ class Jupiter(IndicatorModel):
             "max/1min": ( "etlwind.csv", "wind{scenario}{year}windspeed100yrmetric_mean" )
             }
         for model in self.inventory():
-            if model.id not in csv_info:
+            if model.indicator_id not in csv_info:
                 continue
-            (csv_filename, jupiter_array_name) = csv_info[model.id]
+            (csv_filename, jupiter_array_name) = csv_info[model.indicator_id]
             yield BatchItem(model=model, csv_filename=csv_filename, jupiter_array_name=jupiter_array_name)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
         return [
             HazardResource(
-                type="Fire",
-                id="fire_probability",
-                path="fire/jupiter/v1",
+                hazard_type="Fire",
+                indicator_id="fire_probability",
+                indicator_model_gcm="unknown",
+                path="fire/jupiter/v1/fire_probability_{scenario}_{year}",
                 params={},
                 display_name="Fire probability",
-                array_name="fire_probability_{scenario}_{year}",
                 description="""
 The maximum value, found across all months, of the probability of a wildfire occurring
 at some point in an individual month within 100km of the location. For example, if the probability
@@ -96,9 +96,13 @@ other months, the hazard indicator value is 20%.
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=0.7,
                         units="none"),
                     array_name="fire_probability_{scenario}_{year}_map",
@@ -114,12 +118,12 @@ other months, the hazard indicator value is 20%.
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="Drought",
-                id="months/spei3m/below/-2",
-                path="drought/jupiter/v1",
+                hazard_type="Drought",
+                indicator_id="months/spei3m/below/-2",
+                indicator_model_gcm="unknown",
+                path="drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
                 params={},
                 display_name="Drought",
-                array_name="months_spei3m_below_-2_{scenario}_{year}",
                 description="""
 Months per year where the rolling 3-month averaged Standardized Precipitation Evapotranspiration Index 
 is below -2.
@@ -127,9 +131,13 @@ is below -2.
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=12.0,
                         units="months/year"),
                     array_name="months_spei3m_below_-2_{scenario}_{year}_map",
@@ -145,21 +153,25 @@ is below -2.
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="Precipitation",
-                id="max/daily/water_equivalent",
-                path="precipitation/jupiter/v1",
+                hazard_type="Precipitation",
+                indicator_id="max/daily/water_equivalent",
+                indicator_model_gcm="unknown",
+                path="precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}",
                 params={},
                 display_name="Precipitation",
-                array_name="max_daily_water_equivalent_{scenario}_{year}",
                 description="""
 Maximum daily total water equivalent precipitation experienced at a return period of 100 years.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
-                        name="heating",
+                        name="heating",                        
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=1000.0,
                         units="mm"),
                     array_name="max_daily_water_equivalent_{scenario}_{year}_map",
@@ -175,21 +187,25 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="Hail",
-                id="days/above/5cm",
-                path="hail/jupiter/v1",
+                hazard_type="Hail",
+                indicator_id="days/above/5cm",
+                indicator_model_gcm="unknown",
+                path="hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
                 params={},
                 display_name="Large hail days per year",
-                array_name="days_above_5cm_{scenario}_{year}",
                 description="""
 Number of days per year where large hail (> 5cm diameter) is possible.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=10.0,
                         units="days/year"),
                     array_name="days_above_5cm_{scenario}_{year}_map",
@@ -205,21 +221,25 @@ Number of days per year where large hail (> 5cm diameter) is possible.
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="ChronicHeat",
-                id="days/above/35c",
-                path="chronic_heat/jupiter/v1",
+                hazard_type="ChronicHeat",
+                indicator_id="days/above/35c",
+                indicator_model_gcm="unknown",
+                path="chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
                 params={},
                 display_name="Days per year above 35°C",
-                array_name="days_above_35c_{scenario}_{year}",
                 description="""
 Maximum daily total water equivalent precipitation experienced at a return period of 200 years.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=365.0,
                         units="mm"),
                     array_name="days_above_35c_{scenario}_{year}_map",
@@ -235,21 +255,25 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="Wind",
-                id="max/1min",
-                path="wind/jupiter/v1",
+                hazard_type="Wind",
+                indicator_id="max/1min",
+                indicator_model_gcm="unknown",
+                path="wind/jupiter/v1/max_1min_{scenario}_{year}",
                 params={},
                 display_name="Max 1 minute sustained wind speed",
-                array_name="max_1min_{scenario}_{year}",
                 description="""
 Maximum 1-minute sustained wind speed in km/hour experienced at different return periods.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=120.0,
                         units="km/hour"),
                     array_name="max_1min_{scenario}_{year}_map",
@@ -265,21 +289,25 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
                         years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     ]),
             HazardResource(
-                type="CombinedInundation",
-                id="flooded_fraction",
-                path="combined_flood/jupiter/v1",
+                hazard_type="CombinedInundation",
+                indicator_id="flooded_fraction",
+                indicator_model_gcm="unknown",
+                path="combined_flood/jupiter/v1/fraction_{scenario}_{year}",
                 params={},
                 display_name="Flooded fraction",
-                array_name="fraction_{scenario}_{year}",
                 description="""
 The fraction of land within a 30-km grid cell that experiences flooding at different return periods.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
                 map = MapInfo(
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                     colormap=Colormap(
                         name="heating",
+                        nodata_index=0,
+                        min_index=1,
                         min_value=0.0,
+                        max_index=255,
                         max_value=1.0,
                         units="none"),
                     array_name="fraction_{scenario}_{year}_map",
@@ -303,10 +331,9 @@ The fraction of land within a 30-km grid cell that experiences flooding at diffe
             for year in scenario.years:
                 da = arrays[item.jupiter_array_name.format(scenario=scenario.id, year=year)]
                 da = da.reindex(latitude=da.latitude[::-1]) # by convention latitude reversed
-                (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())
-                pp = PosixPath(item.model.path, item.model.array_name.format(scenario=scenario.id, year=year))
+                (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max()) # type: ignore
+                pp = PosixPath(item.model.path, item.model.path.format(scenario=scenario.id, year=year)) # type: ignore
                 target.write(str(pp), da)
-
                 reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
                 reprojected = da.sel(latitude=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
                 bounds = check_map_bounds(reprojected)

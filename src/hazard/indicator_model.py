@@ -14,16 +14,20 @@ T = TypeVar('T')      # Declare type variable
 class IndicatorModel(ABC, Generic[T]):
     """Generates a set of hazard indicators."""
         
-    def run_all(self, source: OpenDataset, target: ReadWriteDataArray, client: Optional[Client]=None):
+    def run_all(self, source: OpenDataset, target: ReadWriteDataArray, client: Optional[Client]=None, debug_mode=False):
         """Run all items in the batch."""
         if (client is None):
             cluster = LocalCluster(processes=False)
             client = Client(cluster)
-        for item in self.batch_items():
-            try:
+        if debug_mode:
+            for item in self.batch_items():
                 self.run_single(item, source, target, client)
-            except:
-                logger.error("Batch item failed", exc_info=True)
+        else:
+            for item in self.batch_items():
+                try:
+                    self.run_single(item, source, target, client)
+                except:
+                    logger.error("Batch item failed", exc_info=True)
 
     @abstractmethod
     def batch_items(self) -> Iterable[T]:

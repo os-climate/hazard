@@ -47,6 +47,10 @@ class OscZarr(WriteDataArray):
         
         self.root = zarr.group(store=store) 
 
+
+    def create_empty(self, path: str, width: int, height: int, transform: Affine, crs: str, overwrite=False, return_periods=[0]):
+        return self._zarr_create(path, (height, width), transform, crs, overwrite, return_periods=return_periods)
+
     def read(self, path: str) -> xr.DataArray:
         """Read an OS-Climate array as an xarray DataArray. Coordinates are inferred from the 
         coordinate reference system (CRS) and affine transform stored as zarr attributes. 
@@ -58,7 +62,25 @@ class OscZarr(WriteDataArray):
             xr.DataArray: xarray DataArray.
         """
         z = self.root[path]
-        da = self._data_array_from_zarr(z)
+        t = z.attrs["transform_mat3x3"]  # type: ignore
+        crs: str = z.attrs["crs"]  # type: ignore
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        index_values = z.attrs.get("index_values", [0])
+        index_name = z.attrs.get("index_name", [0])
+        if index_values is None:
+            index_values = [0]
+        coords = xarray_utilities.affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
+        data = dask.array.from_zarr(self.root.store, path)
+        da = xr.DataArray(data=data, coords=coords)
+        #da = xr.DataArray(data=z, coords=coords)
+        if len(index_values) == 1:
+            da = da.squeeze("dim_0")
+        else:
+            da = da.rename({ "dim_0": "index" })
+        if crs.upper() == "EPSG:4326":
+            da = da.rename({ "dim_1": "latitude", "dim_2": "longitude" })
+        else:
+            da = da.rename({ "dim_1": "y", "dim_2": "x" })
         return da
 
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
@@ -116,6 +138,10 @@ class OscZarr(WriteDataArray):
         z = self._zarr_create(path, da.shape, transform, crs.to_string())
         z[0, :, :] = data[:,:]
 
+    def write_slice(self, path, slice: slice, da: np.ndarray):
+        z = self.root[path]
+        z[slice] = da
+
     def new_empty_like(self, path: str, da: xr.DataArray) -> xr.DataArray:
         """Write a new empty Zarr array like the one supplied and return array.
 
@@ -150,7 +176,8 @@ class OscZarr(WriteDataArray):
         except:
             renamed = da
         renamed.name = 'data'
-        renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
+        if len(renamed.dims) == 2:
+            renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
         renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
@@ -214,7 +241,9 @@ class OscZarr(WriteDataArray):
         ]
         mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
         attrs["crs"] = crs
-        attrs["transform_mat3x3"] = mat3x3 
+        use_xy = crs.upper() == "EPSG:3857" 
+        attrs["transform_mat3x3"] = mat3x3
+        attrs["dimensions"] = ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"] 
         if return_periods is not None:
             attrs["index_values"] = list(return_periods)
             attrs["index_name"] = "return period (years)"

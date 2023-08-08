@@ -2,28 +2,27 @@ from datetime import datetime
 import json
 import logging, os, sys
 import logging.handlers
-from typing import Dict
+from typing import Dict, List
 from dask.distributed import Client, LocalCluster
 import pytest
 from pytest import approx
 
 import fsspec.implementations.local as local # type: ignore
-from hazard.docs_store import DocStore, HazardModels # type: ignore
-from hazard.map_builder import MapBuilder
+from hazard.docs_store import DocStore, HazardResources # type: ignore
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.models.degree_days import BatchItem, DegreeDays
-from .utilities import test_output_dir
+from .utilities import _create_test_datasets_hurs, test_output_dir
 import numpy as np
 import pandas as pd # type: ignore
 import s3fs # type: ignore
 import xarray as xr
 import zarr # type: ignore
 
-from test.utilities import TestSource, TestTarget, _create_test_dataset_averaged, _create_test_datasets 
+from test.utilities import TestSource, TestTarget, _create_test_dataset_averaged, _create_test_datasets_tas 
 
 
 def test_degree_days_mocked():
@@ -31,18 +30,55 @@ def test_degree_days_mocked():
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
-    source = TestSource(_create_test_datasets())
+    source = TestSource(_create_test_datasets_tas())
     target = TestTarget()
     # cut down the transform
     model = DegreeDays(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year])  
-    model.run_all(source, target)
+    model.run_all(source, target, debug_mode=True)
     with source.open_dataset_year(gcm, scenario, "tasmax", 2029) as y0:
         with source.open_dataset_year(gcm, scenario, "tasmax", 2030) as y1:
             scale = 365.0 / len(y0.time)
             deg0 = scale * xr.where(y0.tasmax > (32 + 273.15), y0.tasmax - (32 + 273.15), 0).sum(dim=["time"])
             deg1 = scale * xr.where(y1.tasmax > (32 + 273.15), y1.tasmax - (32 + 273.15), 0).sum(dim=["time"])
             expected = (deg0 + deg1) / 2 
-    assert expected.values == approx(target.dataset.values)
+    assert expected.values == approx(target.datasets["chronic_heat/osc/v2/mean_degree_days_v2_above_32c_NorESM2-MM_ssp585_2030"].values)
+
+
+def test_work_loss_mocked():
+    """Test degree days calculation based on mocked data."""
+    gcm = "NorESM2-MM"
+    scenario = "ssp585"
+    year = 2030
+    test_sets = _create_test_datasets_tas(quantity="tas")
+    test_sets.update(_create_test_datasets_hurs())
+    alpha_light = (32.98, 17.81)
+    alpha_medium = (30.94, 16.64)
+    alpha_heavy = (24.64, 22.72)
+    source = TestSource(test_sets)
+    target = TestTarget()
+    # cut down the transform
+    model = WorkLossIndicator(window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year])  
+    model.run_all(source, target, debug_mode=True)
+    expected: List[xr.DataArray] = []
+    with source.open_dataset_year(gcm, scenario, "tas", 2029).tas as t0:
+        with source.open_dataset_year(gcm, scenario, "tas", 2030).tas as t1:
+            with source.open_dataset_year(gcm, scenario, "hurs", 2029).hurs as h0:
+                with source.open_dataset_year(gcm, scenario, "hurs", 2030).hurs as h1:
+                    tas_c = t0 - 273.15 # convert from K to C
+                    # vpp is water vapour partial pressure in kPa
+                    vpp = (h0 / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))
+                    wbgt0 = 0.567 * tas_c + 0.393 * vpp + 3.94
+                    tas_c = t1 - 273.15 
+                    vpp = (h1 / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))
+                    wbgt1 = 0.567 * tas_c + 0.393 * vpp + 3.94
+                    
+                    for alpha1, alpha2 in [alpha_light, alpha_medium, alpha_heavy]:
+                        wa0 = 0.1 + 0.9 / (1.0 + (wbgt0 / alpha1)**alpha2) # work-ability
+                        wlm0 = 1.0 - wa0.mean(dim=["time"]) # work-loss
+                        wa1 = 0.1 + 0.9 / (1.0 + (wbgt1 / alpha1)**alpha2) # work-ability
+                        wlm1 = 1.0 - wa1.mean(dim=["time"]) # work-loss
+                        expected.append((wlm0 + wlm1) / 2)                               
+    assert expected[0].values == approx(target.datasets["chronic_heat/osc/v2/mean_work_loss_low_NorESM2-MM_ssp585_2030"].values)
 
 
 def test_zarr_read_write(test_output_dir):
@@ -106,7 +142,7 @@ def test_work_loss(test_output_dir):
     # cut down the model and run
     model = WorkLossIndicator(window_years=3, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
     resources = list(model.inventory())
-    models = HazardModels(hazard_models=resources)
+    models = HazardResources(resources=resources)
     json_str = json.dumps(models.dict(), indent=4) # pretty print
 
     local_fs = local.LocalFileSystem()

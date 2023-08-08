@@ -3,7 +3,6 @@ import os
 import fsspec.implementations.local as local # type: ignore
 from hazard.docs_store import DocStore # type: ignore
 from hazard.onboard.jupiter import Jupiter, JupiterOscFileSource # type: ignore
-from hazard.onboard.osc_chronic_heat import OscChronicHeat
 import pytest
 from pytest import approx
 import zarr # type: ignore
@@ -24,6 +23,7 @@ def test_output_dir():
     yield output_dir
 
 
+@pytest.mark.skip(reason="example")
 def test_jupiter(test_output_dir, s3_credentials):
     # we need Jupiter OSC_Distribution to be in test_output, e.g.:
     # hazard/src/test/test_output/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv
@@ -37,30 +37,6 @@ def test_jupiter(test_output_dir, s3_credentials):
     jupiter = Jupiter()
     docs_store.update_inventory(jupiter.inventory(), remove_existing=True)
     jupiter.run_all(source, target)
-
-
-@pytest.mark.skip(reason="example")
-def test_onboard_chronic_heat_work_loss(test_output_dir):
-    """Example of running the work loss onboarding script."""
-    fs = local.LocalFileSystem()
-
-    # this on-boarding script works with local files:
-    onboarder = OscChronicHeat(root=os.path.join(test_output_dir, "work_loss_inputs"))
-
-    # we can specify as local file system zarr store for testing:
-    store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
-    target = OscZarr(store=store)
-
-    # or an S3 target
-    # zarr_utilities.set_credential_env_variables()
-    # target = OscZarr(prefix="hazard") # hazard_test
-
-    onboarder.onboard(target)
-    onboarder.onboard_maps(target, working_dir=test_output_dir)
-    
-    #maps_dir = os.path.join(test_output_dir, "work_loss_maps")
-    #os.makedirs(maps_dir, exist_ok=True)
-    #onboarder.onboard_maps(target, maps_dir)
 
 
 @pytest.mark.skip(reason="example")

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import logging
 import os
 from typing import Iterable, List
+from hazard.indicator_model import IndicatorModel
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import BatchItem, Indicator, MultiYearAverageIndicatorBase, ThresholdBasedAverageIndicator
@@ -43,7 +44,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             results = self._days_tas_above_indicators(tas, year, self.threshold_temps_c)
         logger.info(f"Calculation complete for year {year}")
         # Get Indicators for reach array, looking up path using "threshold" 
-        return self._get_indicators(item, results, "threshold")
+        return self._get_indicators(item, results, "temp_c")
     
     def _days_tas_above_indicators(self, tas: xr.DataArray, year: int, threshold_temps_c: List[float]) -> List[xr.DataArray]:
         """Create DataArrays containing indicators the thresholds for a single year."""
@@ -62,14 +63,14 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
             description = f.read()
         resource = HazardResource(
-            type="ChronicHeat",
-            id="days_tas_above/{temp_c}c/{gcm}",
-            params={"threshold": [str(t) for t in self.threshold_temps_c], "gcm": list(self.gcms)},
-            path="chronic_heat/osc/v2",
-            display_name="Days with average temperature above {threshold}C/{gcm}",
-            array_name="days_tas_above_{threshold}c_{gcm}_{scenario}_{year}",
+            hazard_type="ChronicHeat",
+            indicator_id="days_tas/above/{temp_c}c",
+            indicator_model_gcm="{gcm}",
+            params={"temp_c": [str(t) for t in self.threshold_temps_c], "gcm": list(self.gcms)},
+            path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
+            display_name="Days with average temperature above {temp_c}C/{gcm}",
             description=description,
-            display_groups=["Days average temperature above"], # display names of groupings
+            display_groups=["Days with average temperature above"], # display names of groupings
             group_id = "",
             map = MapInfo( 
                 colormap=Colormap(
@@ -81,10 +82,10 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                     max_index=255,
                     units="days"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                array_name="days_tas_above_{threshold}c_{gcm}_{scenario}_{year}_map",
+                array_name="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
-            units="fractional loss",
+            units="days",
             scenarios=[
                 Scenario(
                     id="historical",

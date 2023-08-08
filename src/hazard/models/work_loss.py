@@ -48,18 +48,18 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     yield WorkLossBatchItem(resource=resource, gcm=gcm, scenario=scenario, central_year=central_year)    
     
     def inventory(self) -> Iterable[HazardResource]:
-        return self._resource().expand()
+        return [self._resource()]
 
     def _resource(self) -> HazardResource:
         with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:
             description = f.read()
         resource = HazardResource(
-            type="ChronicHeat",
-            id="mean_work_loss/{intensity}/{gcm}",
+            hazard_type="ChronicHeat",
+            indicator_id="mean_work_loss/{intensity}",
+            indicator_model_gcm="{gcm}",
             params={"intensity": ["low", "medium", "high"], "gcm": list(self.gcms)},
-            path="chronic_heat/osc/v2",
+            path="chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
             display_name="Mean work loss, {intensity} intensity/{gcm}",
-            array_name="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
             description=description,
             display_groups=["Mean work loss"], # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
@@ -102,10 +102,10 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             hurs = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "hurs", year)).hurs
             results = self._work_loss_indicators(tas, hurs)
         resource = item.resource
-        paths = [item.resource.array_name.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+        paths = [item.resource.path.format(intensity=intensity, gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                  for intensity in resource.params["intensity"]]
         assert isinstance(resource.map, MapInfo)      
-        result = [Indicator(array=array, path=PurePosixPath(resource.path, paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
+        result = [Indicator(array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds) for i, array in enumerate(results)]
         logger.info(f"Calculation complete for year {year}")
         return result
 
