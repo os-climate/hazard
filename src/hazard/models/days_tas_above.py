@@ -65,6 +65,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_tas/above/{temp_c}c",
+            indicator_model_id=None,
             indicator_model_gcm="{gcm}",
             params={"temp_c": [str(t) for t in self.threshold_temps_c], "gcm": list(self.gcms)},
             path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
@@ -82,7 +83,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                     max_index=255,
                     units="days"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                array_name="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
+                path="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
             units="days",

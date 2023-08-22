@@ -58,7 +58,7 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
+                    "path": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -78,8 +78,8 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_00000NorESM1-M_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inunriver_{scenario}_00000NorESM1-M_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -101,8 +101,8 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -124,8 +124,8 @@ Met Office Hadley Centre.
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_0000HadGEM2-ES_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -147,8 +147,8 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -171,7 +171,7 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
+                    "path": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -194,7 +194,8 @@ Institut Pierre Simon Laplace
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_historical_nosub_hist_0",
-                "indicator_id": "flood_depth/nosub",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "nosub",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/Baseline no subsidence",
                 "description": """
@@ -204,7 +205,7 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                    "path": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -213,17 +214,18 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0",
-                "indicator_id": "flood_depth/nosub/95",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "nosub/95",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/95% no subsidence",
                 "description": """
-World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95th percentile sea level rise.
+World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.
 
                 """
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -236,6 +238,7 @@ World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_05",
                 "indicator_id": "flood_depth/nosub/5",
+                "indicator_model_id": "nosub/5",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/5% no subsidence",
                 "description": """
@@ -245,7 +248,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -257,7 +260,8 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_50",
-                "indicator_id": "flood_depth/nosub/50",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "nosub/50",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/50% no subsidence",
                 "description": """
@@ -267,7 +271,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -279,7 +283,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_historical_wtsub_hist_0",
-                "indicator_id": "flood_depth/wtsub",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "wtsub",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/Baseline with subsidence",
                 "description": """
@@ -289,7 +294,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                    "path": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -298,7 +303,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0",
-                "indicator_id": "flood_depth/wtsub/95",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "wtsub/95",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/95% with subsidence",
                 "description": """
@@ -308,7 +314,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -320,7 +326,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_05",
-                "indicator_id": "flood_depth/wtsub/5",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "wtsub/5",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/5% with subsidence",
                 "description": """
@@ -330,7 +337,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -342,7 +349,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
             {
                 "hazard_type": "CoastalInundation",
                 "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_50",
-                "indicator_id": "flood_depth/wtsub/50",
+                "indicator_id": "flood_depth",
+                "indicator_model_id": "wtsub/50",
                 "indicator_model_gcm": "unknown",
                 "display_name": "WRI/50% with subsidence",
                 "description": """
@@ -352,7 +360,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
                     "source": "mapbox",
                 },
                 "units": "metres",
@@ -374,12 +382,12 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 test_periods = scenario.periods
                 scenario.periods = []
                 for year in scenario.years:
-                    if model.map and model.map.array_name:
-                        name_format = model.map.array_name
-                        array_name = name_format.format(
+                    if model.map and model.map.path:
+                        name_format = model.map.path
+                        path = name_format.format(
                             scenario=scenario.id, year=year, id=model.indicator_id, return_period=1000
                         )
-                        id = alphanumeric(array_name)[0:6]
+                        id = alphanumeric(path)[0:6]
                     else:
                         id = ""
                     scenario.periods.append(Period(year=year, map_id=id))

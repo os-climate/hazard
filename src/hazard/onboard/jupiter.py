@@ -105,7 +105,7 @@ other months, the hazard indicator value is 20%.
                         max_index=255,
                         max_value=0.7,
                         units="none"),
-                    array_name="fire_probability_{scenario}_{year}_map",
+                    path="fire_probability_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="none",
@@ -140,7 +140,7 @@ is below -2.
                         max_index=255,
                         max_value=12.0,
                         units="months/year"),
-                    array_name="months_spei3m_below_-2_{scenario}_{year}_map",
+                    path="months_spei3m_below_-2_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="months/year",
@@ -174,7 +174,7 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         max_index=255,
                         max_value=1000.0,
                         units="mm"),
-                    array_name="max_daily_water_equivalent_{scenario}_{year}_map",
+                    path="max_daily_water_equivalent_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="mm",
@@ -208,7 +208,7 @@ Number of days per year where large hail (> 5cm diameter) is possible.
                         max_index=255,
                         max_value=10.0,
                         units="days/year"),
-                    array_name="days_above_5cm_{scenario}_{year}_map",
+                    path="days_above_5cm_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="days/year",
@@ -242,7 +242,7 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         max_index=255,
                         max_value=365.0,
                         units="mm"),
-                    array_name="days_above_35c_{scenario}_{year}_map",
+                    path="days_above_35c_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="days/year",
@@ -276,7 +276,7 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
                         max_index=255,
                         max_value=120.0,
                         units="km/hour"),
-                    array_name="max_1min_{scenario}_{year}_map",
+                    path="max_1min_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="km/hour",
@@ -310,7 +310,7 @@ The fraction of land within a 30-km grid cell that experiences flooding at diffe
                         max_index=255,
                         max_value=1.0,
                         units="none"),
-                    array_name="fraction_{scenario}_{year}_map",
+                    path="fraction_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="none",

@@ -92,7 +92,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
                     max_value=4000.0,
                     units="degree days"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                array_name="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                path="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
             units="degree days",

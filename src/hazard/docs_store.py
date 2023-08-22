@@ -7,7 +7,7 @@ import s3fs # type: ignore
 from fsspec import AbstractFileSystem # type: ignore
 from pydantic import BaseModel, parse_obj_as
 
-from hazard.sources.osc_zarr import OscZarr
+from hazard.sources.osc_zarr import OscZarr, default_staging_bucket
 
 from .inventory import HazardResource
 
@@ -34,8 +34,8 @@ class DocStore:
 
     def __init__(
         self,
-        bucket: str=OscZarr.default_staging_bucket,
-        prefix: str="hazard",
+        bucket = default_staging_bucket,
+        prefix: str = "hazard",
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
     ):
