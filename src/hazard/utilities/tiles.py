@@ -3,7 +3,8 @@ import math
 import posixpath
 
 import mercantile # type: ignore
-import rasterio # type: ignore
+import rasterio
+from hazard.inventory import HazardResource # type: ignore
 from hazard.sources.osc_zarr import OscZarr
 
 from rasterio import CRS # type: ignore
@@ -11,8 +12,15 @@ from rasterio.warp import Resampling # type: ignore
 
 logger = logging.getLogger(__name__)
 
+def create_tiles_for_resource(source: OscZarr, target: OscZarr, resource: HazardResource):
+    if resource.map is None or resource.map.source != "map_array_pyramid":
+        raise ValueError("resource does not specify 'map_array_pyramid' map source.")
+    create_tile_set(source, resource.path, target, resource.map.path)
+    
+
 def create_tile_set(source: OscZarr, source_path: str,
                     target: OscZarr, target_path: str,
+                    index_slice = slice(-1, None),
                     max_tile_batch_size = 64,
                     reprojection_threads=8):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
@@ -25,6 +33,7 @@ def create_tile_set(source: OscZarr, source_path: str,
         target (OscZarr): OSC Zarr array target.
         target_path (str): OSC Zarr target path. Arrays are stored in {target_path}\{level},
         e.g. my_hazard_indicator/2 for level 2.
+        index_slice (int, optional): Where the Defaults to last index.
         max_tile_batch_size (int, optional): Maximum number of tiles in x and y direction 
         that can be processed simultaneously. 
         Defaults to 64 i.e. max image size is 256 * 64 x 256 * 64 pixels.
@@ -46,11 +55,11 @@ def create_tile_set(source: OscZarr, source_path: str,
     indices = range(len(return_periods))[index_slice]
     logger.info(f"Starting map tiles generation for array {source_path}.")
     max_dimension = 2**max_level * pixels_per_tile
-    logger.info(f"Source array size is {da.size} (z, y, x).")
+    logger.info(f"Source array size is {da.shape} (z, y, x).")
     logger.info(f"Indices (z) subset to be processed: {indices}.")
-    logger.info(f"Maximum zoom is level is {max_level}, i.e. of size ({max_dimension}, {max_dimension}).")
+    logger.info(f"Maximum zoom is level is {max_level}, i.e. of size ({max_dimension}, {max_dimension}) pixels].")
 
-    for level in range(max_level, 0, -1):
+    for level in range(max_level, -1, -1):
         logger.info(f"Starting level {level}.")
         level_path = posixpath.join(target_path, f"{level}")
         
@@ -88,7 +97,7 @@ def create_tile_set(source: OscZarr, source_path: str,
                         resampling=Resampling.bilinear,
                         shape=(pixels_per_tile * tile_batch_size, pixels_per_tile * tile_batch_size),
                         transform=dst_transform,
-                        max_threads=reprojection_threads
+                        num_threads=reprojection_threads
                     )
                     logger.info(f"Reprojection complete. Writing to target.")
 

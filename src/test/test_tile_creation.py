@@ -1,12 +1,20 @@
 import os
 from sys import stdout
+from typing import List
 import dask
 import numpy as np
 import zarr.core # type: ignore
 import xarray as xr
+from hazard.indicator_model import IndicatorModel
+from hazard.models.days_tas_above import DaysTasAboveIndicator
+from hazard.models.degree_days import DegreeDays
+from hazard.models.work_loss import WorkLossIndicator
+from hazard.onboard.jupiter import Jupiter
+from hazard.onboard.wri_aqueduct_flood import WriAqueductFlood
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import zarr_utilities
-from hazard.utilities.tiles import create_tile_set
+from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
+from .utilities import test_output_dir
 
 
 def test_xarray_writing(test_output_dir):
@@ -31,6 +39,21 @@ def test_xarray_writing(test_output_dir):
     y.to_zarr()
 
 
+def test_map_tiles_from_model(test_output_dir):
+    local_store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
+    source = OscZarr(store=local_store)
+    target = source
+    
+    models: List[IndicatorModel] = [WriAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator()] 
+    for model in models:
+        resources = model.inventory()
+        #resources[0].
+        for resource in resources:
+            if resource.map is not None and resource.map.source == "map_array_pyramid":
+                for resource in resource.expand():
+                    create_tiles_for_resource(source, target, resource)
+        
+
 def test_convert_tiles(test_output_dir):
     """We are combining useful logic from a few sources.
     rio_tiler and titiler are very useful and also:
@@ -53,14 +76,16 @@ def test_convert_tiles(test_output_dir):
 
     local_store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
     source = OscZarr(store=local_store)
-    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr')))
+    target = source
 
     create_tile_set(source, path, target, map_path)
 
 
 def copy_zarr_local(test_output_dir, path):
-    source = OscZarr(bucket=os.environ["OSC_S3_BUCKET"])
     local_store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr'))
-    if path not in local_store:
-        dest = zarr.open_group(store=local_store, mode='w')
-        zarr.copy(source.read_zarr(path), dest, log=stdout)
+    dest = zarr.open_group(store=local_store, mode='r+')
+    if path not in dest:
+        source = OscZarr(bucket=os.environ["OSC_S3_BUCKET"])
+        zarr.copy(source.read_zarr(path), dest, name=path, log=stdout)
+    
+        
