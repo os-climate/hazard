@@ -69,7 +69,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_gcm="{gcm}",
             params={"temp_c": [str(t) for t in self.threshold_temps_c], "gcm": list(self.gcms)},
             path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
-            display_name="Days with average temperature above {temp_c}C/{gcm}",
+            display_name="Days with average temperature above {temp_c}°C/{gcm}",
             description=description,
             display_groups=["Days with average temperature above"], # display names of groupings
             group_id = "",
@@ -81,12 +81,12 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                     min_value=0.0,
                     max_value=100,
                     max_index=255,
-                    units="days"),
+                    units="days/year"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 path="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
-            units="days",
+            units="days/year",
             scenarios=[
                 Scenario(
                     id="historical",

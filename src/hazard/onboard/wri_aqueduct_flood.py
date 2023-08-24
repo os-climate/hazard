@@ -50,7 +50,7 @@ class WriAqueductFlood(IndicatorModel):
                 "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "historical",
-                "display_name": "WRI/Baseline",
+                "display_name": "Flood depth/baseline (WRI)",
                 "description": """
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
@@ -69,7 +69,7 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
                 "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "NorESM1-M",
-                "display_name": "WRI/NorESM1-M",
+                "display_name": "Flood depth/NorESM1-M (WRI)",
                 "description": """
 World Resources Institute Aqueduct Floods riverine model using GCM model from
 Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
@@ -92,7 +92,7 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "GFDL-ESM2M",
-                "display_name": "WRI/GFDL-ESM2M",
+                "display_name": "Flood depth/GFDL-ESM2M (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods riverine model using GCM model from
 Geophysical Fluid Dynamics Laboratory (NOAA).
@@ -115,7 +115,7 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "HadGEM2-ES",
-                "display_name": "WRI/HadGEM2-ES",
+                "display_name": "Flood depth/HadGEM2-ES (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods riverine model using GCM model:
 Met Office Hadley Centre.
@@ -138,7 +138,7 @@ Met Office Hadley Centre.
                 "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "IPSL-CM5A-LR",
-                "display_name": "WRI/IPSL-CM5A-LR",
+                "display_name": "Flood depth/IPSL-CM5A-LR (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods riverine model using GCM model from
 Institut Pierre Simon Laplace
@@ -161,7 +161,7 @@ Institut Pierre Simon Laplace
                 "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "MIROC-ESM-CHEM",
-                "display_name": "WRI/MIROC-ESM-CHEM",
+                "display_name": "Flood depth/MIROC-ESM-CHEM (WRI)",
                 "description": """World Resource Institute Aqueduct Floods riverine model using
  GCM model from Atmosphere and Ocean Research Institute
  (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency
@@ -197,7 +197,7 @@ Institut Pierre Simon Laplace
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/Baseline no subsidence",
+                "display_name": "Flood depth/baseline, no subsidence (WRI)",
                 "description": """
 World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.
 
@@ -217,7 +217,7 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub/95",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/95% no subsidence",
+                "display_name": "Flood depth/95%, no subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.
 
@@ -240,7 +240,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
                 "indicator_id": "flood_depth/nosub/5",
                 "indicator_model_id": "nosub/5",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/5% no subsidence",
+                "display_name": "Flood depth/5%, no subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.
 
@@ -263,7 +263,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub/50",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/50% no subsidence",
+                "display_name": "Flood depth/50%, no subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.
 
@@ -286,7 +286,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/Baseline with subsidence",
+                "display_name": "Flood depth/baseline, with subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).
 
@@ -306,7 +306,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/95",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/95% with subsidence",
+                "display_name": "Flood depth/95%, with subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.
 
@@ -329,7 +329,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/5",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/5% with subsidence",
+                "display_name": "Flood depth/5%, with subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.
 
@@ -352,7 +352,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/50",
                 "indicator_model_gcm": "unknown",
-                "display_name": "WRI/50% with subsidence",
+                "display_name": "Flood depth/50%, with subsidence (WRI)",
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.
 

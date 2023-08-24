@@ -3,7 +3,7 @@ import math
 import posixpath
 
 import mercantile # type: ignore
-import rasterio
+import rasterio # type: ignore
 from hazard.inventory import HazardResource # type: ignore
 from hazard.sources.osc_zarr import OscZarr
 
@@ -99,7 +99,7 @@ def create_tile_set(source: OscZarr, source_path: str,
                         transform=dst_transform,
                         num_threads=reprojection_threads
                     )
-                    logger.info(f"Reprojection complete. Writing to target.")
+                    logger.info(f"Reprojection complete. Writing to target {level_path}.")
 
                     target.write_slice(level_path, slice(index, index+1),
                                         slice(y_slice.start * pixels_per_tile, y_slice.stop * pixels_per_tile),

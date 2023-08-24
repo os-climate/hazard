@@ -34,6 +34,7 @@ class IndicatorModel(ABC, Generic[T]):
         """Get a list of all batch items."""
         ...
 
+
     @abstractmethod
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
