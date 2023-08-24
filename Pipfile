@@ -21,6 +21,7 @@ fsspec = "*"
 pydantic = "*"
 mkdocs = "*"
 pymdown-extensions = "*"
+mercantile = "*"
 
 [dev-packages]
 isort = "*"

@@ -32,15 +32,19 @@ class MapInfo(BaseModel):
     """Provides information about map layer."""
 
     colormap: Optional[Colormap] = Field(description="Details of colormap.")
-    array_name: str = Field(
-        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to array_name."  # noqa
+    path: str = Field(
+        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
     )
     bounds: List[Tuple[float, float]] = Field(
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
     # note that the bounds should be consistent with the array attributes
-    source: Optional[str] = Field(description="Source of map image: 'map_array' or 'tiles'.")
+    source: Optional[str] = Field(description="""Source of map image. These are
+                            'map_array': single Mercator projection array at path above
+                            'map_array_pyramid': pyramid of Mercator projection arrays
+                            'mapbox'.
+                                  """)
 
 
 class Period(BaseModel):
@@ -65,6 +69,8 @@ class HazardResource(BaseModel):
     group_id: Optional[str] = Field("public", description="Identifier of the resource group (used for authentication).")
     path: str = Field(description="Full path to the indicator array.")
     indicator_id: str = Field(description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'.")
+    indicator_model_id: Optional[str] = Field(None, description="Identifier specifying the type of model used in the derivation of the indicator \
+                                    (e.g. whether flood model includes impact of sea-level rise).") 
     indicator_model_gcm: str = Field(description="Identifier of general circulation model(s) used in the derivation of the indicator.") 
     params: Dict[str, List[str]] = Field({}, description="Parameters used to expand wild-carded fields.")
     display_name: str = Field(description="Text used to display indicator.")
@@ -105,7 +111,7 @@ def expand_resource(resource: HazardResource, keys: List[str], params: Dict[str,
                         "id": expand(item.indicator_id, key, param),
                         "display_name": expand(item.display_name, key, param),
                         "path": expand(item.path, key, param),
-                        "map": None if item.map is None else item.map.copy(deep=True, update={"array_name": expand(item.map.array_name, key, param)}),
+                        "map": None if item.map is None else item.map.copy(deep=True, update={"array_name": expand(item.map.path, key, param)}),
                     }
                 )
 

@@ -60,6 +60,12 @@ class Jupiter(IndicatorModel):
     to set up a OS-C ClimateScore API Service (“ClimateScore Service”).
     """
     
+    _jupiter_description = """
+These data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment. 
+For higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact 
+[Jupiter Intelligence](https://www.jupiterintel.com).
+"""
+
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
         csv_info = { 
@@ -83,15 +89,15 @@ class Jupiter(IndicatorModel):
             HazardResource(
                 hazard_type="Fire",
                 indicator_id="fire_probability",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="fire/jupiter/v1/fire_probability_{scenario}_{year}",
                 params={},
-                display_name="Fire probability",
-                description="""
-The maximum value, found across all months, of the probability of a wildfire occurring
-at some point in an individual month within 100km of the location. For example, if the probability
-of occurrence of a wildfire is 5% for July, 20% in August, 10% in September and 0% for
-other months, the hazard indicator value is 20%.
+                display_name="Fire probability (Jupiter)",
+                description=self._jupiter_description + """
+This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location based on several parameters from multiple bias corrected 
+and downscaled Global Climate Models (GCMs).
+For example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September and 0% for other months, the hazard indicator value is 20%.
                 """,
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -104,11 +110,11 @@ other months, the hazard indicator value is 20%.
                         min_value=0.0,
                         max_index=255,
                         max_value=0.7,
-                        units="none"),
-                    array_name="fire_probability_{scenario}_{year}_map",
+                        units=""),
+                    path="fire_probability_{scenario}_{year}_map",
                     source="map_array"
                 ),
-                units="none",
+                units="",
                 scenarios=[
                     Scenario(
                         id="ssp126",
@@ -120,13 +126,18 @@ other months, the hazard indicator value is 20%.
             HazardResource(
                 hazard_type="Drought",
                 indicator_id="months/spei3m/below/-2",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
                 params={},
-                display_name="Drought",
-                description="""
-Months per year where the rolling 3-month averaged Standardized Precipitation Evapotranspiration Index 
-is below -2.
+                display_name="Drought (Jupiter)",
+                description=self._jupiter_description + """
+This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI). 
+The SPEl is an extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET) in determining drought events. 
+The SPEl is calculated from a log-logistic probability distribution function of climatic water balance (precipitation minus evapotranspiration) over a given time scale. 
+The SPEI itself is a standardized variable with a mean value 0 and standard deviation 1.  
+This drought model computes the number of months per annum where the 3-month rolling average of SPEI is below -2 based on the mean values of several parameters from 
+bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 """,
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -140,7 +151,7 @@ is below -2.
                         max_index=255,
                         max_value=12.0,
                         units="months/year"),
-                    array_name="months_spei3m_below_-2_{scenario}_{year}_map",
+                    path="months_spei3m_below_-2_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="months/year",
@@ -155,12 +166,14 @@ is below -2.
             HazardResource(
                 hazard_type="Precipitation",
                 indicator_id="max/daily/water_equivalent",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}",
                 params={},
-                display_name="Precipitation",
-                description="""
-Maximum daily total water equivalent precipitation experienced at a return period of 100 years.
+                display_name="Precipitation (Jupiter)",
+                description=self._jupiter_description + """
+This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year return period based on the mean of the precipitation distribution 
+from multiple bias corrected and downscaled Global Climate Models (GCMs).
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -174,7 +187,7 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         max_index=255,
                         max_value=1000.0,
                         units="mm"),
-                    array_name="max_daily_water_equivalent_{scenario}_{year}_map",
+                    path="max_daily_water_equivalent_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="mm",
@@ -189,12 +202,14 @@ Maximum daily total water equivalent precipitation experienced at a return perio
             HazardResource(
                 hazard_type="Hail",
                 indicator_id="days/above/5cm",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
                 params={},
-                display_name="Large hail days per year",
-                description="""
-Number of days per year where large hail (> 5cm diameter) is possible.
+                display_name="Large hail days per year (Jupiter)",
+                description=self._jupiter_description + """
+This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible based on the mean distribution of several parameters 
+across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -208,7 +223,7 @@ Number of days per year where large hail (> 5cm diameter) is possible.
                         max_index=255,
                         max_value=10.0,
                         units="days/year"),
-                    array_name="days_above_5cm_{scenario}_{year}_map",
+                    path="days_above_5cm_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="days/year",
@@ -223,12 +238,14 @@ Number of days per year where large hail (> 5cm diameter) is possible.
             HazardResource(
                 hazard_type="ChronicHeat",
                 indicator_id="days/above/35c",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
                 params={},
-                display_name="Days per year above 35°C",
-                description="""
-Maximum daily total water equivalent precipitation experienced at a return period of 200 years.
+                display_name="Days per year above 35°C (Jupiter)",
+                description=self._jupiter_description + """
+This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits to the bias-corrected and downscaled high temperature distribution 
+across multiple Global Climate Models (GCMs).
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -241,8 +258,8 @@ Maximum daily total water equivalent precipitation experienced at a return perio
                         min_value=0.0,
                         max_index=255,
                         max_value=365.0,
-                        units="mm"),
-                    array_name="days_above_35c_{scenario}_{year}_map",
+                        units="days/year"),
+                    path="days_above_35c_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="days/year",
@@ -257,12 +274,14 @@ Maximum daily total water equivalent precipitation experienced at a return perio
             HazardResource(
                 hazard_type="Wind",
                 indicator_id="max/1min",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="wind/jupiter/v1/max_1min_{scenario}_{year}",
                 params={},
-                display_name="Max 1 minute sustained wind speed",
-                description="""
-Maximum 1-minute sustained wind speed in km/hour experienced at different return periods.
+                display_name="Max 1 minute sustained wind speed (Jupiter)",
+                description=self._jupiter_description + """
+This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a 100 year return period based on mean wind speed distributions 
+from multiple Global Climate Models (GCMs).
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -276,7 +295,7 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
                         max_index=255,
                         max_value=120.0,
                         units="km/hour"),
-                    array_name="max_1min_{scenario}_{year}_map",
+                    path="max_1min_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="km/hour",
@@ -291,12 +310,16 @@ Maximum 1-minute sustained wind speed in km/hour experienced at different return
             HazardResource(
                 hazard_type="CombinedInundation",
                 indicator_id="flooded_fraction",
+                indicator_model_id=None,
                 indicator_model_gcm="unknown",
                 path="combined_flood/jupiter/v1/fraction_{scenario}_{year}",
                 params={},
-                display_name="Flooded fraction",
-                description="""
-The fraction of land within a 30-km grid cell that experiences flooding at different return periods.
+                display_name="Flooded fraction (Jupiter)",
+                description=self._jupiter_description + """
+Flooded fraction provides the spatial fraction of land flooded in a defined grid. 
+It is derived from higher-resolution flood hazards, and computed directly as the fraction of cells within the 30-km cell that have non-zero flooding at that return period. 
+This model uses a 30-km grid that experiences flooding at the 200-year return period.
+Open oceans are excluded.
                 """, 
                 group_id = "jupiter_osc",
                 display_groups=[],
@@ -309,8 +332,8 @@ The fraction of land within a 30-km grid cell that experiences flooding at diffe
                         min_value=0.0,
                         max_index=255,
                         max_value=1.0,
-                        units="none"),
-                    array_name="fraction_{scenario}_{year}_map",
+                        units=""),
+                    path="fraction_{scenario}_{year}_map",
                     source="map_array"
                 ),
                 units="none",

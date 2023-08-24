@@ -56,6 +56,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="mean_work_loss/{intensity}",
+            indicator_model_id=None,
             indicator_model_gcm="{gcm}",
             params={"intensity": ["low", "medium", "high"], "gcm": list(self.gcms)},
             path="chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
@@ -74,7 +75,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     max_index=255,
                     units="fractional loss"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                array_name="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                path="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
                 source="map_array"
             ),
             units="fractional loss",
