@@ -75,7 +75,7 @@ For higher-resolution data based on up-to-date methods, subject to greater valid
             "days/above/5cm": ( "etlhail.csv", "hail{scenario}{year}dayslargehailpossiblemetric_mean" ),
             "days/above/35c": ( "etlheat.csv", "heat{scenario}{year}daysexceeding35cmetric_mean" ),
             "max/daily/water_equivalent": ( "etlprecip.csv", "precip{scenario}{year}onedayprecip100yrmetric_mean" ),
-            "max/1min": ( "etlwind.csv", "wind{scenario}{year}windspeed100yrmetric_mean" )
+            "max_speed": ( "etlwind.csv", "wind{scenario}{year}windspeed100yrmetric_mean" )
             }
         for model in self.inventory():
             if model.indicator_id not in csv_info:
@@ -273,8 +273,8 @@ across multiple Global Climate Models (GCMs).
                     ]),
             HazardResource(
                 hazard_type="Wind",
-                indicator_id="max/1min",
-                indicator_model_id=None,
+                indicator_id="max_speed",
+                indicator_model_id="1min",
                 indicator_model_gcm="unknown",
                 path="wind/jupiter/v1/max_1min_{scenario}_{year}",
                 params={},
@@ -355,7 +355,7 @@ Open oceans are excluded.
                 da = arrays[item.jupiter_array_name.format(scenario=scenario.id, year=year)]
                 da = da.reindex(latitude=da.latitude[::-1]) # by convention latitude reversed
                 (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max()) # type: ignore
-                pp = PosixPath(item.model.path, item.model.path.format(scenario=scenario.id, year=year)) # type: ignore
+                pp = PosixPath(item.model.path.format(scenario=scenario.id, year=year)) # type: ignore
                 target.write(str(pp), da)
                 reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
                 reprojected = da.sel(latitude=slice(85, -85)).rio.reproject("EPSG:3857", resampling=rasterio.enums.Resampling.max) #, shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)

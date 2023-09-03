@@ -10,7 +10,7 @@ from .utilities import test_output_dir
 
 
 def test_wind_onboarding(test_output_dir):
-    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr')))
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
     model = STORMIndicator(os.path.join(test_output_dir, "wind"))
     model.run_single(BatchItem(gcm = "HADGEM3-GC31-HM", model=""), None, target, None)
 

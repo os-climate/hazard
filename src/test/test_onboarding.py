@@ -1,7 +1,8 @@
 
 import os
 import fsspec.implementations.local as local # type: ignore
-from hazard.docs_store import DocStore # type: ignore
+from hazard.docs_store import DocStore
+from hazard.onboard.iris_wind import IRISIndicator # type: ignore
 from hazard.onboard.jupiter import Jupiter, JupiterOscFileSource # type: ignore
 import pytest
 from pytest import approx
@@ -24,6 +25,13 @@ def test_output_dir():
 
 
 @pytest.mark.skip(reason="example")
+def test_iris(test_output_dir):
+    model = IRISIndicator(test_output_dir)
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
+    model.run_all(None, target, debug_mode=True)
+
+
+@pytest.mark.skip(reason="example")
 def test_jupiter(test_output_dir, s3_credentials):
     # we need Jupiter OSC_Distribution to be in test_output, e.g.:
     # hazard/src/test/test_output/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv
@@ -31,12 +39,12 @@ def test_jupiter(test_output_dir, s3_credentials):
     source = JupiterOscFileSource(test_output_dir, local_fs)
     #target = OscZarr(prefix='hazard') # hazard_test
     #docs_store = DocStore(prefix="hazard")
-    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard_test', 'hazard.zarr')))
-    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
+    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard")
 
     jupiter = Jupiter()
     docs_store.update_inventory(jupiter.inventory(), remove_existing=True)
-    jupiter.run_all(source, target)
+    jupiter.run_all(source, target, debug_mode=True)
 
 
 @pytest.mark.skip(reason="example")
