@@ -22,7 +22,7 @@ def test_create_inventory(test_output_dir):
     from pathlib import Path
     path = os.path.join(Path(__file__).parents[1], "inventories")
 
-    path = os.path.join(test_output_dir)
+    #path = os.path.join(test_output_dir)
 
     docs_store = DocStore(bucket=path, fs=local_fs, prefix="hazard")
     #docs_store = DocStore(prefix="hazard") # for writing direct to S3

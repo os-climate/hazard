@@ -103,11 +103,11 @@ IRIS description here
                     min_value=0.0,
                     max_index=255,
                     max_value=120.0,
-                    units="km/hour"),
+                    units="m/s"),
                 path="wind/iris/v1/max_speed_{scenario}_{year}_map",
                 source="map_array"
             ),
-            units="km/hour",
+            units="m/s",
             scenarios=[
                 Scenario(
                     id="historical",
