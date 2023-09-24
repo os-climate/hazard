@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, MutableMapping, Optional, Tuple, Union
+from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
 
 from affine import Affine # type: ignore
 import dask
@@ -20,12 +20,12 @@ import zarr, zarr.core # type: ignore
 from hazard.protocols import OpenDataset, WriteDataArray
 import hazard.utilities.xarray_utilities as xarray_utilities
 
-default_staging_bucket = "redhat-osc-physical-landing-647521352890"
+default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 class OscZarr(WriteDataArray):
      
     def __init__(self, 
-        bucket: str = default_staging_bucket,
+        bucket: str = default_dev_bucket,
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
         store: Optional[MutableMapping] = None):
@@ -41,7 +41,7 @@ class OscZarr(WriteDataArray):
         if store is None:
             if s3 is None:
                 #zarr_utilities.load_dotenv() # to load environment variables
-                s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY"], secret=os.environ["OSC_S3_SECRET_KEY"])
+                s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
             group_path = os.path.join(bucket, prefix, "hazard.zarr")
             store = s3fs.S3Map(root=group_path, s3=s3, check=False)
         
@@ -107,7 +107,7 @@ class OscZarr(WriteDataArray):
         if path in self.root:
             self.root.pop(path)
 
-    def write(self, path: str, da: xr.DataArray):
+    def write(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
         """Write DataArray according to the standard OS-Climate conventions. 
 
         Args:
@@ -116,7 +116,7 @@ class OscZarr(WriteDataArray):
         """
         da_norm = xarray_utilities.normalize_array(da)
         data, transform, crs = xarray_utilities.get_array_components(da_norm, assume_normalized=True)
-        z = self._zarr_create(path, da_norm.shape, transform, crs.to_string(), indexes=da_norm.index.data)
+        z = self._zarr_create(path, da_norm.shape, transform, crs.to_string(), indexes=da_norm.index.data, chunks=chunks)
         z[:, :, :] = data[:, :, :]
 
     def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
@@ -190,7 +190,8 @@ class OscZarr(WriteDataArray):
         else:
             raise ValueError("shape of DataArray must have length of 2 or 3.")
         if chunks is None:
-            chunks = (1 if indexes is None else len(indexes), 1000, 1000)
+            chunk_dim = 1000 if len(indexes) < 10 else 500 
+            chunks = (1 if indexes is None else len(indexes), chunk_dim, chunk_dim)
         z = self.root.create_dataset(
             path,
             shape=zarr_shape,

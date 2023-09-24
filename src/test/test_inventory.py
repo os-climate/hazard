@@ -9,7 +9,7 @@ from hazard.models.degree_days import DegreeDays
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
-from hazard.onboard.wri_aqueduct_flood import WriAqueductFlood
+from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.utilities import zarr_utilities # type: ignore
 from .utilities import test_output_dir
 
@@ -27,7 +27,7 @@ def test_create_inventory(test_output_dir):
     docs_store = DocStore(bucket=path, fs=local_fs, prefix="hazard")
     #docs_store = DocStore(prefix="hazard") # for writing direct to S3
 
-    models = [WriAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator(),
+    models = [WRIAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator(),
               IRISIndicator(None)] 
 
     docs_store.write_new_empty_inventory()

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
-from pathlib import PosixPath
+from pathlib import PosixPath, PurePosixPath
+from affine import Affine
 from dask.distributed import Client
 from fsspec.spec import AbstractFileSystem # type: ignore
 import numpy as np # type: ignore
@@ -15,20 +16,81 @@ from typing import Dict, Iterable, List
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Period, Scenario
 from hazard.protocols import OpenDataset, ReadDataArray, WriteDataArray, WriteDataset
+from hazard.sources.osc_zarr import OscZarr
+from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities import xarray_utilities
 from hazard.utilities.map_utilities import alphanumeric, check_map_bounds, transform_epsg4326_to_epsg3857
+from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
 
 @dataclass
 class BatchItem:
     resource: HazardResource
+    path: str
+    scenario: str
+    year: str
+    filename_return_period: str # the filename of the input
 
-class WriAqueductFlood(IndicatorModel):
-    """On-board the WRI Aqueduct flood model data set.
+class WRIAqueductFlood(IndicatorModel):
+    """On-board the WRI Aqueduct flood model data set from
+    http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html
     """
-    
-    def batch_items(self) -> Iterable[BatchItem]:
-        raise NotImplementedError()
+    def __init__(self):
+        self.resources = {}
+        for res in self.inventory():
+            for scen in res.scenarios:
+                for year in scen.years:
+                     path = res.path.format(scenario=scen.id, year=year)
+                     self.resources[path] = res
+        self.return_periods = [2, 5, 10, 25, 50, 100, 250, 500, 1000]
 
+    def _resource(self, path):
+        return self.resources[path]
+
+    def batch_items(self) -> Iterable[BatchItem]:
+        items = self.batch_items_riverine() + self.batch_items_coastal()
+        filtered = [i for i in items if i.resource.path in \
+            ["inundation/wri/v2/inuncoast_historical_nosub_hist_0", "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]] 
+        return filtered
+
+    def batch_items_riverine(self):
+        gcms = ["00000NorESM1-M", "0000GFDL-ESM2M", "0000HadGEM2-ES", "00IPSL-CM5A-LR", "MIROC-ESM-CHEM"]
+        years = [2030, 2050, 2080]
+        scenarios = ["rcp4p5", "rcp8p5"]
+        items: List[BatchItem] = []
+        for gcm in gcms:
+            for year in years:
+                for scenario in scenarios:
+                    path, filename_return_period = self.path_riverine(scenario, gcm, year)
+                    items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        path, filename_return_period = self.path_riverine("historical", "000000000WATCH", 1980)
+        items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        return items
+
+    def batch_items_coastal(self):
+        models = ["0", "0_perc_05", "0_perc_50"]
+        subs = ["wtsub", "nosub"]
+        years = [2030, 2050, 2080]
+        scenarios = ["rcp4p5", "rcp8p5"]
+        items: List[BatchItem] = []
+        for model in models:
+            for sub in subs:
+                for year in years:
+                    for scenario in scenarios:
+                        path, filename_return_period = self.path_coastal(scenario, sub, str(year), model)
+                        items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        for sub in subs:
+            path, filename_return_period = self.path_coastal("historical", sub, "hist", "0")
+            items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        return items
+
+    def path_riverine(self, scenario: str, gcm: str, year: int):
+        path = "inundation/wri/v2/" + f"inunriver_{scenario}_{gcm}_{year}"
+        return path, f"inunriver_{scenario}_{gcm}_{year}_rp{{return_period:04d}}"
+
+    def path_coastal(self, scenario: str, sub: str, year: str, model: str):
+        path = "inundation/wri/v2/" + f"inuncoast_{scenario}_{sub}_{year}_{model}"
+        return path, f"inuncoast_{scenario}_{sub}_{year}_rp{{return_period:04d}}_{model}"
+    
     def inventory(self) -> Iterable[HazardResource]:
         """Here we create the JSON directly, as a demonstration and for the sake of variety."""
         with open(os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r") as f:
@@ -294,8 +356,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_historical_wtsub_hist_0_map", # "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                    "source": "map_array_pyramid" # "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980]}],
@@ -401,6 +463,25 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
 
         return expanded_models
 
+    def run_single(self, item: BatchItem, source: WRIAqueductSource, target: WriteDataArray, client: Client):
+        assert isinstance(target, OscZarr)
+        for i, ret in enumerate(self.return_periods):
+            with source.open_dataset(item.filename_return_period.format(return_period=ret)) as da:
+                assert da is not None
+                if ret == self.return_periods[0]:
+                    z = target.create_empty(item.resource.path, len(da.x), len(da.y),
+                        Affine(da.transform[0], da.transform[1], da.transform[2], da.transform[3], da.transform[4], da.transform[5]),
+                        str(da.crs), indexes = self.return_periods)
+                #('band', 'y', 'x')
+                values = da[0, :, :].data # will load into memory; assume source not chunked efficiently
+                values[values == -9999.0] = float("nan")
+                z[i, :, :] = values
+        print("done")
 
-    def run_single(self, item: BatchItem, source: ReadDataArray, target: WriteDataArray, client: Client):
-        raise NotImplementedError()
+    def generate_tiles_single(self, item: BatchItem, source: OscZarr, target: OscZarr):
+        source_path = item.path
+        assert item.resource.map is not None
+        target_path = item.resource.map.path.format(scenario = item.scenario, year = item.year)
+        create_tile_set(source, source_path, target, target_path, nodata=-9999.0, nodata_as_zero=True)
+        #create_tiles_for_resource(source, target, resource)
+    

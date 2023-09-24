@@ -2,7 +2,8 @@ import logging
 import math
 import posixpath
 
-import mercantile # type: ignore
+import mercantile
+import numpy as np # type: ignore
 import rasterio # type: ignore
 from hazard.inventory import HazardResource # type: ignore
 from hazard.sources.osc_zarr import OscZarr
@@ -25,14 +26,17 @@ def create_tiles_for_resource(source: OscZarr, target: OscZarr, resource: Hazard
 def create_image_set(source: OscZarr, source_path: str,
                     target: OscZarr, target_path: str,
                     index_slice = slice(-1, None),
-                    reprojection_threads=8):
+                    reprojection_threads=8,
+                    nodata = None):
     da = xarray_utilities.normalize_array(source.read(source_path))
-    _create_image_set(da, target, target_path, index_slice=index_slice, reprojection_threads=reprojection_threads)
+    _create_image_set(da, target, target_path, index_slice=index_slice, 
+                      reprojection_threads=reprojection_threads, nodata=nodata)
 
 def _create_image_set(source: xr.DataArray,
                     target: OscZarr, target_path: str,
                     index_slice = slice(-1, None),
-                    reprojection_threads=8):  
+                    reprojection_threads = 8,
+                    nodata = None):  
     return_periods = source.index.data
     index_slice = slice(-1, None)
     src_crs = CRS.from_epsg(4326)
@@ -55,7 +59,8 @@ def _create_image_set(source: xr.DataArray,
     
     indices = range(len(return_periods))[index_slice]
     for index in indices:
-        da_m = source[index, :, :].rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)
+        da_m = source[index, :, :].rio.reproject(dst_crs, shape=(dst_height, dst_width), 
+            transform=dst_transform, nodata=nodata)
         target.write_slice(target_path, slice(index, index+1), slice(None), slice(None), da_m.data)
 
 
@@ -63,7 +68,9 @@ def create_tile_set(source: OscZarr, source_path: str,
                     target: OscZarr, target_path: str,
                     index_slice = slice(-1, None),
                     max_tile_batch_size = 64,
-                    reprojection_threads=8):
+                    reprojection_threads=8,
+                    nodata=None,
+                    nodata_as_zero = False):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
     Slippy Map standard. 
 
@@ -90,7 +97,8 @@ def create_tile_set(source: OscZarr, source_path: str,
     dst_crs = CRS.from_epsg(3857)
 
     max_level = int(round(math.log2(src_width / 256.0)))
-    pixels_per_tile = 256 
+    pixels_per_tile = 256
+    chunk_size = 512 
     
     index_slice = slice(-1, None)
     indices = range(len(return_periods))[index_slice]
@@ -100,7 +108,7 @@ def create_tile_set(source: OscZarr, source_path: str,
     logger.info(f"Indices (z) subset to be processed: {indices}.")
     logger.info(f"Maximum zoom is level is {max_level}, i.e. of size ({max_dimension}, {max_dimension}) pixels].")
 
-    for level in range(max_level, -1, -1):
+    for level in range(max_level, 0, -1):
         logger.info(f"Starting level {level}.")
         level_path = posixpath.join(target_path, f"{level}")
         
@@ -115,13 +123,17 @@ def create_tile_set(source: OscZarr, source_path: str,
         _ = target.create_empty(level_path,
                                 dst_dim, dst_dim, whole_map_transform, dst_crs, 
                                 indexes=return_periods,
-                                chunks=(1, 256, 256)) 
+                                chunks=(1, chunk_size, chunk_size)) 
         
         num_batches = max(1, 2**level // max_tile_batch_size)
         tile_batch_size = min(2**level, max_tile_batch_size)
         for index in indices:
             logger.info(f"Starting index {index}.")
             da_index = da[index, :, :] #.compute()
+            if nodata_as_zero:
+                da_index.data[np.isnan(da_index.data)] = 0
+                if nodata:
+                    da_index.data[da_index.data == nodata] = 0
             for batch_x in range(0, num_batches):
                 for batch_y in range(0, num_batches):
                     x_slice = slice(batch_x * tile_batch_size, (batch_x + 1) * tile_batch_size)
@@ -138,7 +150,8 @@ def create_tile_set(source: OscZarr, source_path: str,
                         resampling=Resampling.bilinear,
                         shape=(pixels_per_tile * tile_batch_size, pixels_per_tile * tile_batch_size),
                         transform=dst_transform,
-                        num_threads=reprojection_threads
+                        num_threads=reprojection_threads,
+                        nodata=nodata
                     )
                     logger.info(f"Reprojection complete. Writing to target {level_path}.")
 

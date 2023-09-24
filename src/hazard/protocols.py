@@ -1,4 +1,4 @@
-from typing import Iterable, List, Protocol
+from typing import Iterable, List, Optional, Protocol
 import typing
 import xarray as xr
 
@@ -20,7 +20,7 @@ class ReadDataArray(Protocol):
 
 class WriteDataArray(Protocol):
     """Write DataArray."""
-    def write(self, path: str, data_array: xr.DataArray):
+    def write(self, path: str, data_array: xr.DataArray, chunks: Optional[List[int]] = None):
         ...
 
 class ReadWriteDataArray(ReadDataArray, WriteDataArray):

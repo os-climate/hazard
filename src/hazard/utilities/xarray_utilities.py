@@ -110,8 +110,8 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
     coords = affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
     coords["dim_0"] = index_values
     da = xr.DataArray(data=dask.array.from_zarr(z), dims=["dim_0", "dim_1", "dim_2"], coords=coords)
-    da.rio.write_crs(4326, inplace=True)
-    if crs.upper() == "EPSG:4326":
+    if "EPSG:4326" in crs.upper():
+        da.rio.write_crs(4326, inplace=True)
         da = da.rename({ "dim_0": "index", "dim_1": "latitude", "dim_2": "longitude" })
     else:
         da = da.rename({ "dim_0": "index", "dim_1": "y", "dim_2": "x" })

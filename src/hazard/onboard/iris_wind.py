@@ -49,7 +49,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         da = OscZarr.normalize_dims(ds.vmax)
         # if the coordinates give the left, bottom of each pixel:
         da = da.assign_coords(latitude = da.latitude.data + 0.05, longitude = da.longitude.data + 0.05)
-        target.write(item.resource.path.format(scenario=item.scenario, year=item.year), da)
+        target.write(item.resource.path.format(scenario=item.scenario, year=item.year), da, chunks=[len(da.index.data), 250, 250])
         self.generate_single_map(item, target, target)
 
     def generate_single_map(self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray):
@@ -81,6 +81,8 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         return [self._hazard_resource()]
 
     def _hazard_resource(self) -> HazardResource:
+        with open(os.path.join(os.path.dirname(__file__), "iris_wind.md"), "r") as f:
+            description = f.read()
         resource = HazardResource(
             hazard_type="Wind",
             indicator_id="max_speed",
@@ -89,9 +91,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
             path="wind/iris/v1/max_speed_{scenario}_{year}",
             params={},
             display_name="Max wind speed (IRIS)",
-            description="""
-IRIS description here
-            """, 
+            description=description, 
             group_id = "iris_osc",
             display_groups=[],
             map = MapInfo(
