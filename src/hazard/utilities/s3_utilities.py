@@ -28,8 +28,8 @@ def copy_dev_to_prod(prefix: str, dry_run = False):
         # double check on environment variables
         raise ValueError("unexpected bucket")
     keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
-    logger.info("Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-    logger.info("Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+    logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
+    logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
     if not dry_run:
         copy_objects(keys, s3_source_client, source_bucket_name, s3_target_client, target_bucket_name)
 
