@@ -470,7 +470,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         assert isinstance(target, OscZarr)
         logger.info(f"Running batch item with path {item.path}")
         for i, ret in enumerate(self.return_periods):
-            logger.info(f"Copying return period {i}/{len(self.return_periods)}")
+            logger.info(f"Copying return period {i + 1}/{len(self.return_periods)}")
             with source.open_dataset(item.filename_return_period.format(return_period=ret)) as da:
                 assert da is not None
                 if ret == self.return_periods[0]:
