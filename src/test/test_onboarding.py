@@ -45,7 +45,7 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     source = WRIAqueductSource()
     target = OscZarr()
     #target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
-    model.generate_tiles_single(items[0], target, target)
+    #model.generate_tiles_single(items[0], target, target)
     for item in items[1:]:
         model.run_single(item, source, target, None)
         model.generate_tiles_single(item, target, target)

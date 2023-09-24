@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 import os
 from pathlib import PosixPath, PurePosixPath
 from affine import Affine
@@ -21,6 +22,8 @@ from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities import xarray_utilities
 from hazard.utilities.map_utilities import alphanumeric, check_map_bounds, transform_epsg4326_to_epsg3857
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
@@ -465,7 +468,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
 
     def run_single(self, item: BatchItem, source: WRIAqueductSource, target: WriteDataArray, client: Client):
         assert isinstance(target, OscZarr)
+        logger.info(f"Running batch item with path {item.path}")
         for i, ret in enumerate(self.return_periods):
+            logger.info(f"Copying return period {i}/{len(self.return_periods)}")
             with source.open_dataset(item.filename_return_period.format(return_period=ret)) as da:
                 assert da is not None
                 if ret == self.return_periods[0]:
@@ -479,6 +484,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         print("done")
 
     def generate_tiles_single(self, item: BatchItem, source: OscZarr, target: OscZarr):
+        logger.info(f"Generating tile-set for batch item with path {item.path})")
         source_path = item.path
         assert item.resource.map is not None
         target_path = item.resource.map.path.format(scenario = item.scenario, year = item.year)
