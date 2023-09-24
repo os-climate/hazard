@@ -270,8 +270,8 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_historical_nosub_hist_0_map", # "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                    "source":  "map_array_pyramid" # "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980]}],
