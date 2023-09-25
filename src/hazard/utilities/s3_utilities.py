@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 
 def copy_dev_to_prod(prefix: str, dry_run = False):
     """ Use this script to copy files with the prefix specified from
-    dev S3 to prod S3. 
-    OSC_S3_BUCKET=physrisk-hazard-indicators
-    OSC_S3_ACCESS_KEY=...
-    OSC_S3_SECRET_KEY=...
+    dev S3 to prod S3.
     OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
     OSC_S3_ACCESS_KEY_DEV=...
     OSC_S3_SECRET_KEY_DEV=...
+    OSC_S3_BUCKET=physrisk-hazard-indicators
+    OSC_S3_ACCESS_KEY=...
+    OSC_S3_SECRET_KEY=...
     """
     s3_source_client = boto3.client('s3', aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"], 
                                     aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"])
@@ -25,6 +25,33 @@ def copy_dev_to_prod(prefix: str, dry_run = False):
     source_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
     target_bucket_name = os.environ["OSC_S3_BUCKET"]
     if source_bucket_name != "physrisk-hazard-indicators-dev01" or target_bucket_name != "physrisk-hazard-indicators":
+        # double check on environment variables
+        raise ValueError("unexpected bucket")
+    keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
+    logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
+    logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+    if not dry_run:
+        copy_objects(keys, s3_source_client, source_bucket_name, s3_target_client, target_bucket_name)
+
+
+def copy_prod_to_public(prefix: str, dry_run = False):
+    """ Use this script to copy files with the prefix specified from
+    prod S3 to public S3.
+    OSC_S3_BUCKET=physrisk-hazard-indicators
+    OSC_S3_ACCESS_KEY=...
+    OSC_S3_SECRET_KEY=...
+    OSC_S3_BUCKET_PUBLIC=os-climate-public-data
+    OSC_S3_ACCESS_KEY_PUBLIC=...
+    OSC_S3_SECRET_KEY_PUBLIC=...
+    """
+    s3_source_client = boto3.client('s3', aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"], 
+                                    aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"])
+    s3_target_client = boto3.client('s3', aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_PUBLIC"], 
+                                    aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_PUBLiC"])
+
+    source_bucket_name = os.environ["OSC_S3_BUCKET"]
+    target_bucket_name = os.environ["OSC_S3_BUCKET_PUBLIC"]
+    if source_bucket_name != "physrisk-hazard-indicators" or target_bucket_name != "os-climate-public-data":
         # double check on environment variables
         raise ValueError("unexpected bucket")
     keys, size = list_objects(s3_source_client, source_bucket_name, prefix)

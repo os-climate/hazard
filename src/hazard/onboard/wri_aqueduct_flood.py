@@ -51,9 +51,9 @@ class WRIAqueductFlood(IndicatorModel):
 
     def batch_items(self) -> Iterable[BatchItem]:
         items = self.batch_items_riverine() + self.batch_items_coastal()
-        filtered = [i for i in items if i.resource.path in \
-            ["inundation/wri/v2/inuncoast_historical_nosub_hist_0", "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]] 
-        return filtered
+        #filtered = [i for i in items if i.resource.path in \
+        #    ["inundation/wri/v2/inuncoast_historical_nosub_hist_0", "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]] 
+        return items
 
     def batch_items_riverine(self):
         gcms = ["00000NorESM1-M", "0000GFDL-ESM2M", "0000HadGEM2-ES", "00IPSL-CM5A-LR", "MIROC-ESM-CHEM"]
@@ -65,7 +65,9 @@ class WRIAqueductFlood(IndicatorModel):
                 for scenario in scenarios:
                     path, filename_return_period = self.path_riverine(scenario, gcm, year)
                     items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
-        path, filename_return_period = self.path_riverine("historical", "000000000WATCH", 1980)
+        # plus one extra historical/baseline item
+        scenario, year = "historical", 1980
+        path, filename_return_period = self.path_riverine(scenario, "000000000WATCH", year)
         items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
         return items
 
@@ -81,8 +83,10 @@ class WRIAqueductFlood(IndicatorModel):
                     for scenario in scenarios:
                         path, filename_return_period = self.path_coastal(scenario, sub, str(year), model)
                         items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        # plus two extra historical/baseline items
         for sub in subs:
-            path, filename_return_period = self.path_coastal("historical", sub, "hist", "0")
+            scenario, year = "historical", "hist"
+            path, filename_return_period = self.path_coastal(scenario, sub, year, "0")
             items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
         return items
 
@@ -123,8 +127,8 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980], "periods": [{"year": 1980, "map_id": "gw4vgq"}]}],
@@ -143,7 +147,7 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_00000NorESM1-M_{year}_map",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
@@ -166,7 +170,7 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
@@ -189,7 +193,7 @@ Met Office Hadley Centre.
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
@@ -212,7 +216,7 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
@@ -236,8 +240,8 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -290,8 +294,8 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -313,8 +317,8 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_05_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -336,8 +340,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_50_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -379,8 +383,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -402,8 +406,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_05_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -425,8 +429,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 + aqueduct_description,
                 "map": {
                     "colormap": wri_colormap,
-                    "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
-                    "source": "mapbox",
+                    "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_50_map",
+                    "source": "map_array_pyramid",
                 },
                 "units": "metres",
                 "scenarios": [

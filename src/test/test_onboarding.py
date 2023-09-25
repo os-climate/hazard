@@ -46,9 +46,14 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     target = OscZarr()
     #target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
     #model.generate_tiles_single(items[0], target, target)
-    for item in items[1:]:
-        model.run_single(item, source, target, None)
-        model.generate_tiles_single(item, target, target)
+    s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY"], secret=os.environ["OSC_S3_SECRET_KEY"])
+    target = OscZarr(bucket=os.environ["OSC_S3_BUCKET"], s3=s3)
+    for item in items:
+        map_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
+        if map_path != (item.path + "_map"):
+            raise ValueError(f"unexpected map path {map_path}") 
+        #model.run_single(item, source, target, None)
+        #model.generate_tiles_single(item, target, target)
 
 
 #@pytest.mark.skip(reason="example")

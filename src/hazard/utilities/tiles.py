@@ -89,6 +89,9 @@ def create_tile_set(source: OscZarr, source_path: str,
         to EPSG:3857. 
         Defaults to 8.
     """
+    if not target_path.endswith("map"):
+        # for safety; should end with 'map' to avoid clash
+        raise ValueError("invalid target path {target_path}")
 
     da = source.read(source_path) #.to_dataset()
     return_periods = da.index.data
