@@ -492,6 +492,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         source_path = item.path
         assert item.resource.map is not None
         target_path = item.resource.map.path.format(scenario = item.scenario, year = item.year)
+        if target_path != source_path + "_map":
+            raise ValueError(f"unexpected target path {target_path}")
         create_tile_set(source, source_path, target, target_path, nodata=-9999.0, nodata_as_zero=True)
         #create_tiles_for_resource(source, target, resource)
     
