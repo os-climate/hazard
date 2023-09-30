@@ -10,7 +10,7 @@ from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.degree_days import DegreeDays
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.jupiter import Jupiter
-from hazard.onboard.wri_aqueduct_flood import WriAqueductFlood
+from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import zarr_utilities
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
@@ -44,7 +44,7 @@ def test_map_tiles_from_model(test_output_dir):
     source = OscZarr(store=local_store)
     target = source
     
-    models: List[IndicatorModel] = [WriAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator()] 
+    models: List[IndicatorModel] = [WRIAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator()] 
     for model in models:
         resources = model.inventory()
         #resources[0].

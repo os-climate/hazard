@@ -21,7 +21,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
+                "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -40,7 +40,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -73,7 +73,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_00000NorESM1-M_{year}_map",
+                "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -135,7 +135,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
+                "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -197,7 +197,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
+                "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -259,7 +259,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
+                "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -321,7 +321,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
+                "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -340,7 +340,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -383,7 +383,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                "path": "inundation/wri/v2/inuncoast_historical_nosub_hist_0_map",
                 "bounds": [
                     [
                         -180.0,
@@ -402,7 +402,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -435,7 +435,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_map",
                 "bounds": [
                     [
                         -180.0,
@@ -454,7 +454,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -497,7 +497,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_05_map",
                 "bounds": [
                     [
                         -180.0,
@@ -516,7 +516,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -559,7 +559,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_50_map",
                 "bounds": [
                     [
                         -180.0,
@@ -578,7 +578,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -621,7 +621,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                "path": "inundation/wri/v2/inuncoast_historical_wtsub_hist_0_map",
                 "bounds": [
                     [
                         -180.0,
@@ -640,7 +640,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -673,7 +673,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_map",
                 "bounds": [
                     [
                         -180.0,
@@ -692,7 +692,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -735,7 +735,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_05_map",
                 "bounds": [
                     [
                         -180.0,
@@ -754,7 +754,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -797,7 +797,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_50_map",
                 "bounds": [
                     [
                         -180.0,
@@ -816,7 +816,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -1269,8 +1269,8 @@
             "hazard_type": "Wind",
             "group_id": "jupiter_osc",
             "path": "wind/jupiter/v1/max_1min_{scenario}_{year}",
-            "indicator_id": "max/1min",
-            "indicator_model_id": null,
+            "indicator_id": "max_speed",
+            "indicator_model_id": "1min",
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
@@ -1588,6 +1588,76 @@
                 }
             ],
             "units": "days/year"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "iris_osc",
+            "path": "wind/iris/v1/max_speed_{scenario}_{year}",
+            "indicator_id": "max_speed",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "combined",
+            "params": {},
+            "display_name": "Max wind speed (IRIS)",
+            "display_groups": [],
+            "description": "Assessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.  \nhttps://www.imperial.ac.uk/grantham/research/climate-science/modelling-tropical-cyclones/\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "m/s"
+                },
+                "path": "wind/iris/v1/max_speed_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2010
+                    ]
+                },
+                {
+                    "id": "ssp119",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2050
+                    ]
+                }
+            ],
+            "units": "m/s"
         }
     ]
 }
