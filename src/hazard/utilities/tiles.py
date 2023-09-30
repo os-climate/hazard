@@ -1,5 +1,6 @@
 import logging
 import math
+import os
 import posixpath
 
 import mercantile
@@ -70,7 +71,8 @@ def create_tile_set(source: OscZarr, source_path: str,
                     max_tile_batch_size = 64,
                     reprojection_threads=8,
                     nodata=None,
-                    nodata_as_zero = False):
+                    nodata_as_zero = False,
+                    check_fill = False):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
     Slippy Map standard. 
 
@@ -111,6 +113,9 @@ def create_tile_set(source: OscZarr, source_path: str,
     logger.info(f"Indices (z) subset to be processed: {indices}.")
     logger.info(f"Maximum zoom is level is {max_level}, i.e. of size ({max_dimension}, {max_dimension}) pixels].")
 
+    target.remove(target_path)
+
+    os.environ["CHECK_WITH_INVERT_PROJ"] = "YES"
     for level in range(max_level, 0, -1):
         logger.info(f"Starting level {level}.")
         level_path = posixpath.join(target_path, f"{level}")
@@ -157,6 +162,9 @@ def create_tile_set(source: OscZarr, source_path: str,
                         nodata=nodata
                     )
                     logger.info(f"Reprojection complete. Writing to target {level_path}.")
+
+                    if check_fill:
+                        da_m.data = xr.where(da_m.data > 3.4e38, np.nan, da_m.data)
 
                     target.write_slice(level_path, slice(index, index+1),
                                         slice(y_slice.start * pixels_per_tile, y_slice.stop * pixels_per_tile),

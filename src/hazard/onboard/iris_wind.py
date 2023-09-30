@@ -57,7 +57,8 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         assert item.resource.map is not None
         assert isinstance(source, OscZarr) and isinstance(target, OscZarr)
         target_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
-        tiles.create_image_set(source, source_path, target, target_path)
+        tiles.create_tile_set(source, source_path, target, target_path, check_fill=True)
+        #tiles.create_image_set(source, source_path, target, target_path)
 
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
@@ -105,7 +106,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
                     max_value=120.0,
                     units="m/s"),
                 path="wind/iris/v1/max_speed_{scenario}_{year}_map",
-                source="map_array"
+                source="map_array_pyramid"
             ),
             units="m/s",
             scenarios=[

@@ -8,11 +8,9 @@ from hazard.docs_store import DocStore
 from hazard.onboard.iris_wind import IRISIndicator # type: ignore
 from hazard.onboard.jupiter import Jupiter, JupiterOscFileSource # type: ignore
 import pytest
-from pytest import approx
 import s3fs
 import zarr
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood # type: ignore
-
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities import s3_utilities, zarr_utilities
@@ -21,6 +19,7 @@ from hazard.utilities import s3_utilities, zarr_utilities
 def s3_credentials():
     zarr_utilities.set_credential_env_variables()
     yield "s3_credentials"
+
 
 @pytest.fixture
 def log_to_stdout():
@@ -31,6 +30,7 @@ def log_to_stdout():
                     ])
     yield "log_to_stdout"
 
+
 @pytest.fixture
 def test_output_dir():
     """Provides directory for (for example) testing (file-based) storage of datasets."""
@@ -38,6 +38,7 @@ def test_output_dir():
     yield output_dir
 
 
+@pytest.mark.skip(reason="example")
 def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     model = WRIAqueductFlood()
     items = model.batch_items()
@@ -45,7 +46,6 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     source = WRIAqueductSource()
     target = OscZarr()
     #target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
-    #model.generate_tiles_single(items[0], target, target)
     s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY"], secret=os.environ["OSC_S3_SECRET_KEY"])
     target = OscZarr(bucket=os.environ["OSC_S3_BUCKET"], s3=s3)
     for item in items:
@@ -53,22 +53,27 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
         if map_path != (item.path + "_map"):
             raise ValueError(f"unexpected map path {map_path}") 
         #model.run_single(item, source, target, None)
-        #model.generate_tiles_single(item, target, target)
+        model.generate_tiles_single(item, target, target)
 
 
-#@pytest.mark.skip(reason="example")
+@pytest.mark.skip(reason="requires input data")
 def test_iris(test_output_dir, s3_credentials):
     # upload IRIS
     #copy_iris_files(s3_credentials)
-    promote_iris(s3_credentials)
+    #promote_iris(s3_credentials)
     model = IRISIndicator(test_output_dir)
     #s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
-    #target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))) # save locally
-    target = OscZarr() # default dev bucket
-    model.run_all(None, target, debug_mode=True)
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))) # save locally
+    #target = OscZarr() # default dev bucket
+    for item in model.batch_items():
+        model.generate_single_map(item, target, target)
+    #model.run_all(None, target, debug_mode=True)
+    #create_tile_set(source, source_path, target, target_path, nodata=-9999.0, nodata_as_zero=True)
+
 
 def promote_iris(s3_credentials):
     s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/wind/iris")
+
 
 def copy_iris_files(s3_credentials):
     bucket = os.environ["OSC_S3_BUCKET_DEV"] # physrisk-hazard-indicators-dev01
@@ -86,7 +91,7 @@ def copy_iris_files(s3_credentials):
         s3.put(filepath, s3_path, recursive=True)   
 
 
-@pytest.mark.skip(reason="example")
+@pytest.mark.skip(reason="requires input data")
 def test_jupiter(test_output_dir, s3_credentials):
     # we need Jupiter OSC_Distribution to be in test_output, e.g.:
     # hazard/src/test/test_output/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv

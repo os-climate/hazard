@@ -50,6 +50,12 @@ class OscZarr(WriteDataArray):
     def create_empty(self, path: str, width: int, height: int, transform: Affine, crs: str, overwrite=False, indexes=[0], chunks=None):
         return self._zarr_create(path, (len(indexes), height, width), transform, str(crs), overwrite, indexes=indexes, chunks=chunks)
 
+    def remove(self, path: str):
+        try:
+            self.root.pop(path)
+        except:
+            pass # if it already exists, remove it
+
     def read(self, path: str) -> xr.DataArray:
         """Read an OS-Climate array as an xarray DataArray. Coordinates are inferred from the 
         coordinate reference system (CRS) and affine transform stored as zarr attributes. 
