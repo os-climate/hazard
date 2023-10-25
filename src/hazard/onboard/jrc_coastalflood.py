@@ -146,7 +146,7 @@ class JRCCoastalFlood():
 
     def create_latlon_grid(self):
         """
-        
+        Create a grid of latitudes and longitudes given the bounds.
         """
         
         # Create latitude and longitude grid
@@ -161,7 +161,7 @@ class JRCCoastalFlood():
 
     def create_hazard_matrix(self, npy_filename):
         """
-        
+        Create a hazard matrix given a hazrd vector. The method used is very slow and can could be optimized.
         """
 
         grid = self.create_latlon_grid()
@@ -202,7 +202,7 @@ class JRCCoastalFlood():
 
     def onboard_all(self):
         """
-        
+        This functions populates the s3 for every file.
         """
 
         for file_i in range(len(self.nc_filenames)):
