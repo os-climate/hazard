@@ -5,7 +5,6 @@ import numpy as np
 import rasterio
 import requests
 import zipfile
-
 import pyproj
 from pyproj.crs import CRS
 from affine import Affine
