@@ -10,9 +10,17 @@ import numpy as np
 import pandas as pd # type: ignore
 import xarray as xr
 
+from hazard.utilities import zarr_utilities
+
 
 def working_directory():
     pass
+
+
+@pytest.fixture
+def s3_credentials():
+    zarr_utilities.set_credential_env_variables()
+    yield "s3_credentials"
 
 
 @pytest.fixture
