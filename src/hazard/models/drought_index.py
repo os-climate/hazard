@@ -2,6 +2,7 @@ import logging
 import os, itertools
 from datetime import datetime
 from typing import Iterable, Sequence
+import dask.array as da
 
 import numpy as np # type: ignore
 import s3fs # type: ignore
@@ -20,6 +21,10 @@ class BatchItem():
     gcm: str
     scenario: str
     central_year: int
+
+class WorkingStore:
+    def get_zarr_store(self):
+        pass
 
 class DroughtIndicator:
     def __init__(self,
@@ -116,16 +121,21 @@ class DroughtIndicator:
             ds_spei_slice = self.calculate_spei_for_slice(lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario)
             lats_all, lons_all = ds_chunked['lat'].values, ds_chunked['lon'].values
             # consider refactoring data_chunks to give both slice and values?
-            lat_min_idx, lat_max_idx = np.where(ds_spei['lat'].values == lat_min), np.where(ds_spei['lat'].values == lat_max)
-            lon_min_idx, lon_max_idx = np.where(ds_spei['lon'].values == lon_min), np.where(ds_spei['lon'].values == lon_max)
+            lat_indexes = np.where(np.logical_and(ds_spei['lat'].values >= lat_min, ds_spei['lat'].values <= lat_max))[0]
+            lon_indexes = np.where(np.logical_and(ds_spei['lon'].values >= lon_min, ds_spei['lon'].values <= lon_max))[0]
             if ds_spei is None:
-                ds_spei = xr.DataArray(coords={'time': ds_spei_slice['time'].values, 'lat': lats_all,'lon': lons_all}, 
+                # must use deferred dask array to avoid allocating memory for whole array
+                data = da.empty([len(ds_spei_slice['time'].values), len(lats_all), len(lons_all)])
+                ds_spei = xr.DataArray(data=data, coords={'time': ds_spei_slice['time'].values, 'lat': lats_all,'lon': lons_all}, 
                                        dims=["time", "lat", "lon"]).chunk(chunks={'lat': 40,'lon': 40,'time': 100000}).to_dataset(name='spei')
-                ds_spei.to_zarr(store=zarr_store, mode='w')
-                logger.info(f"created new .") 
+                # compute=False to avoid calculating array
+                ds_spei.to_zarr(store=zarr_store, mode='w', compute=False)
+                logger.info(f"created new zarr array.") 
             else:
                 # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
-                ds_spei_slice.to_zarr(store=zarr_store, mode='r+', region={"lat": slice(lat_min_idx, lat_max_idx + 1), "lon": slice(lon_min_idx, lon_max_idx+ 1)})
+                ds_spei_slice.to_zarr(store=zarr_store, mode='r+', 
+                                      region={"lat": slice(lat_indexes[0], lat_indexes[-1] + 1), "lon": slice(lon_indexes[0], lon_indexes[-1] + 1)})
+                logger.info(f"written chunk {chunk_name} to zarr array.") 
             
     def calculate_spei_for_slice(
             self,
