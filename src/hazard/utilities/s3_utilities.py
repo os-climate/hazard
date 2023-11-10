@@ -96,6 +96,8 @@ def copy_objects(keys: Sequence[str], s3_source_client, source_bucket_name: str,
               s3_target_client, target_bucket_name: str, rename: Optional[Callable[[str], str]] = None):
     """Form of copy that allows separate credentials for source and target buckets."""
     
+    logger.info(f"Source bucket {source_bucket_name}; target bucket {target_bucket_name}")
+    
     for i, key in enumerate(keys):
         obj = s3_source_client.get_object(
             Bucket=source_bucket_name,
@@ -134,6 +136,8 @@ def remove_from_prod(prefix: str, dry_run = True):
 def sync_buckets(s3_source_client, source_bucket_name: str,
               s3_target_client, target_bucket_name: str, prefix, 
               dry_run = True):
+    logger.info(f"Syncing target bucket {target_bucket_name} to source {source_bucket_name}.")
+    
     source_etags = list_object_etags(s3_source_client, source_bucket_name, prefix)
     target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
     # look for objects that are 1) missing in target and 2) different in target
@@ -144,6 +148,11 @@ def sync_buckets(s3_source_client, source_bucket_name: str,
                  + _first_5_last_5(list(missing)))
     if not dry_run:
         copy_objects(list(missing), s3_source_client, source_bucket_name, s3_target_client,
+                    target_bucket_name)
+    logger.info(f"Copying {len(different)} different files from {source_bucket_name} to {target_bucket_name}: "
+                 + _first_5_last_5(list(different)))
+    if not dry_run:
+        copy_objects(list(different), s3_source_client, source_bucket_name, s3_target_client,
                     target_bucket_name)
 
 
