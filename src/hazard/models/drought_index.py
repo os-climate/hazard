@@ -1,7 +1,7 @@
 import logging
 import os, itertools
 from datetime import datetime
-from typing import Iterable, Sequence
+from typing import Iterable, MutableMapping, Sequence
 import dask.array as da
 
 import numpy as np # type: ignore
@@ -16,22 +16,19 @@ from hazard.sources.osc_zarr import OscZarr
 
 logger = logging.getLogger(__name__)
 
+
 class BatchItem():
     resource: HazardResource
     gcm: str
     scenario: str
     central_year: int
 
-class WorkingStore:
-    def get_zarr_store(self):
-        pass
 
 class DroughtIndicator:
     def __init__(self,
-                s3_working,
-                working_source_path,
+                working_zarr_store: MutableMapping,
                 window_years: int=MultiYearAverageIndicatorBase._default_window_years,
-                gcms: Iterable[str]=MultiYearAverageIndicatorBase._default_gcms,
+                gcms: Iterable[str] = ["MIROC6"],  #MultiYearAverageIndicatorBase._default_gcms,
                 scenarios: Iterable[str]=MultiYearAverageIndicatorBase._default_scenarios,
                 central_years: Sequence[int]=[2005, 2030, 2040, 2050, 2080]):
         
@@ -44,12 +41,12 @@ class DroughtIndicator:
         self.spei_threshold = [0, -1, -1.5, -2, -2.5, -3, -3.6]
         self.gcms = gcms
         self.scenarios = scenarios
-        self.s3_working=s3_working
-        self.working_source_path=working_source_path
+        self.working_zarr_store=working_zarr_store
         self.window_years = window_years
         self.resource = self._resource()
     
     def pre_chunk(self,
+        item: BatchItem,
         years = np.arange(1950, 2101),
         quantities = ['tas', 'pr'],
         lat_chunk_size = 40,
@@ -73,25 +70,22 @@ class DroughtIndicator:
                 ds = ds_temp.astype('float32').compute()
                 return ds
 
-        for variable in quantities:
-            zarr_root = os.path.join(self.working_source_path, variable + "_" + self.gcm + "_" + self.scenario)
-            zarr_store = s3fs.S3Map(root=zarr_root, s3=self.s3, check=False)
+        for quantity in quantities:
+            group = quantity + "_" + item.gcm + "_" + item.scenario
             for year in years:
-                ds = download_dataset(variable, year, self.gcm, self.scenario).chunk({'time': 365,'lat': lat_chunk_size,'lon': lon_chunk_size})
+                ds = download_dataset(quantity, year, item.gcm, item.scenario).chunk({'time': 365,'lat': lat_chunk_size,'lon': lon_chunk_size})
                 if year == years[0]:
-                    ds.to_zarr(store=zarr_store, mode='w')
+                    ds.to_zarr(store=self.working_zarr_store, group=group, mode='w')
                 else:
-                    ds.to_zarr(store=zarr_store, append_dim='time')
-                logger.info(f"completed processing: variable={variable}, year={year}.") 
+                    ds.to_zarr(store=self.working_zarr_store, group=group, append_dim='time')
+                logger.info(f"completed processing: variable={quantity}, year={year}.") 
 
     def read_quantity_from_s3_store(self, gcm, scenario, quantity, lat_min, lat_max, lon_min, lon_max) -> xr.Dataset:
         ds = self.chunked_dataset(gcm, scenario, quantity).sel(lat=slice(lat_min, lat_max), lon=slice(lon_min, lon_max))
         return ds
 
     def chunked_dataset(self, gcm, scenario, quantity) -> xr.Dataset:
-        zarr_root = os.path.join(self.working_source_path, quantity + "_" + gcm + "_" + scenario)
-        zarr_store = s3fs.S3Map(root=zarr_root, s3=self.s3_working, check=False)
-        ds = xr.open_zarr(store=zarr_store)
+        ds = xr.open_zarr(store=self.working_zarr_store, group=quantity + "_" + gcm + "_" + scenario)
         return ds
 
     def get_datachunks(self):
@@ -181,11 +175,9 @@ class DroughtIndicator:
             year (int): Year.
             target (OscZarr): Target to write result to.
         """
-        def get_spei_full_results(gcm, scenario, chunked_source_path = self.working_source_path):
-            zarr_root = os.path.join(chunked_source_path, "SPEI", "Aggregated", gcm + "_" + scenario)
-            zarr_store = s3fs.S3Map(root=zarr_root, s3=self.s3_working, check=False)
-            ds_spei = xr.open_zarr(store=zarr_store)
-            return ds_spei    
+        def get_spei_full_results(gcm, scenario):
+            ds_spei = xr.open_zarr(store=self.working_zarr_store, group=os.path.join("SPEI", "Aggregated", gcm + "_" + scenario))
+            return ds_spei
 
         period = [datetime(central_year - self.window_years // 2, 1, 1), datetime(central_year + self.window_years // 2-1, 12, 31)]
         print(gcm + " " + scenario + " " + str(central_year) + " period:   " + str(period[0]) + "---" + str(period[1]))
@@ -205,20 +197,22 @@ class DroughtIndicator:
         target.write(path, spei_annual_all)
         return spei_annual_all   
 
-    def run_single(self, item: BatchItem, target: OscZarr):
-        self.calculate_spei(item.gcm, item.scenario)
-        self.calculate_annual_average_spei(item.gcm, item.scenario, item.central_year, target)
+    def run_single(self, item: BatchItem, target: OscZarr, calculate_spei = True, calculate_average_spei = True):
+        if calculate_spei:
+            self.calculate_spei(item.gcm, item.scenario)
+        if calculate_average_spei:
+            self.calculate_annual_average_spei(item.gcm, item.scenario, item.central_year, target)
 
     def _resource(self) -> HazardResource:
         #with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
         #    description = f.read()
         resource = HazardResource(
-            hazard_type="AcuteDrought",
-            indicator_id="months/spei12m/below",
+            hazard_type="Drought",
+            indicator_id="months/spei12m/below/index",
             indicator_model_id=None,
             indicator_model_gcm="{gcm}",
             params={"gcm": list(self.gcms)},
-            path="acute_drought/osc/v1/months_spei12m_below_{gcm}_{scenario}_{year}",
+            path="drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}",
             display_name="Drought SPEI index",
             description="",
             display_groups=["Drought SPEI index"], # display names of groupings
@@ -229,24 +223,25 @@ class DroughtIndicator:
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=12.0,
                     max_index=255,
-                    units="days/year"),
+                    units="months/year"),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                path="acute_drought/osc/v1/months_spei12m_below_{gcm}_{scenario}_{year}_map",
-                source="map_array"
+                index_values=self.spei_threshold,
+                path="drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
+                source="map_array_pyramid"
             ),
-            units="days/year",
+            units="months/year",
             scenarios=[
-                Scenario(
-                    id="historical",
-                    years=[self.central_years[0]]),
-                Scenario(
-                    id="ssp126",
-                    years=list(self.central_years)),
-                Scenario(
-                    id="ssp245",
-                    years=list(self.central_years)),
+                # Scenario(
+                #     id="historical",
+                #     years=[self.central_years[0]]),
+                # Scenario(
+                #     id="ssp126",
+                #     years=list(self.central_years)),
+                # Scenario(
+                #     id="ssp245",
+                #     years=list(self.central_years)),
                 Scenario(
                     id="ssp585",
                     years=list(self.central_years)),

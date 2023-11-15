@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import posixpath
+from typing import Optional, Sequence
 
 import mercantile
 import numpy as np # type: ignore
@@ -20,7 +21,18 @@ logger = logging.getLogger(__name__)
 def create_tiles_for_resource(source: OscZarr, target: OscZarr, resource: HazardResource):
     if resource.map is None or resource.map.source != "map_array_pyramid":
         raise ValueError("resource does not specify 'map_array_pyramid' map source.")
-    create_tile_set(source, resource.path, target, resource.map.path)
+    indices = None
+    resources = resource.expand()
+    for resource in resources:
+        for scenario in resource.scenarios:
+            for year in scenario.years:
+                path = resource.path.format(scenario=scenario.id, year=year)
+                map_path = resource.map.path.format(scenario=scenario.id, year=year)
+                if resource.map.index_values is not None: 
+                    da = source.read(path)
+                    indexes = list(da["index"].values)
+                    indices = [indexes.index(v) for v in resource.map.index_values]
+                create_tile_set(source, path, target, map_path, indices=indices)
     
 #def create_image_set_for_resource(source: OscZarr, target: OscZarr, resource: HazardResource):
 
@@ -67,7 +79,7 @@ def _create_image_set(source: xr.DataArray,
 
 def create_tile_set(source: OscZarr, source_path: str,
                     target: OscZarr, target_path: str,
-                    index_slice = slice(-1, None),
+                    indices: Optional[Sequence[int]] = None,
                     max_tile_batch_size = 64,
                     reprojection_threads=8,
                     nodata=None,
@@ -83,7 +95,7 @@ def create_tile_set(source: OscZarr, source_path: str,
         target (OscZarr): OSC Zarr array target.
         target_path (str): OSC Zarr target path. Arrays are stored in {target_path}\{level},
         e.g. my_hazard_indicator/2 for level 2.
-        index_slice (int, optional): Where the Defaults to last index.
+        indices (Sequence[int], optional): Indices for which map should be generated.
         max_tile_batch_size (int, optional): Maximum number of tiles in x and y direction 
         that can be processed simultaneously. 
         Defaults to 64 i.e. max image size is 256 * 64 x 256 * 64 pixels.
@@ -104,9 +116,9 @@ def create_tile_set(source: OscZarr, source_path: str,
     max_level = int(round(math.log2(src_width / 256.0)))
     pixels_per_tile = 256
     chunk_size = 512 
-    
-    index_slice = slice(-1, None)
-    indices = range(len(return_periods))[index_slice]
+    if indices is None:
+        index_slice = slice(-1, None)
+        indices = range(len(return_periods))[index_slice]
     logger.info(f"Starting map tiles generation for array {source_path}.")
     max_dimension = 2**max_level * pixels_per_tile
     logger.info(f"Source array size is {da.shape} (z, y, x).")
