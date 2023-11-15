@@ -14,7 +14,7 @@ from hazard.protocols import OpenDataset, WriteDataset
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
-from hazard.models.degree_days import BatchItem, DegreeDays
+from hazard.models.degree_days import BatchItem, DegreeDays, HeatingCoolingDegreeDays
 from .utilities import _create_test_datasets_hurs, test_output_dir
 import numpy as np
 import pandas as pd # type: ignore
@@ -108,7 +108,8 @@ def test_degree_days(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr'))
     target = OscZarr(store=store)
     # cut down the model and run
-    model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    model = HeatingCoolingDegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
+    #model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])
     model.run_all(source, target)
     # check one point...
     path = model._item_path(BatchItem(gcm, scenario, years[1]))
