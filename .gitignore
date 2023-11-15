@@ -55,5 +55,6 @@ pad.ipynb
 *test_output
 
 credentials.env
+src/inventories/hazard/inventory_live.json
 .vscode/launch.json
 .vscode/settings.json
