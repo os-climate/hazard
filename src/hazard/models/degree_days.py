@@ -229,7 +229,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         for i, threshold in enumerate(self.threshold_temps_c):
             threshold_k = 273.15 + threshold
             da[i, :, :] = (scale * xr.where(tas > threshold_k, tas - threshold_k, 0).sum(dim=["time"]) 
-                if above_below == AboveBelow.BELOW else 
+                if above_below == AboveBelow.ABOVE else 
                 scale * xr.where(tas < threshold_k, threshold_k - tas, 0).sum(dim=["time"])
             )
         return da
