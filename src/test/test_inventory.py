@@ -5,7 +5,7 @@ from hazard.docs_store import DocStore
 import fsspec.implementations.local as local # type: ignore
 from hazard.docs_store import DocStore, HazardResources
 from hazard.models.days_tas_above import DaysTasAboveIndicator
-from hazard.models.degree_days import DegreeDays
+from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
@@ -28,7 +28,7 @@ def test_create_inventory(test_output_dir):
     #docs_store = DocStore(prefix="hazard") # for writing direct to S3
 
     models = [WRIAqueductFlood(), DegreeDays(), Jupiter(), WorkLossIndicator(), DaysTasAboveIndicator(),
-              IRISIndicator(None)] 
+              IRISIndicator(None), HeatingCoolingDegreeDays()] 
 
     docs_store.write_new_empty_inventory()
     #docs_store.write_inventory_json(json_str)

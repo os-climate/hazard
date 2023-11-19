@@ -201,6 +201,10 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         self.threshold_temps_c = threshold_temps_c
         self.resources = self._resource()
 
+    def inventory(self) -> Iterable[HazardResource]:
+        """Get the inventory item(s)."""
+        return list(self._resource().values())
+
     def _calculate_single_year_indicators(self, source: OpenDataset, item: BatchItem, year: int) -> List[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")

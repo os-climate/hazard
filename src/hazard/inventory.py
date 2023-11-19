@@ -39,13 +39,13 @@ class MapInfo(BaseModel):
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
-    index_values: Optional[List[Any]] = Field(description="Index values to include in maps. If None, the last index value only is included.") 
+    index_values: Optional[List[Any]] = Field(None, description="Index values to include in maps. If None, the last index value only is included.") 
     # note that the bounds should be consistent with the array attributes
     source: Optional[str] = Field(description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
                             'mapbox'.
-                                  """)
+                            """)
 
 
 class Period(BaseModel):
