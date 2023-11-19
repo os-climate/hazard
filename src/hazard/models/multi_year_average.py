@@ -7,7 +7,7 @@ from typing import Iterable, List, Optional, Tuple, TypeVar
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
-from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
+from hazard.utilities.map_utilities import generate_map
 
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 from hazard.protocols import Averageable, OpenDataset, ReadWriteDataArray, WriteDataArray
@@ -72,16 +72,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         return
     
     def _generate_map(self, path: str, map_path: str, bounds: Optional[List[Tuple[float, float]]], target: ReadWriteDataArray):
-        logger.info(f"Generating map projection for file {path}; reading file")
-        da = target.read(path)
-        logger.info(f"Reprojecting to EPSG:3857")
-        reprojected = transform_epsg4326_to_epsg3857(da)
-        # sanity check bounds:
-        (top, right, bottom, left) = check_map_bounds(reprojected)
-        if top > 85.05 or bottom < -85.05:
-            raise ValueError('invalid range')
-        logger.info(f"Writing map file {map_path}")
-        target.write(map_path, reprojected)
+        generate_map(path, map_path, bounds, target)
         return
     
     def _averaged_indicators(self, client: Client, source: OpenDataset, target: WriteDataArray, item: Averageable) -> List[Indicator]:

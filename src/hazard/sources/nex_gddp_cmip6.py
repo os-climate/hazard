@@ -57,17 +57,6 @@ class NexGddpCmip6(OpenDataset):
     def gcms(self) -> List[str]:
         return list(self.subset.keys())
 
-    def open_dataset(self,
-        gcm: str,
-        scenario: str,
-        quantity: str,
-        year: int,
-        chunks=None):
-        pass
-        #xr.open_dataset()
-        #xr.open_mfdataset()
-
-
     @contextmanager
     def open_dataset_year(self, # type: ignore
         gcm: str,

@@ -7,6 +7,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 from time import sleep
+from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt # type: ignore
 import numpy as np
@@ -19,9 +20,9 @@ from rasterio import CRS, profiles # type: ignore
 from rasterio.enums import Resampling # type: ignore
 import xarray as xr
 
+from hazard.protocols import ReadWriteDataArray
 
-LOG = logging.getLogger("Mapbox onboarding")
-LOG.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
 def epsg3857_to_epsg4326(x, y):
     lon = (x / 20037508.34) * 180.0
@@ -34,6 +35,20 @@ def epsg4326_to_epsg3857(lon, lat):
     y = log(tan((90.0 + lat) * pi / 360.0)) / (pi / 180.0)
     y = y * 20037508.34 / 180.0
     return x, y
+
+def generate_map(path: str, map_path: str,
+                  bounds: Optional[List[Tuple[float, float]]], target: ReadWriteDataArray):
+    logger.info(f"Generating map projection for file {path}; reading file")
+    da = target.read(path)
+    logger.info(f"Reprojecting to EPSG:3857")
+    reprojected = transform_epsg4326_to_epsg3857(da)
+    # sanity check bounds:
+    (top, right, bottom, left) = check_map_bounds(reprojected)
+    if top > 85.05 or bottom < -85.05:
+        raise ValueError('invalid range')
+    logger.info(f"Writing map file {map_path}")
+    target.write(map_path, reprojected)
+    return
 
 def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     src_crs = CRS.from_epsg(4326)
@@ -150,7 +165,7 @@ def geotiff_profile(epsg: int=4326) -> profiles.Profile:
 
 def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None, lowest_bin_transparent=False):
     (data, profile, width, height, transform) = load(os.path.join(input_dir, filename), s3=input_s3)
-    LOG.info("Loaded")
+    logger.info("Loaded")
 
     write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir, lowest_bin_transparent=lowest_bin_transparent)
 
@@ -211,7 +226,7 @@ def write_map_geotiff_data(
 
     filename_stub = filename.split(".")[0]
     alpha = alphanumeric(filename_stub)[0:6]
-    LOG.info(f"Hashing {filename_stub} as code: {alpha}")
+    logger.info(f"Hashing {filename_stub} as code: {alpha}")
 
     colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
     with (s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w")) as f:
@@ -264,13 +279,13 @@ def write_map_geotiff_data(
         # dst.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue ]
         # dst.write(result, indexes=1)
         # dst.write_colormap(1, map)
-        LOG.info("Writing R 1/4")
+        logger.info("Writing R 1/4")
         dst.write(reds[result], 1)
-        LOG.info("Writing G 2/4")
+        logger.info("Writing G 2/4")
         dst.write(greens[result], 2)
-        LOG.info("Writing B 3/4")
+        logger.info("Writing B 3/4")
         dst.write(blues[result], 3)
-        LOG.info("Writing A 4/4")
+        logger.info("Writing A 4/4")
         dst.write(a[result], 4)
 
     if s3 is not None:
@@ -281,7 +296,7 @@ def write_map_geotiff_data(
         with rasterio.open(path_out, "w", **profile) as dst:
             write_dataset(dst)
 
-    LOG.info("Complete")
+    logger.info("Complete")
     return (path_out, colormap_path_out)
 
 
@@ -292,7 +307,7 @@ def upload_geotiff(path, id, access_token):
         while attempt < 5:
             upload_resp = uploader.upload(src, id)
             if upload_resp.status_code == 201:
-                LOG.info("Upload in progress")
+                logger.info("Upload in progress")
                 break
             if upload_resp.status_code != 422:
                 raise Exception("unexpected response")
@@ -305,7 +320,7 @@ def upload_geotiff(path, id, access_token):
         for i in range(5):
             status_resp = uploader.status(upload_id).json()
             if status_resp["complete"]:
-                LOG.info("Complete")
+                logger.info("Complete")
                 break
-            LOG.info("Uploading...")
+            logger.info("Uploading...")
             sleep(5)

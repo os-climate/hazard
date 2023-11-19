@@ -1,6 +1,6 @@
 import json
 from pathlib import PosixPath
-from typing import Callable, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 from pydantic import BaseModel, Field
 from enum import Flag, auto
 from typing import Dict, List, Optional, Tuple
@@ -39,12 +39,13 @@ class MapInfo(BaseModel):
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
+    index_values: Optional[List[Any]] = Field(None, description="Index values to include in maps. If None, the last index value only is included.") 
     # note that the bounds should be consistent with the array attributes
     source: Optional[str] = Field(description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
                             'mapbox'.
-                                  """)
+                            """)
 
 
 class Period(BaseModel):
@@ -111,7 +112,7 @@ def expand_resource(resource: HazardResource, keys: List[str], params: Dict[str,
                         "id": expand(item.indicator_id, key, param),
                         "display_name": expand(item.display_name, key, param),
                         "path": expand(item.path, key, param),
-                        "map": None if item.map is None else item.map.copy(deep=True, update={"array_name": expand(item.map.path, key, param)}),
+                        "map": None if item.map is None else item.map.copy(deep=True, update={"path": expand(item.map.path, key, param)}),
                     }
                 )
 

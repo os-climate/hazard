@@ -38,6 +38,7 @@ def test_output_dir():
     yield output_dir
 
 
+
 @pytest.mark.skip(reason="example")
 def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     model = WRIAqueductFlood()
@@ -72,7 +73,10 @@ def test_iris(test_output_dir, s3_credentials):
 
 
 def promote_iris(s3_credentials):
-    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/wind/iris")
+    for name in ['max_speed_ssp585_2050_map']:
+        prefix = "hazard/hazard.zarr/wind/iris/v1/" + name
+        s3_utilities.remove_from_prod(prefix, dry_run=False)
+        s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True)
 
 
 def copy_iris_files(s3_credentials):

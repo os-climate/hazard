@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 numpy = "*"
 xarray = "*"
-zarr = "===2.10.3"
+zarr = "==2.10.3"
 dask = {extras = ["distributed"], version = "*"}
 rasterio = "*"
 s3fs = "*"
@@ -22,6 +22,7 @@ pydantic = "*"
 mkdocs = "*"
 pymdown-extensions = "*"
 mercantile = "*"
+xclim = "==0.45.0"
 
 [dev-packages]
 isort = "*"

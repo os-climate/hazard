@@ -4,6 +4,7 @@ from affine import Affine # type: ignore
 import dask # type: ignore
 import numpy as np
 import rasterio, rioxarray # type: ignore
+from rasterio.crs import CRS # type: ignore
 import xarray as xr
 import zarr # type: ignore
 
@@ -152,12 +153,19 @@ def get_array_components(da: xr.DataArray, assume_normalized: bool = False) -> T
     return (data, transform, crs)
 
 
+def global_crs_transform(width: int = 3600, height: int = 1800):
+    crs = CRS.from_epsg(4326)
+    affine = Affine(2 * 180 / width, 0, -180.0, 0, -2 * 90 / height, 90)
+    return crs, affine
+
+
 def normalize_array(da: xr.DataArray) -> xr.DataArray:
     """Ensure that DataArray follows the conventions expected by downstream algorithms:
     - dimensions must be (index, latitude, longitude) or (index, y, x) in that order; 'index' is most often
     used for return periods;
     - longitude and index are increasing; latitude is decreasing;
     - CRS is present.
+    - longitude should be in range -180 and 180, not 0 to 360.
     """
 
     mappings = { "X": "x", "Y": "y", "lat": "latitude", "lon": "longitude" }
@@ -194,6 +202,12 @@ def normalize_array(da: xr.DataArray) -> xr.DataArray:
 
     if not da_norm.rio.crs:
         da_norm.rio.write_crs(4326, inplace=True)
+
+    if 'longitude' in da_norm.dims and np.any(da_norm.longitude > 180):
+        longitude = da_norm.longitude
+        longitude = np.where(longitude > 180, longitude - 360, longitude) 
+        da_norm["longitude"] = longitude
+        da_norm = da_norm.roll(longitude=-len(da_norm.longitude) // 2, roll_coords=True)
 
     return da_norm
 

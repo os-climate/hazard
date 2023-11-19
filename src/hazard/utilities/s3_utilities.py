@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Sequence
+from typing import Callable, Dict, Optional, Sequence
 
 import boto3
 
@@ -62,7 +62,7 @@ def copy_prod_to_public(prefix: str, dry_run = False):
 
 
 def list_objects(client, bucket_name, prefix):
-    paginator = client.get_paginator('list_objects_v2')
+    paginator = client.get_paginator('list_objects_v2', PaginationConfig={'MaxItems': 10000})
     pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
     # get the list of keys with the given prefix
     keys = []
@@ -78,10 +78,25 @@ def list_objects(client, bucket_name, prefix):
                 size += objs['Size']
     return keys, size
 
+def list_object_etags(client, bucket_name, prefix):
+    paginator = client.get_paginator('list_objects_v2') #, PaginationConfig={'MaxItems': 10000})
+    pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
+    # get the list of keys with the given prefix
+    etags = {}
+    for page in pages:
+        for objs in page['Contents']:
+            if isinstance(objs, list):
+                for obj in objs:
+                    etags[obj['Key']] = obj['ETag']
+            else:
+                etags[objs['Key']] = objs['ETag']
+    return etags
 
 def copy_objects(keys: Sequence[str], s3_source_client, source_bucket_name: str,
-              s3_target_client, target_bucket_name: str):
+              s3_target_client, target_bucket_name: str, rename: Optional[Callable[[str], str]] = None):
     """Form of copy that allows separate credentials for source and target buckets."""
+    
+    logger.info(f"Source bucket {source_bucket_name}; target bucket {target_bucket_name}")
     
     for i, key in enumerate(keys):
         obj = s3_source_client.get_object(
@@ -89,7 +104,7 @@ def copy_objects(keys: Sequence[str], s3_source_client, source_bucket_name: str,
             Key=key
         )
         data = obj['Body'].read()
-        target_key = key
+        target_key = rename(key) if rename is not None else key
         #target_key = key.replace('hazard_test/hazard.zarr', 'hazard/hazard.zarr')
         s3_target_client.put_object(
             Body=data,
@@ -98,6 +113,47 @@ def copy_objects(keys: Sequence[str], s3_source_client, source_bucket_name: str,
         )
         if i % 100 == 0:
             logger.info(f"Completed {i}/{len(keys)}")
+
+
+def remove_objects(keys: Sequence[str], s3_client, bucket_name: str):
+    for i, key in enumerate(keys):
+        s3_client.delete_object(Bucket=bucket_name, Key=key)
+        if i % 100 == 0:
+            logger.info(f"Completed {i}/{len(keys)}")
+
+
+def remove_from_prod(prefix: str, dry_run = True):
+    s3_client = boto3.client('s3', aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"], 
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"])
+    bucket_name = os.environ["OSC_S3_BUCKET"]
+    keys, size = list_objects(s3_client, bucket_name, prefix)
+    logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
+    logger.info(f"Removing from bucket {bucket_name}")
+    if not dry_run:
+        remove_objects(keys, s3_client, bucket_name)
+
+
+def sync_buckets(s3_source_client, source_bucket_name: str,
+              s3_target_client, target_bucket_name: str, prefix, 
+              dry_run = True):
+    logger.info(f"Syncing target bucket {target_bucket_name} to source {source_bucket_name}.")
+    
+    source_etags = list_object_etags(s3_source_client, source_bucket_name, prefix)
+    target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
+    # look for objects that are 1) missing in target and 2) different in target
+    all_diffs = set(key for key, etag in source_etags.items() if target_etags.get(key, "") != etag)
+    missing = set(key for key in source_etags if key not in target_etags)
+    different =  set(key for key in all_diffs if key not in missing)
+    logger.info(f"Copying {len(missing)} missing files from {source_bucket_name} to {target_bucket_name}: "
+                 + _first_5_last_5(list(missing)))
+    if not dry_run:
+        copy_objects(list(missing), s3_source_client, source_bucket_name, s3_target_client,
+                    target_bucket_name)
+    logger.info(f"Copying {len(different)} different files from {source_bucket_name} to {target_bucket_name}: "
+                 + _first_5_last_5(list(different)))
+    if not dry_run:
+        copy_objects(list(different), s3_source_client, source_bucket_name, s3_target_client,
+                    target_bucket_name)
 
 
 def fast_copy(s3_public_client, keys, source_bucket_name, target_bucket_name, 
@@ -113,3 +169,6 @@ def fast_copy(s3_public_client, keys, source_bucket_name, target_bucket_name,
         s3_public_client.copy_object(CopySource=copy_source, Bucket=target_bucket_name, Key=target_key)
         if i % 100 == 0:
             logger.info(f"Completed {i}/{len(keys)}")
+
+def _first_5_last_5(items):
+    return ', '.join(items[0:5]) + ", ..., " + ', '.join(items[-5:-1])
