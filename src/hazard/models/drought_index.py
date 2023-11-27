@@ -3,7 +3,11 @@ import os, itertools
 from datetime import datetime
 import concurrent.futures
 from pathlib import PurePosixPath
-from typing import Callable, Iterable, MutableMapping, Protocol, Sequence
+from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
+from pydantic.type_adapter import TypeAdapter
+import json
+from typing import Iterable, List, Optional, Protocol, Sequence
 import dask.array as da
 import zarr, zarr.hierarchy # type: ignore
 from zarr.errors import GroupNotFoundError # type: ignore
@@ -27,9 +31,11 @@ class BatchItem():
     scenario: str
     central_year: int
 
+
 class ZarrWorkingStore(Protocol):
     def get_store(self, path: str):
         ...
+
 
 class S3ZarrWorkingStore(ZarrWorkingStore):
     def __init__(self):
@@ -43,12 +49,60 @@ class S3ZarrWorkingStore(ZarrWorkingStore):
     def get_store(self, path: str):
         return s3fs.S3Map(root=str(PurePosixPath(self._base_path, path)), s3=self._s3, check=False)
     
+
 class LocalZarrWorkingStore(ZarrWorkingStore):
     def __init__(self, working_dir: str):
         self._base_path = os.path.join(working_dir, "/drought/osc/v01")
     
     def get_store(self, path: str):
         return zarr.DirectoryStore(os.path.join(self._base_path, path))
+
+
+class ChunkIndicesComplete(BaseModel):
+    complete_indices: List[int]
+
+
+class ProgressStore():
+    def __init__(self, dir: str, id: str):
+        """Simple persistent JSON store of the indices of a chunked calculation
+        that are complete. 
+
+        Args:
+            dir (str): Path to directory for storing progress files.
+            id (str): Identifier for the calculation (for use in filename).
+        """
+        self.dir = dir
+        self.id = id
+        if not os.path.exists(self._filename()):
+            self.reset()
+
+    def reset(self):
+        self._write(ChunkIndicesComplete(complete_indices=[]))
+
+    def add_completed(self, indices: Sequence[int]):
+       existing = set(self._read().complete_indices)
+       union = existing.union(set(indices))
+       self._write(ChunkIndicesComplete(complete_indices = list(union))) 
+
+    def completed(self):
+        return self._read().complete_indices
+    
+    def remaining(self, n_indices: int):
+        existing = self._read().complete_indices
+        return np.setdiff1d(np.arange(0, n_indices, dtype=int), existing)
+
+    def _filename(self):
+        return os.path.join(self.dir, self.id + ".json")
+
+    def _read(self):
+        with open(self._filename(), "r") as f:  
+            indices = TypeAdapter(ChunkIndicesComplete).validate_json(f.read())
+            return indices
+        
+    def _write(self, indices: ChunkIndicesComplete):
+        with open(self._filename(), "w") as f:
+            f.write(json.dumps(indices.model_dump()))
+
 
 class DroughtIndicator:
     def __init__(self,
@@ -125,21 +179,33 @@ class DroughtIndicator:
                     for x in zip(lon_bins[:-1], lon_bins[1:])]))}
         return data_chunks
 
-    def calculate_spei(self, gcm, scenario):
+    def calculate_spei(self, gcm, scenario, progress_store: Optional[ProgressStore] = None):
         """Calculate SPEI for the given GCM and scenario, storing """
         # we infer the lats and lons from the source dataset:
         ds_chunked = self.chunked_dataset(gcm, scenario, "tas")
         data_chunks = self.get_datachunks()
         chunk_names = list(data_chunks.keys())
+        if progress_store:
+            chunk_names_remaining = list(np.array(chunk_names)[progress_store.remaining(len(chunk_names))])
+        else:
+            chunk_names_remaining = chunk_names
+        
         # do the first chunk in isolation to ensure that dataset is written without contention
-        self._calculate_spei_chunk(chunk_names[0], data_chunks, ds_chunked, gcm, scenario)
+        if chunk_names[0] in chunk_names_remaining:
+            self._calculate_spei_chunk(chunk_names[0], data_chunks, ds_chunked, gcm, scenario)
+            chunk_names_remaining.remove(chunk_names[0])
+            if progress_store:
+                progress_store.add_completed([0])
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:  
             futures = {executor.submit(self._calculate_spei_chunk, chunk_name, data_chunks, ds_chunked, gcm, scenario): chunk_name
-                       for chunk_name in chunk_names[1:]}
+                       for chunk_name in chunk_names_remaining}
             for future in concurrent.futures.as_completed(futures):
                 try:
                     chunk_name = future.result()
-                    logger.info(f"chunk {chunk_name} complete.") 
+                    logger.info(f"chunk {chunk_name} complete.")
+                    if progress_store:
+                        progress_store.add_completed([chunk_names.index(chunk_name)])
                 except Exception as exc:
                     logger.info(f"chunk {futures[future]} failed.") 
 
