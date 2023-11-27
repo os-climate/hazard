@@ -5,28 +5,27 @@ import os
 import dask.array as da
 import fsspec.implementations.local as local # type: ignore
 import numpy as np
-import s3fs
+import s3fs # type: ignore
 import xarray as xr
-import zarr
+import zarr # type: ignore
 from hazard.docs_store import DocStore
 
 
-from hazard.models.drought_index import DroughtIndicator
+from hazard.models.drought_index import DroughtIndicator, S3ZarrWorkingStore
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 from .utilities import TestTarget, s3_credentials, test_output_dir
 
 def test_spei_indicator(test_output_dir, s3_credentials):
     # to test 
-    s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
-    working_path = os.environ["OSC_S3_BUCKET_DEV"] + "/drought/osc/v01"
-    zarr_store = s3fs.S3Map(root=working_path, s3=s3, check=False)
-    model = DroughtIndicator(zarr_store)
+    gcm = "MIROC6"
+    scenario = "ssp585"
+    working_store = S3ZarrWorkingStore()
+    model = DroughtIndicator(working_store)
+    model.calculate_spei(gcm, scenario)
     target = TestTarget()
     data_chunks = model.get_datachunks()
     test_chunk = data_chunks["Chunk_0255"]
-    gcm = "MIROC6"
-    scenario = "ssp585"
     lat_min, lat_max = test_chunk["lat_min"], test_chunk["lat_max"]
     lon_min, lon_max = test_chunk["lon_min"], test_chunk["lon_max"]
     assert lat_min == 10.0 and lat_max == 20.0

@@ -1,8 +1,12 @@
 import logging
 import os, itertools
 from datetime import datetime
-from typing import Iterable, MutableMapping, Sequence
+import concurrent.futures
+from pathlib import PurePosixPath
+from typing import Callable, Iterable, MutableMapping, Protocol, Sequence
 import dask.array as da
+import zarr, zarr.hierarchy # type: ignore
+from zarr.errors import GroupNotFoundError # type: ignore
 
 import numpy as np # type: ignore
 import s3fs # type: ignore
@@ -23,10 +27,32 @@ class BatchItem():
     scenario: str
     central_year: int
 
+class ZarrWorkingStore(Protocol):
+    def get_store(self, path: str):
+        ...
+
+class S3ZarrWorkingStore(ZarrWorkingStore):
+    def __init__(self):
+        s3 = s3fs.S3FileSystem(anon=False,
+                               key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+                               secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
+        base_path = os.environ["OSC_S3_BUCKET_DEV"] + "/drought/osc/v01"
+        self._base_path = base_path
+        self._s3 = s3
+    
+    def get_store(self, path: str):
+        return s3fs.S3Map(root=str(PurePosixPath(self._base_path, path)), s3=self._s3, check=False)
+    
+class LocalZarrWorkingStore(ZarrWorkingStore):
+    def __init__(self, working_dir: str):
+        self._base_path = os.path.join(working_dir, "/drought/osc/v01")
+    
+    def get_store(self, path: str):
+        return zarr.DirectoryStore(os.path.join(self._base_path, path))
 
 class DroughtIndicator:
     def __init__(self,
-                working_zarr_store: MutableMapping,
+                working_zarr_store: ZarrWorkingStore,
                 window_years: int=MultiYearAverageIndicatorBase._default_window_years,
                 gcms: Iterable[str] = ["MIROC6"],  #MultiYearAverageIndicatorBase._default_gcms,
                 scenarios: Iterable[str]=MultiYearAverageIndicatorBase._default_scenarios,
@@ -85,7 +111,7 @@ class DroughtIndicator:
         return ds
 
     def chunked_dataset(self, gcm, scenario, quantity) -> xr.Dataset:
-        ds = xr.open_zarr(store=self.working_zarr_store, group=quantity + "_" + gcm + "_" + scenario)
+        ds = xr.open_zarr(store=self.working_zarr_store.get_store(quantity + "_" + gcm + "_" + scenario))
         return ds
 
     def get_datachunks(self):
@@ -104,41 +130,57 @@ class DroughtIndicator:
         # we infer the lats and lons from the source dataset:
         ds_chunked = self.chunked_dataset(gcm, scenario, "tas")
         data_chunks = self.get_datachunks()
-        ds_spei = None
-        zarr_root = os.path.join(self.working_source_path, "spei", gcm + "_" + scenario)
-        zarr_store = s3fs.S3Map(root=zarr_root, s3=self.s3_working, check=False)
         chunk_names = list(data_chunks.keys())
-        for chunk_name in chunk_names:             
-            data_chunk = data_chunks[chunk_name]
-            lat_min, lat_max = data_chunk['lat_min'], data_chunk['lat_max']
-            lon_min, lon_max = data_chunk['lon_min'], data_chunk['lon_max']
-            ds_spei_slice = self.calculate_spei_for_slice(lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario)
-            lats_all, lons_all = ds_chunked['lat'].values, ds_chunked['lon'].values
-            # consider refactoring data_chunks to give both slice and values?
-            lat_indexes = np.where(np.logical_and(ds_spei['lat'].values >= lat_min, ds_spei['lat'].values <= lat_max))[0]
-            lon_indexes = np.where(np.logical_and(ds_spei['lon'].values >= lon_min, ds_spei['lon'].values <= lon_max))[0]
-            if ds_spei is None:
-                # must use deferred dask array to avoid allocating memory for whole array
-                data = da.empty([len(ds_spei_slice['time'].values), len(lats_all), len(lons_all)])
-                ds_spei = xr.DataArray(data=data, coords={'time': ds_spei_slice['time'].values, 'lat': lats_all,'lon': lons_all}, 
-                                       dims=["time", "lat", "lon"]).chunk(chunks={'lat': 40,'lon': 40,'time': 100000}).to_dataset(name='spei')
-                # compute=False to avoid calculating array
-                ds_spei.to_zarr(store=zarr_store, mode='w', compute=False)
-                logger.info(f"created new zarr array.") 
-            else:
-                # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
-                ds_spei_slice.to_zarr(store=zarr_store, mode='r+', 
-                                      region={"lat": slice(lat_indexes[0], lat_indexes[-1] + 1), "lon": slice(lon_indexes[0], lon_indexes[-1] + 1)})
-                logger.info(f"written chunk {chunk_name} to zarr array.") 
+        # do the first chunk in isolation to ensure that dataset is written without contention
+        self._calculate_spei_chunk(chunk_names[0], data_chunks, ds_chunked, gcm, scenario)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:  
+            futures = {executor.submit(self._calculate_spei_chunk, chunk_name, data_chunks, ds_chunked, gcm, scenario): chunk_name
+                       for chunk_name in chunk_names[1:]}
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    chunk_name = future.result()
+                    logger.info(f"chunk {chunk_name} complete.") 
+                except Exception as exc:
+                    logger.info(f"chunk {futures[future]} failed.") 
+
+    def _calculate_spei_chunk(self, chunk_name, data_chunks, ds_chunked: xr.Dataset, gcm, scenario):
+        data_chunk = data_chunks[chunk_name]
+        lat_min, lat_max = data_chunk['lat_min'], data_chunk['lat_max']
+        lon_min, lon_max = data_chunk['lon_min'], data_chunk['lon_max']
+        ds_spei_slice = self._calculate_spei_for_slice(lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario)
+        lats_all, lons_all = ds_chunked['lat'].values, ds_chunked['lon'].values
+        path = os.path.join("spei", gcm + "_" + scenario)
+        store = self.working_zarr_store.get_store(path)
+        # consider refactoring data_chunks to give both slice and values?
+        try:
+            # if dataset does not already exist then create
+            zarr.hierarchy.open_group(store=store, mode='r')
+        except GroupNotFoundError:
+            # must use deferred dask array to avoid allocating memory for whole array
+            data = da.empty([len(ds_spei_slice['time'].values), len(lats_all), len(lons_all)])
+            ds_spei = xr.DataArray(data=data, coords={'time': ds_spei_slice['time'].values, 'lat': lats_all,'lon': lons_all}, 
+                                    dims=["time", "lat", "lon"]).chunk(chunks={'lat': 40,'lon': 40,'time': 100000}).to_dataset(name='spei')
+            # compute=False to avoid calculating array
+            ds_spei.to_zarr(store=store,
+                            mode='w', compute=False)
+            logger.info(f"created new zarr array.") 
+            # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
+
+        lat_indexes = np.where(np.logical_and(lats_all >= lat_min, lats_all <= lat_max))[0]
+        lon_indexes = np.where(np.logical_and(lons_all >= lon_min, lons_all <= lon_max))[0]
+        ds_spei_slice.to_zarr(store=self.working_zarr_store, mode='r+', 
+                                region={"lat": slice(lat_indexes[0], lat_indexes[-1] + 1), "lon": slice(lon_indexes[0], lon_indexes[-1] + 1)})
+        logger.info(f"written chunk {chunk_name} to zarr array.") 
+        return chunk_name
             
-    def calculate_spei_for_slice(
+    def _calculate_spei_for_slice(
             self,
             lat_min, lat_max,
             lon_min, lon_max,
             *,
             gcm,
             scenario,
-            num_workers = 4):
+            num_workers = 2):
         ds_tas = self.read_quantity_from_s3_store(gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max).chunk({'time': 100000})
         ds_pr = self.read_quantity_from_s3_store(gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max).chunk({'time': 100000}) 
         ds_tas = ds_tas.drop_duplicates(dim=..., keep='last').sortby('time')
@@ -147,8 +189,8 @@ class DroughtIndicator:
         da_wb = xclim.indices.water_budget(pr=ds_pr['pr'], evspsblpot=ds_pet['pet'])
         with xr.set_options(keep_attrs=True):
             da_wb = da_wb - 1.01 * da_wb.min()
-        da_wb_calib = da_wb.sel(time=slice(str(self.calib_start)[:10], str(self.calib_end)[:10]))
-        da_wb_calc = da_wb.sel(time=slice(str(self.calc_start)[:10], str(self.calc_end)[:10]))
+        da_wb_calib = da_wb.sel(time=slice(self.calib_start.strftime("%Y-%m-%d"), self.calib_end.strftime("%Y-%m-%d")))
+        da_wb_calc = da_wb.sel(time=slice(self.calc_start.strftime("%Y-%m-%d"), self.calc_end.strftime("%Y-%m-%d")))
         ds_spei = (
                 xclim.indices.standardized_precipitation_evapotranspiration_index(
                                                                         da_wb_calc,
