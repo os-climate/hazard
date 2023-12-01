@@ -83,7 +83,9 @@ class FutureStreamsSource(OpenDataset):
         from_year = self.from_year(gcm, to_year)
         path, url = self.water_temp_download_path(gcm, scenario, from_year, to_year)
         self.download_file(url, path)
-        return xr.open_dataset(path, chunks=chunks)
+        dataset = xr.open_dataset(path, chunks=chunks)
+        os.unlink(path)
+        return dataset
 
     def water_temp_download_path(
         self, gcm: str, scenario: str, from_year: int, to_year: int
