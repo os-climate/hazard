@@ -38,29 +38,50 @@ class FutureStreamsSource(OpenDataset):
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
 
-        self.from_historical_years = [1976, 1986, 1996]
-        self.to_historical_years = [1985, 1995, 2005]
+        self.from_years = [
+            1976,
+            1986,
+            1996,
+            2006,
+            2020,
+            2030,
+            2040,
+            2050,
+            2060,
+            2070,
+            2080,
+            2090,
+        ]
+        self.to_years = [
+            1985,
+            1995,
+            2005,
+            2019,
+            2029,
+            2039,
+            2049,
+            2059,
+            2069,
+            2079,
+            2089,
+            2099,
+        ]
 
-        self.from_years = [2006, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090]
-        self.to_years = [2019, 2029, 2039, 2049, 2059, 2069, 2079, 2089, 2099]
+    def from_year(self, gcm, to_year: int) -> int:
+        if to_year not in self.to_years:
+            raise ValueError(
+                f"The input year {to_year} is not within the available from_years={list(self.to_years)}"
+            )
+        from_year = self.from_years[self.to_years.index(to_year)]
+        if gcm == "E2O" and from_year == 1976:
+            return 1979
+        return from_year
 
     def open_dataset_year(
-        self, gcm: str, scenario: str, _: str, year: int, chunks=None
+        self, gcm: str, scenario: str, _: str, to_year: int, chunks=None
     ) -> xr.Dataset:
-        from_years = (
-            self.from_historical_years if scenario == "historical" else self.from_years
-        )
-        to_years = (
-            self.to_historical_years if scenario == "historical" else self.to_years
-        )
-        set_from_year, set_to_year = next(
-            (from_year, to_year)
-            for from_year, to_year in zip(from_years, to_years)
-            if year >= from_year and year <= to_year
-        )
-        path, url = self.water_temp_download_path(
-            gcm, scenario, set_from_year, set_to_year
-        )
+        from_year = self.from_year(gcm, to_year)
+        path, url = self.water_temp_download_path(gcm, scenario, from_year, to_year)
         self.download_file(url, path)
         return xr.open_dataset(path, chunks=chunks)
 
@@ -78,27 +99,16 @@ class FutureStreamsSource(OpenDataset):
         return os.path.join(self.working_dir, filename), url
 
     def filename(self, gcm: str, scenario: str, from_year: int, to_year: int):
-        adjusted_from_year = (
-            1979
-            if scenario == "historical"
-            and gcm == "E2O"
-            and from_year == self.from_historical_years[0]
-            else from_year
-        )
-        from_date = f"{adjusted_from_year}-01-07"
+        from_date = f"{from_year}-01-07"
         to_date = f"{to_year}-12-30"
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         return f"waterTemp_weekAvg_output_{adjusted_gcm}_{adjusted_scenario}_{from_date}_to_{to_date}.nc"
 
     def download_all(self, gcm: str, scenario: str):
-        from_years = (
-            self.from_historical_years if scenario == "historical" else self.from_years
-        )
-        to_years = (
-            self.to_historical_years if scenario == "historical" else self.to_years
-        )
-        for from_year, to_year in zip(from_years, to_years):
+        to_years = self.to_years[:3] if scenario == "historical" else self.to_years[3:]
+        for to_year in to_years:
+            from_year = self.from_year(gcm, to_year)
             filename, url = self.water_temp_download_path(
                 gcm, scenario, from_year, to_year
             )
@@ -152,47 +162,62 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
             central_years=central_years,
         )
         self.threshold_temps_c = threshold_temps_c
+        self.resource = self._resource()
 
     def _years(self, source: OpenDataset, item: Averageable) -> List[int]:
         if item.scenario == "historical":
-            return source.from_historical_years
+            return source.to_years[:3]
         return [
-            source.from_year
-            for (from_year, to_year) in zip(source.from_years, source.to_years)
-            if from_year == item.year or to_year + 1 == item.year
+            source.to_year
+            for (from_year, to_year) in zip(source.from_years[3:], source.to_years[3:])
+            if from_year == item.central_year or to_year + 1 == item.central_year
         ]
 
     def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, year: int
+        self, source: OpenDataset, item: BatchItem, to_year: int
     ) -> List[Indicator]:
+        from_year: int = source.from_year(item.gcm, to_year)
+        correction: float = 1.0
+        if item.gcm == "E2O" and item.scenario == "historical":
+            correction = float(to_year - from_year + 1) / 9.0
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
-        logger.info(f"Starting calculation for year {year}")
+        logger.info(f"Starting calculation for years from {from_year} to {to_year}")
         with ExitStack() as stack:
             dataset = stack.enter_context(
                 source.open_dataset_year(
                     item.gcm,
                     item.scenario,
                     "waterTemperature",
-                    year,
+                    to_year,
                     chunks={"time": -1, "latitude": 540, "longitude": 1080},
                 )
             ).waterTemperature
-            results = self._weeks_water_temp_above_indicators(dataset)
-        logger.info(f"Calculation complete for year {year}")
+            if from_year == 2006:
+                cutoff = item.central_year - self.window_years // 2 - 1970
+                from_index = min(
+                    [
+                        i
+                        for i, time in enumerate(dataset.time.values)
+                        if cutoff <= time.astype("datetime64[Y]").astype(int)
+                    ]
+                )
+                dataset = dataset[from_index:]
+            results = self._weeks_water_temp_above_indicators(dataset, correction)
+        logger.info(f"Calculation complete for years from {from_year} to {to_year}")
         return [
             Indicator(
                 results,
                 PurePosixPath(
-                    self._resource.path.format(
+                    self.resource.path.format(
                         gcm=item.gcm, scenario=item.scenario, year=item.central_year
                     )
                 ),
-                self.resources["above"].map.bounds,
+                self.resource.map.bounds,
             )
         ]
 
     def _weeks_water_temp_above_indicators(
-        self, input: xr.DataArray
+        self, input: xr.DataArray, correction: float
     ) -> List[xr.DataArray]:
         """Create DataArrays containing indicators the thresholds for a single year."""
         if any(
@@ -201,7 +226,7 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
         ):
             raise ValueError("expect coordinates: 'latitude', 'longitude' and 'time'")
         # normalize to 52 weeks
-        scale = 52.0 / len(input.time)
+        scale = 52.0 * correction / len(input.time)
         coords = {
             "index": self.threshold_temps_c,
             "lat": input.coords["latitude"].values,
