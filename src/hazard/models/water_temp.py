@@ -170,7 +170,7 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
         if item.scenario == "historical":
             return source.to_years[:3]
         return [
-            source.to_year
+            to_year
             for (from_year, to_year) in zip(source.from_years[3:], source.to_years[3:])
             if from_year == item.central_year or to_year + 1 == item.central_year
         ]
