@@ -67,36 +67,32 @@ class FutureStreamsSource(OpenDataset):
             2099,
         ]
 
-    def from_year(self, gcm, to_year: int) -> int:
-        if to_year not in self.to_years:
+    def from_year(self, gcm, year: int) -> int:
+        if year not in self.to_years:
             raise ValueError(
-                f"The input year {to_year} is not within the available from_years={list(self.to_years)}"
+                f"The input year {year} is not within the available from_years={list(self.to_years)}"
             )
-        from_year = self.from_years[self.to_years.index(to_year)]
+        from_year = self.from_years[self.to_years.index(year)]
         if gcm == "E2O" and from_year == 1976:
             return 1979
         return from_year
 
     def open_dataset_year(
-        self, gcm: str, scenario: str, _: str, to_year: int, chunks=None
+        self, gcm: str, scenario: str, _: str, year: int, chunks=None
     ) -> xr.Dataset:
-        from_year = self.from_year(gcm, to_year)
-        path, url = self.water_temp_download_path(gcm, scenario, from_year, to_year)
+        path, url = self.water_temp_download_path(gcm, scenario, year)
         self.download_file(url, path)
         return xr.open_dataset(path, chunks=chunks)
 
-    def delete_file_year(self, gcm: str, scenario: str, to_year: int) -> None:
-        from_year = self.from_year(gcm, to_year)
-        path, _ = self.water_temp_download_path(gcm, scenario, from_year, to_year)
+    def delete_file_year(self, gcm: str, scenario: str, year: int) -> None:
+        path, _ = self.water_temp_download_path(gcm, scenario, year)
         if os.path.isfile(path) or os.path.islink(path):
             os.unlink(path)
 
-    def water_temp_download_path(
-        self, gcm: str, scenario: str, from_year: int, to_year: int
-    ):
+    def water_temp_download_path(self, gcm: str, scenario: str, year: int):
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
-        filename = self.filename(gcm, scenario, from_year, to_year)
+        filename = self.filename(gcm, scenario, year)
         url = (
             "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/"
             + f"original/waterTemp/{adjusted_scenario}/{adjusted_gcm}/"
@@ -104,23 +100,23 @@ class FutureStreamsSource(OpenDataset):
         )
         return os.path.join(self.working_dir, filename), url
 
-    def filename(self, gcm: str, scenario: str, from_year: int, to_year: int):
+    def filename(self, gcm: str, scenario: str, year: int):
+        from_year = self.from_year(gcm, year)
         from_date = f"{from_year}-01-07"
-        to_date = f"{to_year}-12-30"
+        to_date = f"{year}-12-30"
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         return f"waterTemp_weekAvg_output_{adjusted_gcm}_{adjusted_scenario}_{from_date}_to_{to_date}.nc"
 
     def download_all(self, gcm: str, scenario: str):
-        to_years = self.to_years[:3] if scenario == "historical" else self.to_years[3:]
-        for to_year in to_years:
-            from_year = self.from_year(gcm, to_year)
-            filename, url = self.water_temp_download_path(
-                gcm, scenario, from_year, to_year
-            )
+        years = self.to_years[:3] if scenario == "historical" else self.to_years[3:]
+        for year in years:
+            filename, url = self.water_temp_download_path(gcm, scenario, year)
             self.download_file(url, os.path.join(self.working_dir, filename))
 
     def download_file(self, url, path):
+        # if os.path.exists(path):
+        #    return
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(path, "wb") as f:
@@ -180,21 +176,25 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         ]
 
     def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, to_year: int
+        self, source: OpenDataset, item: BatchItem, year: int
     ) -> List[Indicator]:
-        from_year: int = source.from_year(item.gcm, to_year)
+        from_year: int = (
+            source.from_year(item.gcm, year)
+            if hasattr(source, "from_year")
+            else (year - self.window_years // 2 + 1)
+        )
         correction: float = 1.0
         if item.gcm == "E2O" and item.scenario == "historical":
-            correction = float(to_year - from_year + 1) / 9.0
+            correction = float(year - from_year + 1) / 9.0
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
-        logger.info(f"Starting calculation for years from {from_year} to {to_year}")
+        logger.info(f"Starting calculation for years from {from_year} to {year}")
         with ExitStack() as stack:
             dataset = stack.enter_context(
                 source.open_dataset_year(
                     item.gcm,
                     item.scenario,
                     "waterTemperature",
-                    to_year,
+                    year,
                     chunks={"time": -1, "latitude": 540, "longitude": 1080},
                 )
             ).waterTemperature
@@ -209,8 +209,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 )
                 dataset = dataset[from_index:, :, :]
             results = self._weeks_water_temp_above_indicators(dataset, correction)
-        logger.info(f"Calculation complete for years from {from_year} to {to_year}")
-        source.delete_file_year(item.gcm, item.scenario, to_year)
+        logger.info(f"Calculation complete for years from {from_year} to {year}")
+        if hasattr(source, "delete_file"):
+            source.delete_file(item.gcm, item.scenario, year)
         return [
             Indicator(
                 results,
