@@ -179,7 +179,11 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         """Get batch items (batch items can be calculated independently from one another)."""
         resource = self._resource()
         for gcm in self.gcms:
-            scenarios = ["historical"] if gcm == "E2O" else self.scenarios
+            scenarios = (
+                [scenario for scenario in self.scenarios if scenario == "historical"]
+                if gcm == "E2O"
+                else self.scenarios
+            )
             for scenario in scenarios:
                 central_years = (
                     [self.central_year_historical]
