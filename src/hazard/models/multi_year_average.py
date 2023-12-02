@@ -1,6 +1,5 @@
 import logging
 from abc import abstractmethod
-from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Iterable, List, Optional, Tuple, TypeVar
