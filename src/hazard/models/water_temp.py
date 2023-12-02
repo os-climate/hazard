@@ -128,7 +128,7 @@ class FutureStreamsSource(OpenDataset):
                     f.write(chunk)
 
 
-class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
+class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
     def __init__(
         self,
         threshold_temps_c: List[float] = [
@@ -277,8 +277,9 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
                     max_index=255,
                     units="weeks/year",
                 ),
-                bounds=[(-180.0, 90.0), (180.0, 90.0), (180.0, -90.0), (-180.0, -90.0)],
+                bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 path="weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
+                index_values=self.threshold_temps_c,
                 source="map_array",
             ),
             units="weeks/year",
