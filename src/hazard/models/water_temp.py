@@ -83,9 +83,13 @@ class FutureStreamsSource(OpenDataset):
         from_year = self.from_year(gcm, to_year)
         path, url = self.water_temp_download_path(gcm, scenario, from_year, to_year)
         self.download_file(url, path)
-        dataset = xr.open_dataset(path, chunks=chunks)
-        os.unlink(path)
-        return dataset
+        return xr.open_dataset(path, chunks=chunks)
+
+    def delete_file_year(self, gcm: str, scenario: str, to_year: int) -> None:
+        from_year = self.from_year(gcm, to_year)
+        path, _ = self.water_temp_download_path(gcm, scenario, from_year, to_year)
+        if os.path.isfile(path) or os.path.islink(path):
+            os.unlink(path)
 
     def water_temp_download_path(
         self, gcm: str, scenario: str, from_year: int, to_year: int
@@ -203,9 +207,10 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
                         if cutoff <= time.astype("datetime64[Y]").astype(int)
                     ]
                 )
-                dataset = dataset[from_index:]
+                dataset = dataset[from_index:, :, :]
             results = self._weeks_water_temp_above_indicators(dataset, correction)
         logger.info(f"Calculation complete for years from {from_year} to {to_year}")
+        source.delete_file_year(item.gcm, item.scenario, to_year)
         return [
             Indicator(
                 results,
@@ -237,10 +242,10 @@ class WaterTemperatureIndicator(ThresholdBasedAverageIndicator):
         output = xr.DataArray(coords=coords, dims=coords.keys())
         for i, threshold_c in enumerate(self.threshold_temps_c):
             threshold_k = 273.15 + threshold_c
-            output[i, :, :] = scale * xr.where(input > threshold_k, 1.0, 0.0).sum(
+            output[i, :, :] = xr.where(input > threshold_k, scale, 0.0).sum(
                 dim=["time"]
             )
-        return input
+        return output
 
     def _resource(self) -> HazardResource:
         """Create resource."""
