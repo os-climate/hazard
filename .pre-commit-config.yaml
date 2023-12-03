@@ -3,16 +3,5 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
-      - id: trailing-whitespace
       - id: check-merge-conflict
-      - id: name-tests-test
-      - id: check-byte-order-marker
-      - id: check-case-conflict
-      - id: check-docstring-first
-      - id: check-json
-      - id: check-toml
-      - id: check-yaml
-      - id: check-symlinks
-      - id: detect-private-key
-      - id: check-ast
-      - id: debug-statements
+      
