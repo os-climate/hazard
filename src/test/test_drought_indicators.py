@@ -17,13 +17,14 @@ from hazard.models.drought_index import (
     ProgressStore,
     S3ZarrWorkingStore,
 )
+
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 from .utilities import TestTarget, s3_credentials, test_output_dir
 
 
 def test_spei_indicator(test_output_dir, s3_credentials):
-    # to test
+    # to test 
     gcm = "MIROC6"
     scenario = "ssp585"
     working_store = S3ZarrWorkingStore()
@@ -119,6 +120,13 @@ def test_check_result(test_output_dir, s3_credentials):
     attrs = za.attrs
     print(attrs)
 
+def test_progress_store(test_output_dir):
+    store = ProgressStore(test_output_dir, "test_progress_store")
+    store.reset()
+    store.add_completed([4, 5, 8])
+    store.add_completed([6, 7, 8])
+    remaining = store.remaining(10) # 0 to 9
+    np.testing.assert_array_equal(remaining, [0, 1, 2, 3, 9])
 
 def test_progress_store(test_output_dir):
     store = ProgressStore(test_output_dir, "test_progress_store")
