@@ -3,8 +3,8 @@ import os
 from pathlib import PurePosixPath
 from typing import Callable, Dict, Iterable, List, Optional
 
-import s3fs # type: ignore
-from fsspec import AbstractFileSystem # type: ignore
+import s3fs  # type: ignore
+from fsspec import AbstractFileSystem  # type: ignore
 from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import OscZarr, default_dev_bucket
@@ -34,7 +34,7 @@ class DocStore:
 
     def __init__(
         self,
-        bucket = default_dev_bucket,
+        bucket=default_dev_bucket,
         prefix: str = "hazard",
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
@@ -79,7 +79,7 @@ class DocStore:
         with self._fs.open(self._full_path_inventory(), "r") as f:
             json_str = f.read()
         return json_str
-    
+
     def write_inventory_json(self, json_str: str):
         """Write inventory."""
         path = self._full_path_inventory()
@@ -91,19 +91,23 @@ class DocStore:
         path = self._full_path_inventory()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         models = HazardResources(resources=[])
-        json_str = json.dumps(models.dict(), indent=4) # pretty print
+        json_str = json.dumps(models.dict(), indent=4)  # pretty print
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool=False):
+    def update_inventory(
+        self, resources: Iterable[HazardResource], remove_existing: bool = False
+    ):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
         path = self._full_path_inventory()
-        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory()) 
+        combined = (
+            {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
+        )
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))
-        json_str = json.dumps(models.dict(), indent=4) # pretty print
+        json_str = json.dumps(models.dict(), indent=4)  # pretty print
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 

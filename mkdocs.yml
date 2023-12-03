@@ -12,7 +12,7 @@ extra_javascript:
 
 # Thanks to python-markdown-math
 # pip install pymdown-extensions
-#markdown_extensions: 
+#markdown_extensions:
 #    - mdx_math:
 #        enable_dollar_delimiter: True #for use of inline $..$
 #    - fenced_code

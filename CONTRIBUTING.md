@@ -20,7 +20,7 @@ When adding a package for use in new or improved functionality,
 testing or development, `pipenv install -d <package-name>`.
 
 ### JupyterHub and requirements.txt
-It may be useful to generate a requirements.txt file:  
+It may be useful to generate a requirements.txt file:
 ```
 pipenv requirements > requirements.txt
 ```
@@ -69,7 +69,7 @@ to allow running of tests within the IDE.
 ## Releasing
 Actions are configured to release to PyPI on pushing a tag. In order to do this:
 - Update VERSION
-- Create new annotated tag and push 
+- Create new annotated tag and push
 ```
 git tag -a v1.0.0 -m "v1.0.0"
 git push --follow-tags
@@ -78,5 +78,3 @@ git push --follow-tags
 ## Forking workflow
 This is a useful clarification of the forking workflow:
 https://gist.github.com/Chaser324/ce0505fbed06b947d962
-
-

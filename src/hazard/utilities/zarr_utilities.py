@@ -6,16 +6,18 @@ from pathlib import PurePosixPath
 from typing import List, Tuple
 
 import numpy as np
-import s3fs # type: ignore
-import zarr # type: ignore
-from affine import Affine # type: ignore
+import s3fs  # type: ignore
+import zarr  # type: ignore
+from affine import Affine  # type: ignore
 from dotenv import load_dotenv
 
 
 def add_logging_output_to_stdout(LOG):
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     handler.setFormatter(formatter)
     LOG.addHandler(handler)
 
@@ -30,7 +32,7 @@ def get_coordinates(longitudes, latitudes, transform):
 
 
 def get_geotiff_meta_data(path, s3):
-    from tifffile.tifffile import TiffFile # type: ignore
+    from tifffile.tifffile import TiffFile  # type: ignore
 
     with s3.open(path) as f:
         with TiffFile(f) as tif:
@@ -59,7 +61,11 @@ def zarr_create(group_path, path, s3, shape, transform, return_periods):
 
     z = root.create_dataset(
         path,
-        shape=(1 if return_periods is None else len(return_periods), shape[0], shape[1]),
+        shape=(
+            1 if return_periods is None else len(return_periods),
+            shape[0],
+            shape[1],
+        ),
         chunks=(1 if return_periods is None else len(return_periods), 1000, 1000),
         dtype="f4",
         overwrite=True,
