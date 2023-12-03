@@ -5,7 +5,7 @@ import logging
 import os
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
 import requests  # type: ignore
 import xarray as xr
@@ -67,7 +67,7 @@ class FutureStreamsSource(OpenDataset):
             2099,
         ]
 
-    def from_year(self, gcm, year: int) -> int:
+    def from_year(self, gcm: str, year: int) -> int:
         if year not in self.to_years:
             raise ValueError(
                 f"The input year {year} is not within the available from_years={list(self.to_years)}"
@@ -84,12 +84,14 @@ class FutureStreamsSource(OpenDataset):
         self.download_file(url, path)
         return xr.open_dataset(path, chunks=chunks)
 
-    def delete_file_year(self, gcm: str, scenario: str, year: int) -> None:
+    def delete_file(self, gcm: str, scenario: str, year: int) -> None:
         path, _ = self.water_temp_download_path(gcm, scenario, year)
         if os.path.isfile(path) or os.path.islink(path):
             os.unlink(path)
 
-    def water_temp_download_path(self, gcm: str, scenario: str, year: int):
+    def water_temp_download_path(
+        self, gcm: str, scenario: str, year: int
+    ) -> Tuple[str, str]:
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         filename = self.filename(gcm, scenario, year)
@@ -100,7 +102,7 @@ class FutureStreamsSource(OpenDataset):
         )
         return os.path.join(self.working_dir, filename), url
 
-    def filename(self, gcm: str, scenario: str, year: int):
+    def filename(self, gcm: str, scenario: str, year: int) -> str:
         from_year = self.from_year(gcm, year)
         from_date = f"{from_year}-01-07"
         to_date = f"{year}-12-30"
@@ -108,15 +110,13 @@ class FutureStreamsSource(OpenDataset):
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         return f"waterTemp_weekAvg_output_{adjusted_gcm}_{adjusted_scenario}_{from_date}_to_{to_date}.nc"
 
-    def download_all(self, gcm: str, scenario: str):
+    def download_all(self, gcm: str, scenario: str) -> None:
         years = self.to_years[:3] if scenario == "historical" else self.to_years[3:]
         for year in years:
             filename, url = self.water_temp_download_path(gcm, scenario, year)
             self.download_file(url, os.path.join(self.working_dir, filename))
 
-    def download_file(self, url, path):
-        # if os.path.exists(path):
-        #    return
+    def download_file(self, url: str, path: str) -> None:
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(path, "wb") as f:
@@ -166,6 +166,26 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         self.threshold_temps_c = threshold_temps_c
         self.resource = self._resource()
 
+    def inventory(self) -> Iterable[HazardResource]:
+        """Get the inventory item(s)."""
+        if "E2O" in self.gcms and "historical" in self.scenarios:
+            return [self.resource, self._other_resource()]
+        return [self.resource]
+
+    def batch_items(self) -> Iterable[BatchItem]:
+        """Get batch items (batch items can be calculated independently from one another)."""
+        items = [item for item in super().batch_items() if item.gcm != "E2O"]
+        if "E2O" in self.gcms and "historical" in self.scenarios:
+            items.append(
+                BatchItem(
+                    resource=self._other_resource(),
+                    gcm="E20",
+                    scenario="historical",
+                    central_year=self.central_year_historical,
+                )
+            )
+        return items
+
     def _years(self, source: OpenDataset, item: Averageable) -> List[int]:
         if item.scenario == "historical":
             return source.to_years[:3]
@@ -212,15 +232,18 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         logger.info(f"Calculation complete for years from {from_year} to {year}")
         if hasattr(source, "delete_file"):
             source.delete_file(item.gcm, item.scenario, year)
+        path = (
+            item.resource.path.format(scenario=item.scenario, year=item.central_year)
+            if item.gcm == "E2O"
+            else item.resource.path.format(
+                gcm=item.gcm, scenario=item.scenario, year=item.central_year
+            )
+        )
         return [
             Indicator(
                 results,
-                PurePosixPath(
-                    self.resource.path.format(
-                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
-                    )
-                ),
-                self.resource.map.bounds,
+                PurePosixPath(path),
+                item.resource.map.bounds,
             )
         ]
 
@@ -259,7 +282,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_gcm="{gcm}",
             params={
                 "temp_c": [str(t) for t in self.threshold_temps_c],
-                "gcm": list(self.gcms),
+                "gcm": [gcm for gcm in self.gcms if gcm != "E2O"],
             },
             path="chronic_heat/osc/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average temperature above threshold in degrees celsius/{gcm}",
@@ -293,3 +316,33 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             ],
         )
         return resource
+
+    def _other_resource(self) -> HazardResource:
+        map = MapInfo(
+            colormap=self.resource.map.colormap,
+            bounds=self.resource.map.bounds,
+            path=self.resource.map.path.format(
+                gcm="E2O", scenario="{scenario}", year="{year}"
+            ),
+            index_values=self.resource.map.index_values,
+            source=self.resource.map.source,
+        )
+        return HazardResource(
+            hazard_type=self.resource.hazard_type,
+            indicator_id=self.resource.indicator_id,
+            indicator_model_id=self.resource.indicator_model_id,
+            indicator_model_gcm=self.resource.indicator_model_gcm.format(gcm="E2O"),
+            params={"temp_c": self.resource.params["temp_c"]},
+            path=self.resource.path.format(
+                gcm="E2O", scenario="{scenario}", year="{year}"
+            ),
+            display_name=self.resource.display_name.format(gcm="E2O"),
+            description=self.resource.description.replace("1976", "1979"),
+            display_groups=self.resource.display_groups,
+            group_id=self.resource.group_id,
+            map=map,
+            units=self.resource.units,
+            scenarios=[
+                Scenario(id="historical", years=[self.central_year_historical]),
+            ],
+        )
