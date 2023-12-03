@@ -36,7 +36,8 @@ class FutureStreamsSource(OpenDataset):
         """
         self.working_dir = working_dir
         if not os.path.exists(self.working_dir):
-            os.makedirs(self.working_dir)
+            if 0 < len(self.working_dir):
+                os.makedirs(self.working_dir)
 
         self.from_years = [
             1976,
@@ -179,7 +180,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             items.append(
                 BatchItem(
                     resource=self._other_resource(),
-                    gcm="E20",
+                    gcm="E2O",
                     scenario="historical",
                     central_year=self.central_year_historical,
                 )
@@ -187,13 +188,17 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         return items
 
     def _years(self, source: OpenDataset, item: Averageable) -> List[int]:
-        if item.scenario == "historical":
-            return source.to_years[:3]
-        return [
-            to_year
-            for (from_year, to_year) in zip(source.from_years[3:], source.to_years[3:])
-            if from_year == item.central_year or to_year + 1 == item.central_year
-        ]
+        if hasattr(source, "from_years") and hasattr(source, "to_years"):
+            if item.scenario == "historical":
+                return source.to_years[:3]
+            return [
+                to_year
+                for (from_year, to_year) in zip(
+                    source.from_years[3:], source.to_years[3:]
+                )
+                if from_year == item.central_year or to_year + 1 == item.central_year
+            ]
+        return super()._years(source, item)
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
