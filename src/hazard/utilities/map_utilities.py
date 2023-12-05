@@ -2,27 +2,29 @@ import base64
 import hashlib
 import json
 import logging
-from math import atan, exp, log, pi, tan
 import os
+from math import atan, exp, log, pi, tan
 from os import listdir
 from os.path import isfile, join
 from time import sleep
 from typing import List, Optional, Tuple
 
-import matplotlib.pyplot as plt # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
-import rasterio # type: ignore
-import seaborn as sns # type: ignore
-from affine import Affine # type: ignore
-from mapbox import Uploader # type: ignore
-import rasterio.warp, rasterio.transform # type: ignore
-from rasterio import CRS, profiles # type: ignore
-from rasterio.enums import Resampling # type: ignore
+import rasterio  # type: ignore
+import rasterio.transform
+import rasterio.warp  # type: ignore
+import seaborn as sns  # type: ignore
 import xarray as xr
+from affine import Affine  # type: ignore
+from mapbox import Uploader  # type: ignore
+from rasterio import CRS, profiles  # type: ignore
+from rasterio.enums import Resampling  # type: ignore
 
 from hazard.protocols import ReadWriteDataArray
 
 logger = logging.getLogger(__name__)
+
 
 def epsg3857_to_epsg4326(x, y):
     lon = (x / 20037508.34) * 180.0
@@ -30,41 +32,65 @@ def epsg3857_to_epsg4326(x, y):
     lat = (180.0 / pi) * (2.0 * atan(exp(lat * pi / 180.0)) - pi / 2)
     return lon, lat
 
+
 def epsg4326_to_epsg3857(lon, lat):
     x = lon * 20037508.34 / 180
     y = log(tan((90.0 + lat) * pi / 360.0)) / (pi / 180.0)
     y = y * 20037508.34 / 180.0
     return x, y
 
-def generate_map(path: str, map_path: str,
-                  bounds: Optional[List[Tuple[float, float]]], target: ReadWriteDataArray):
+
+def generate_map(
+    path: str,
+    map_path: str,
+    bounds: Optional[List[Tuple[float, float]]],
+    target: ReadWriteDataArray,
+):
     logger.info(f"Generating map projection for file {path}; reading file")
     da = target.read(path)
-    logger.info(f"Reprojecting to EPSG:3857")
+    logger.info("Reprojecting to EPSG:3857")
     reprojected = transform_epsg4326_to_epsg3857(da)
     # sanity check bounds:
     (top, right, bottom, left) = check_map_bounds(reprojected)
     if top > 85.05 or bottom < -85.05:
-        raise ValueError('invalid range')
+        raise ValueError("invalid range")
     logger.info(f"Writing map file {map_path}")
     target.write(map_path, reprojected)
     return
+
 
 def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     src_crs = CRS.from_epsg(4326)
     dst_crs = CRS.from_epsg(3857)
     src_left, src_bottom, src_right, src_top = src.rio.bounds()
-    # we have to truncate into range -85 to 85 
-    src_bottom, src_top = max(src_bottom, -85.0), min(src_top, 85.0), 
-    src_width, src_height = src.sizes['longitude'], src.sizes['latitude']
-    _, width, height = rasterio.warp.calculate_default_transform(src_crs, dst_crs,
-                                              width=src_width, height=src_height,
-                                              left=src_left, bottom=src_bottom, right=src_right, top=src_top)
+    # we have to truncate into range -85 to 85
+    src_bottom, src_top = (
+        max(src_bottom, -85.0),
+        min(src_top, 85.0),
+    )
+    src_width, src_height = src.sizes["longitude"], src.sizes["latitude"]
+    _, width, height = rasterio.warp.calculate_default_transform(
+        src_crs,
+        dst_crs,
+        width=src_width,
+        height=src_height,
+        left=src_left,
+        bottom=src_bottom,
+        right=src_right,
+        top=src_top,
+    )
     dst_width, dst_height = src_width, max(src_height, height)
-    ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top])
-    dst_transform = rasterio.transform.from_bounds(dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height)
-    reprojected = src.rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)
+    ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(
+        src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top]
+    )
+    dst_transform = rasterio.transform.from_bounds(
+        dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height
+    )
+    reprojected = src.rio.reproject(
+        dst_crs, shape=(dst_height, dst_width), transform=dst_transform
+    )
     return reprojected
+
 
 def highest_zoom_slippy_maps(src: xr.DataArray):
     ...
@@ -73,11 +99,12 @@ def highest_zoom_slippy_maps(src: xr.DataArray):
 def check_map_bounds(da: xr.DataArray):
     transform: Affine = da.rio.transform(recalc=True)
     x_min, y_max = transform * (0, 0)
-    x_max, y_min = transform * (da.sizes['x'], da.sizes['y'])
-    #(left, bottom, top, right) = da.rio.bounds()
+    x_max, y_min = transform * (da.sizes["x"], da.sizes["y"])
+    # (left, bottom, top, right) = da.rio.bounds()
     (left, top) = epsg3857_to_epsg4326(x_min, y_max)
     (right, bottom) = epsg3857_to_epsg4326(x_max, y_min)
     return (top, right, bottom, left)
+
 
 def alphanumeric(text):
     """Return alphanumeric hash from supplied string."""
@@ -96,7 +123,7 @@ def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
         raise TypeError("number must be positive")
 
     if 0 <= number < len(alphabet):
-        return sign + alphabet[number]
+        return alphabet[number]
 
     while number != 0:
         number, i = divmod(number, len(alphabet))
@@ -137,20 +164,25 @@ def load_dataset(dataset, target_width=None):
     data = (
         dataset.read(1)
         if scaling == 1
-        else dataset.read(1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear)
+        else dataset.read(
+            1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear
+        )
     )
 
     # scale image transform
     t = dataset.transform
-    transform = Affine(t.a / scaling, t.b / scaling, t.c, t.d / scaling, t.e / scaling, t.f)
+    transform = Affine(
+        t.a / scaling, t.b / scaling, t.c, t.d / scaling, t.e / scaling, t.f
+    )
     transform = dataset.transform * dataset.transform.scale(
-        (float(dataset.width) / data.shape[-1]), (float(dataset.height) / data.shape[-2])
+        (float(dataset.width) / data.shape[-1]),
+        (float(dataset.height) / data.shape[-2]),
     )
 
     return (data, dataset.profile, width, height, transform)
 
 
-def geotiff_profile(epsg: int=4326) -> profiles.Profile:
+def geotiff_profile(epsg: int = 4326) -> profiles.Profile:
     """Create GeoTiff Profile from EPSG.
     Args:
         epsg (int, optional): For Web Mercator use 3857. Defaults to 4326.
@@ -163,11 +195,29 @@ def geotiff_profile(epsg: int=4326) -> profiles.Profile:
     return profile
 
 
-def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None, lowest_bin_transparent=False):
-    (data, profile, width, height, transform) = load(os.path.join(input_dir, filename), s3=input_s3)
+def write_map_geotiff(
+    input_dir,
+    output_dir,
+    filename,
+    input_s3=None,
+    output_s3=None,
+    lowest_bin_transparent=False,
+):
+    (data, profile, width, height, transform) = load(
+        os.path.join(input_dir, filename), s3=input_s3
+    )
     logger.info("Loaded")
 
-    write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir, lowest_bin_transparent=lowest_bin_transparent)
+    write_map_geotiff_data(
+        data,
+        profile,
+        width,
+        height,
+        transform,
+        filename,
+        output_dir,
+        lowest_bin_transparent=lowest_bin_transparent,
+    )
 
 
 def write_map_geotiff_data(
@@ -186,7 +236,6 @@ def write_map_geotiff_data(
     max_intensity=2.0,
     palette="flare",
 ):
-
     # the Seaborn 'flare' palette is the default for representing intensity
     # perceptually uniform, use of hue and luminance, smaller values have lighter colours
 
@@ -196,7 +245,9 @@ def write_map_geotiff_data(
             return cmap(0.5 + 0.5 * i / 256.0)
         else:
             cmap = (
-                sns.color_palette(palette, as_cmap=True) if palette == "flare" else plt.get_cmap(palette)
+                sns.color_palette(palette, as_cmap=True)
+                if palette == "flare"
+                else plt.get_cmap(palette)
             )  #  plt.get_cmap("Reds") as alternative
             return cmap(i)
 
@@ -228,8 +279,14 @@ def write_map_geotiff_data(
     alpha = alphanumeric(filename_stub)[0:6]
     logger.info(f"Hashing {filename_stub} as code: {alpha}")
 
-    colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
-    with (s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w")) as f:
+    colormap_path_out = os.path.join(
+        output_dir, "colormap_" + alpha + "_" + filename_stub + ".json"
+    )
+    with (
+        s3.open(colormap_path_out, "w")
+        if s3 is not None
+        else open(colormap_path_out, "w")
+    ) as f:
         json_dict = {
             "colormap": map_for_json,
             "nodata": {"color_index": 0},
@@ -246,7 +303,9 @@ def write_map_geotiff_data(
 
     # by zero_transparent, we mean, _exactly_ zero
     np.multiply(data, 254.0 / max_intensity, out=data, casting="unsafe")
-    np.add(data, 1.0, out=data, casting="unsafe")  # np.clip seems a bit slow so we do not use
+    np.add(
+        data, 1.0, out=data, casting="unsafe"
+    )  # np.clip seems a bit slow so we do not use
 
     # 0 is no data
     # 1 is zero (to max_intensity / 254)
@@ -270,8 +329,6 @@ def write_map_geotiff_data(
     profile["width"] = width
     profile["height"] = height
     profile["transform"] = transform
-
-    bounds = rasterio.transform.array_bounds(height, width, transform)
 
     path_out = os.path.join(output_dir, "map_" + alpha + "_" + filename)
 
