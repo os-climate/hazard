@@ -3,10 +3,10 @@ Creation of climate hazard model data sets for OS-Climate.
 
 *Hazard* is a Python library for creating climate hazard model data sets for OS-Climate applications. The datasets may be simply on-boarded from existing data or derived by transforming other data sources.
 
-An important use of *hazard* is the preparation of hazard model data sets for use in the [Physrisk](https://github.com/os-climate/physrisk) physical climate risk analysis tool. In general the preparation is in the form of a pipeline, whereby data is sourced, transformed and stored in optimized form (generally to OS-Climate Amazon S3). It is desirable to leverage cloud computing services where tasks are memory-, I/O- and/or compute-intensive.  
+An important use of *hazard* is the preparation of hazard model data sets for use in the [Physrisk](https://github.com/os-climate/physrisk) physical climate risk analysis tool. In general the preparation is in the form of a pipeline, whereby data is sourced, transformed and stored in optimized form (generally to OS-Climate Amazon S3). It is desirable to leverage cloud computing services where tasks are memory-, I/O- and/or compute-intensive.
 
 ## Using hazard
-In line with the the *'treat your data as code'* approach and to ensure that the creation of any data set for OS-Climate is *repeatable* and *transparent*, a data set is associated with a particular Git commit of this repository.  
+In line with the the *'treat your data as code'* approach and to ensure that the creation of any data set for OS-Climate is *repeatable* and *transparent*, a data set is associated with a particular Git commit of this repository.
 A particular data set creation task is a Python script. These can be run on [OS-Climate JupyterHub](https://jupyterhub-odh-jupyterhub.apps.odh-cl2.apps.os-climate.org) environment (as script, notebook or pipeline).
 
 ## Introduction to data sets for hazard models
@@ -25,7 +25,7 @@ Two important types of model used in the assessment of the vulnerability of an a
 
 Return-period-based acute hazard model data sets contain event intensity as a function of return period for different locations. For example, the model might specify that in a certain region flood events with an inundation depth of 50 cm occur with a return period of 10 years (i.e. these are one in 10 year events) and events with an inundation depth of 100 cm occur with a return period of 200 years. In practice, flood models may have a granularity of 10 return periods or more.
 
-An inundation depth of 100 cm for events with a 200 year return period implies that there is a probability of $1/200$ that a flood event occurs in a single year with an inundation depth greater than 100 cm (see [methodology document](https://github.com/os-climate/physrisk/tree/main/methodology#:~:text=PhysicalRiskMethodology.pdf) for discussion of different return period conventions). The probability here is an *exceedance probability*.  
+An inundation depth of 100 cm for events with a 200 year return period implies that there is a probability of $1/200$ that a flood event occurs in a single year with an inundation depth greater than 100 cm (see [methodology document](https://github.com/os-climate/physrisk/tree/main/methodology#:~:text=PhysicalRiskMethodology.pdf) for discussion of different return period conventions). The probability here is an *exceedance probability*.
 
 The dataset therefore has three dimensions (or axes); two spatial and return period.
 
@@ -54,7 +54,7 @@ For return-period-based data sets, the recommended dimensions are ('return perio
 import zarr
 import zarr.storage.MemoryStore
 
-# create empty Zarr array containing return period data with 21600 latitudes and 43200 longitudes 
+# create empty Zarr array containing return period data with 21600 latitudes and 43200 longitudes
 shape = (10, 21600, 43200) # ('return period', 'latitude', 'longitude')
 store = zarr.storage.MemoryStore(root="hazard.zarr")
 root = zarr.open(store=store, mode="w")
@@ -80,6 +80,5 @@ within this, Zarr arrays are stored in Zarr group hazard/hazard.zarr
 The convention for paths to Zarr arrays is:
 hazard/hazard.zarr/`<`path to array`>`/`<`version`>`/`<`array name`>`
 
-Arrays are typically instances of models 
-- 
-
+Arrays are typically instances of models
+-
