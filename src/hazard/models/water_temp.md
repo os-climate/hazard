@@ -1,8 +1,7 @@
 Weeks per year for which the average water temperature is above a threshold specified in degrees celsius:
 
-$$
-I =  \frac{52}{n_y} \sum_{i = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^{avg}_i > T^\text{ref}} \nonumber
-$$
+$I =  \frac{52}{n_y} \sum_{i = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^{avg}_i > T^\text{ref}} \nonumber$
+
 $I$ is the indicator, $T^\text{avg}_i$ is the weekly average water temperature for week index $i$ in degrees celsius, $n_y$ is the number of weeks in the sample
 and $T^\text{ref}$ is the reference temperature.
 The OS-Climate-generated indicators are inferred from downscaled CMIP5 data. This is done for 5 Global Circulation Models: GFDL-ESM2M, HadGEM2-ES, ISPL-CM5A-LR, MIROC-ESM-CHEM and NorESM1-M.
