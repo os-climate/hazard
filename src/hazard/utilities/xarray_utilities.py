@@ -1,11 +1,11 @@
 from typing import Any, Dict, Generator, Iterable, List, Tuple
 
-import dask  # type: ignore
+import dask, dask.array  # type: ignore
 import numpy as np
 import rasterio  # type: ignore
 import rioxarray
 import xarray as xr
-import zarr  # type: ignore
+import zarr, zarr.core  # type: ignore
 from affine import Affine  # type: ignore
 from rasterio.crs import CRS  # type: ignore
 
@@ -238,22 +238,34 @@ def normalize_array(da: xr.DataArray) -> xr.DataArray:
     return da_norm
 
 
-def return_period_data_array(
-    width: int,
-    height: int,
+def data_array(
+    data: np.ndarray,
     transform: Affine,
     crs: str = "EPSG:4326",
-    return_periods: List[float] = [0],
+    index_values: List[float] = [0],
 ):
-    z_dim = "return_period"
+    n_indices, height, width = data.shape
+    assert len(index_values) == n_indices
+
+    z_dim = "index"
     y_dim, x_dim = (
         ("latitude", "longitude") if crs.upper() == "EPSG:4326" else ("y", "x")
     )
     coords = affine_to_coords(transform, width, height, x_dim=x_dim, y_dim=y_dim)
-    coords[z_dim] = np.array(return_periods, dtype=float)
-    data = dask.array.empty(shape=[len(return_periods), height, width])
+    coords[z_dim] = np.array(index_values, dtype=float)
     da = xr.DataArray(data=data, coords=coords, dims=[z_dim, y_dim, x_dim])
     return da
+
+
+def empty_data_array(
+    width: int,
+    height: int,
+    transform: Affine,
+    crs: str = "EPSG:4326",
+    index_values: List[float] = [0],
+):
+    data = dask.array.empty(shape=[len(index_values), height, width])
+    return data_array(data, transform, crs, index_values)
 
 
 def write_array(array: xr.DataArray, path: str):
