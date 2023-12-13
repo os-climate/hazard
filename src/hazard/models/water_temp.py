@@ -12,7 +12,8 @@ import xarray as xr
 from attr import dataclass
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import Indicator, ThresholdBasedAverageIndicator
+from hazard.models.multi_year_average import (Indicator,
+                                              ThresholdBasedAverageIndicator)
 from hazard.protocols import Averageable, OpenDataset
 
 logger = logging.getLogger(__name__)
@@ -286,10 +287,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_id=None,
             indicator_model_gcm="{gcm}",
             params={
-                "temp_c": [str(t) for t in self.threshold_temps_c],
                 "gcm": [gcm for gcm in self.gcms if gcm != "E2O"],
             },
-            path="chronic_heat/osc/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
+            path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average temperature above threshold in degrees celsius/{gcm}",
             description=description,
             display_groups=[
@@ -307,7 +307,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     units="weeks/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
-                path="weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
+                path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
                 source="map_array",
             ),
@@ -337,7 +337,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_id=self.resource.indicator_id,
             indicator_model_id=self.resource.indicator_model_id,
             indicator_model_gcm=self.resource.indicator_model_gcm.format(gcm="E2O"),
-            params={"temp_c": self.resource.params["temp_c"]},
+            params={},
             path=self.resource.path.format(
                 gcm="E2O", scenario="{scenario}", year="{year}"
             ),

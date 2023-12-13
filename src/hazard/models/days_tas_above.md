@@ -3,6 +3,7 @@ Days per year for which the average near-surface temperature 'tas' is above a th
 $$
 I =  \frac{365}{n_y} \sum_{i = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^{avg}_i > T^\text{ref}} \nonumber
 $$
+
 $I$ is the indicator, $T^\text{avg}_i$ is the daily average near-surface temperature for day index $i$ in °C, $n_y$ is the number of days in the year
 and $T^\text{ref}$ is the reference temperature.
 The OS-Climate-generated indicators are inferred from downscaled CMIP6 data. This is done for 6 Global Circulation Models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.
