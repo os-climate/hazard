@@ -1,16 +1,18 @@
 import os
 
-import pytest
-from hazard.docs_store import DocStore
 import fsspec.implementations.local as local  # type: ignore
+import pytest
+
 from hazard.docs_store import DocStore, HazardResources
 from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
+from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.utilities import zarr_utilities  # type: ignore
+
 from .utilities import test_output_dir
 
 
@@ -36,6 +38,7 @@ def test_create_inventory(test_output_dir):
         DaysTasAboveIndicator(),
         IRISIndicator(None),
         HeatingCoolingDegreeDays(),
+        WaterTemperatureAboveIndicator(),
     ]
 
     docs_store.write_new_empty_inventory()
