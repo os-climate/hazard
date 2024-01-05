@@ -2,16 +2,16 @@ Days per year for which the 'Wet Bulb Globe Temperature' indicator is above a th
 
 $$I =  \frac{365}{n_y} \sum_{i = 1}^{n_y} \boldsymbol{\mathbb{1}}_{T^\text{WBGT}_i > T^\text{ref}}$$
 
-$n_y$ is the number of weeks in the sample. The 'Wet-Bulb Globe Temperature' (WBGT) indicator is calculated from both the average daily near-surface surface temperature in °C denoted $T^\text{avg}$ and the water vapour partial pressure in kPa denoted $p^\text{vapour}$:
+$n_y$ is the number of days in the sample. The 'Wet-Bulb Globe Temperature' (WBGT) indicator is calculated from both the average daily near-surface surface temperature in °C denoted $T^\text{avg}$ and the water vapour partial pressure in kPa denoted $p^\text{vapour}$:
 
 $$
 T^\text{WBGT}_i = 0.567 \times T^\text{avg}_i + 0.393 \times p^\text{vapour}_i + 3.94
 $$
 
-The water vapour partial pressure $p^\text{vapour}$ is calculated from relative humidity $h_r$:
+The water vapour partial pressure $p^\text{vapour}$ is calculated from relative humidity $h^\text{relative}$:
 
 $$
-p^\text{vapour}_i = \frac{h_r}{100} \times 6.105 \times \exp \left( \frac{17.27 \times T^\text{avg}_i}{237.7 + T^\text{avg}_i} \right)
+p^\text{vapour}_i = \frac{h^\text{relative}_i}{100} \times 6.105 \times \exp \left( \frac{17.27 \times T^\text{avg}_i}{237.7 + T^\text{avg}_i} \right)
 $$
 
 The OS-Climate-generated indicators are inferred from downscaled CMIP6 data, averaged over for 6 Global Circulation Models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.
