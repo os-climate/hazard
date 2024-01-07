@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
+from hazard.models.water_temp import (FutureStreamsSource,
+                                      WaterTemperatureAboveIndicator)
 
 from .utilities import TestSource, TestTarget, _create_test_datasets_tas
 
@@ -54,7 +55,7 @@ def test_water_temp_above_mocked():
     )
     model.run_all(source, target)
     result = target.datasets[
-        "chronic_heat/osc/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}".format(
+        "chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}".format(
             gcm=gcm, scenario=scenario, year=year
         )
     ]
