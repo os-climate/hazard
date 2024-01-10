@@ -356,7 +356,3 @@ class DroughtIndicator:
                 ]
         )
         return resource
-
-               
-        
-         
