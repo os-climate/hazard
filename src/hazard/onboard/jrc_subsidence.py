@@ -5,7 +5,7 @@ import zarr
 import numpy as np
 import logging
 import xarray as xr
-# from osgeo import gdal
+from osgeo import gdal
 
 from pyproj.crs import CRS
 from affine import Affine
@@ -26,10 +26,10 @@ class JRCSubsidence_inventory():
         
         return [
             HazardResource(
-                hazard_type="Subsidence",
-                indicator_id="subsidence",
+                hazard_type="Drought",
+                indicator_id="susceptability",
                 indicator_model_gcm = 'historical',
-                path="subsidence/jrc/v1/susceptability_{scenario}_{year}",
+                path="drought/subsidence_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
                 display_name="Subsidence Susceptability",
                 description="""
@@ -39,7 +39,7 @@ class JRCSubsidence_inventory():
                 content, Depth available to roots, Clay content, Silt content, Sand content, Organic 
                 carbon, Bulk Density, Coarse fragments.
                 """,
-                group_id = "jrc",
+                group_id = "subsidence_jrc",
                 display_groups=[],
                 map = MapInfo(
                     bounds= [
@@ -70,7 +70,7 @@ class JRCSubsidence_inventory():
                         max_value=5.0,
                         units="index"),
                     path="susceptability_{scenario}_{year}_map",
-                    source="map_array"
+                    source="map_array_pyramid"
                 ),
                 units="none",
                 scenarios=[
@@ -139,9 +139,9 @@ class JRCSubsidence():
         self.data_filenames = ['STU_EU_T_SAND.rst', 'STU_EU_T_CLAY.rst']
 
         # zarr parameters
-        hazard_type = 'subsidence'
-        data_source_name = 'jrc'
-        version = 'v2'
+        hazard_type = 'drought'
+        data_source_name = 'subsidence_jrc'
+        version = 'v1'
         dataset_names = ['susceptability_historical_1980']
         self.group_path_arrays = [os.path.join(hazard_type, data_source_name, version, dataset_name) for dataset_name in dataset_names]
 
@@ -164,6 +164,16 @@ class JRCSubsidence():
         self.group_path = os.path.join(self.bucket_name, self.prefix, self.zarr_storage).replace('\\','/')
         self.store = s3fs.S3Map(root=self.group_path, s3=self.s3, check=False)
         self.root = zarr.group(store=self.store, overwrite=False) 
+
+        import boto3
+        boto_c = boto3.client('s3', aws_access_key_id=os.environ["OSC_S3_HIdev01_ACCESS_KEY"], aws_secret_access_key=os.environ["OSC_S3_HIdev01_SECRET_KEY"])
+
+        to_remove = boto_c.list_objects_v2(Bucket=self.bucket_name, Prefix='hazard/hazard.zarr/subsidence')['Contents']
+
+        keys = [item['Key'] for item in to_remove]
+
+        for key_ in keys:
+            boto_c.delete_object(Bucket=self.bucket_name, Key=key_)
 
     def create_OSCZarr_object(self):
         """
@@ -296,11 +306,13 @@ class JRCSubsidence():
         # Download data from s3
         # data_sand, data_clay = self.download_files_from_s3()
 
-        sand_filename = 'STU_EU_T_SAND.txt'
-        clay_filename = 'STU_EU_T_CLAY.txt'
+        # sand_filename = 'STU_EU_T_SAND.txt'
+        # clay_filename = 'STU_EU_T_CLAY.txt'
 
-        data_sand = np.loadtxt(sand_filename)
-        data_clay = np.loadtxt(clay_filename)
+        # data_sand = np.loadtxt(sand_filename)
+        # data_clay = np.loadtxt(clay_filename)
+
+        data_sand, data_clay = read_files_from_local()
 
         # 
         width = data_sand.shape[1]
@@ -338,37 +350,6 @@ class JRCSubsidence():
 
         logger.info("Creating image: " + self.group_path_array, extra=logger_config)
         self.create_map_images() 
-
-
-    def create_empty_zarr_in_s3(self):
-        """
-        Create and empty zarr in s3 with dimension (number of return periods x map width x map heigh)
-        """
-        # Create data file inside zarr group with name dataset_name
-
-        # Name standard is: hazard_type + _ + hazard_subtype (if exists) + '_' + hist or scenario + '_' RP (return period) or event/ emulated + '_' + data_provider
-
-        self.oscZ._zarr_create(path=self.group_path_array,
-                        shape = self.shape,
-                        transform = self.transform_latlon,
-                        crs = str(self.crs_latlon),
-                        overwrite=False,
-                        return_periods=self.return_periods)    
-
-
-    def populate_zarr_in_s3(self, ws_matrix):
-        """
-        Populate s3 zarr file in chunks.
-        """
-
-        chunck_size = 1000
-        z = self.oscZ.root[self.group_path_array]
-
-        for rt_i in range(len(self.return_periods)):
-            for height_pos in range(0, self.height, chunck_size):
-                for width_pos in range(0, self.width, chunck_size):
-
-                    z[rt_i,height_pos:height_pos+chunck_size, width_pos:width_pos+chunck_size] = ws_matrix[height_pos:height_pos+chunck_size, width_pos:width_pos+chunck_size]
 
 
 
@@ -446,7 +427,7 @@ def read_files_from_local():
 
     hazard_type = 'Subsidence'
     datasource = 'JRC'
-    data_filename = 'STU_EU_T_SAND.rst'
+    data_filename = 'STU_EU_S_SAND.rst'
 
     inputfile_path = os.path.join(base_path_hazard, hazard_type, datasource)
     inputfile = os.path.join(inputfile_path, data_filename)
@@ -454,7 +435,7 @@ def read_files_from_local():
     data_sand = gdal.Open(inputfile).ReadAsArray()
 
 
-    data_filename = 'STU_EU_T_CLAY.rst'
+    data_filename = 'STU_EU_S_CLAY.rst'
 
     inputfile = os.path.join(inputfile_path, data_filename)
 
@@ -474,11 +455,11 @@ if __name__ == '__main__':
     # https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-dev-s3-keys
     bucket_name = 'physrisk-hazard-indicators-dev01'
     prefix = 'hazard'
-    zarr_storage = 'hazard_consortium.zarr'
+    zarr_storage = 'hazard.zarr'
     upload_files = False # Set to True to upload data to S3
 
     # Upload raw data to s3
-    data_filenames = ['STU_EU_T_SAND.rst', 'STU_EU_T_CLAY.rst']
+    data_filenames = ['STU_EU_S_SAND.rst', 'STU_EU_S_CLAY.rst']
     if upload_files:
         upload_files_to_s3(bucket_name, data_filenames)
 

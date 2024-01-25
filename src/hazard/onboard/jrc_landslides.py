@@ -25,10 +25,10 @@ class JRCLandslides_inventory():
         
         return [
             HazardResource(
-                hazard_type="Landslide",
+                hazard_type="Drought",
                 indicator_id="susceptability",
                 indicator_model_gcm = 'historical',
-                path="landslide/jrc/v1/susceptability_{scenario}_{year}",
+                path="drought/landslide_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
                 display_name="Landslide Susceptability",
                 description="""
@@ -38,7 +38,7 @@ class JRCLandslides_inventory():
                 addition to Albania, Andorra, Bosnia and Herzegovina, Croatia, FYR Macedonia, Iceland, 
                 Kosovo, Liechtenstein, Montenegro, Norway, San Marino, Serbia, and Switzerland.
                 """,
-                group_id = "jrc",
+                group_id = "landslide_jrc",
                 display_groups=[],
                 map = MapInfo(
                     bounds= [
@@ -127,9 +127,9 @@ class JRCLandslides():
         self.data_filenames = ['elsus_v2.asc']
 
         # zarr parameters
-        hazard_type = 'landslide'
-        data_source_name = 'jrc'
-        version = 'v2'
+        hazard_type = 'drought'
+        data_source_name = 'landslide_jrc'
+        version = 'v1'
         dataset_names = ['susceptability_historical_1980']
         self.group_path_arrays = [os.path.join(hazard_type, data_source_name, version, dataset_name) for dataset_name in dataset_names]
 
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     # https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-dev-s3-keys
     bucket_name = 'physrisk-hazard-indicators-dev01'
     prefix = 'hazard'
-    zarr_storage = 'hazard_consortium.zarr'
+    zarr_storage = 'hazard.zarr'
     upload_files = False # Set to True to upload data to S3
 
     # Upload raw data to s3

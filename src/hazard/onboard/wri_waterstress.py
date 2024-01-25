@@ -30,12 +30,12 @@ class WRIWaterstress_inventory():
         
         return [
             HazardResource(
-                hazard_type="WaterStress",
+                hazard_type="Drought",
                 indicator_id="water_stress",
                 indicator_model_gcm = 'historical',
-                path="waterstress/wri/v2/water_stress_{scenario}_{year}",
+                path="drought/waterstress_wri/v1/water_stress_{scenario}_{year}",
                 params={},
-                display_name="WRI Water Stress",
+                display_name="WRI Water Stress (Cat)",
                 description="""
                 The Aqueduct Water Stress Projections Data include indicators of change in water supply, 
                 water demand, water stress, and seasonal variability, projected for the coming decades 
@@ -51,7 +51,7 @@ class WRIWaterstress_inventory():
                 0: No data
 
                 """,
-                group_id = "wri",
+                group_id = "waterstress_wri",
                 display_groups=[],
                 map = MapInfo(
                     bounds= [
@@ -162,9 +162,9 @@ class WRIWaterstress():
 
 
         # zarr parameters
-        hazard_type = 'waterstress'
-        data_source_name = 'wri'
-        version = 'v4'
+        hazard_type = 'drought'
+        data_source_name = 'waterstress_wri'
+        version = 'v1'
         years = ['20' + y for y in year_codes]
         sc = ['rcp26', 'rcp45', 'rcp85']
         dataset_names = []
@@ -185,6 +185,7 @@ class WRIWaterstress():
         self.group_path = os.path.join(self.bucket_name, self.prefix, self.zarr_storage).replace('\\','/')
         self.store = s3fs.S3Map(root=self.group_path, s3=self.s3, check=False)
         self.root = zarr.group(store=self.store, overwrite=False) 
+
 
     def create_OSCZarr_object(self):
         """
@@ -306,7 +307,7 @@ if __name__ == '__main__':
     # https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-dev-s3-keys
     bucket_name = 'physrisk-hazard-indicators-dev01'
     prefix = 'hazard'
-    zarr_storage = 'hazard_consortium.zarr'
+    zarr_storage = 'hazard.zarr'
 
     temp_dir = 'data'
     download_data = False
@@ -321,4 +322,6 @@ if __name__ == '__main__':
     WRIWaterstress_.create_OSCZarr_object()
 
     WRIWaterstress_.onboard_all()
+
+    logger.info("Water Stress Data Onboarding Finished:", extra=logger_config)
 

@@ -27,7 +27,7 @@ class TUDELFTCoastalFlood_inventory():
                 hazard_type="CoastalInundation",
                 indicator_id="flood_depth",
                 indicator_model_gcm = 'historical',
-                path="inundation_coastal_tudelft/ecb/v1/flood_depth_{scenario}_{year}",
+                path="inundation/coastal_tudelft/v1/flood_depth_{scenario}_{year}",
                 params={},
                 display_name="Coastal Flood Depth (tudelft)",
                 description="""
@@ -137,9 +137,9 @@ class TUDELFTCoastalFlood():
         self.tif_paths =  [os.path.join(self.temp_dir, ax) for ax in self.tif_filenames]
 
         # zarr parameters
-        hazard_type = 'inundation_coastal_tudelft'
-        data_source_name = 'ecb'
-        version = 'v2'
+        hazard_type = 'inundation'
+        data_source_name = 'coastal_tudelft'
+        version = 'v1'
         roots = ['_historical_1971', '_rcp45_2050', '_rcp85_2050', '_rcp45_2070', '_rcp85_2070']
         dataset_names = ['flood_depth' + ax for ax in roots]
         self.group_path_arrays = [os.path.join(hazard_type, data_source_name, version, dataset_name) for dataset_name in dataset_names]
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     # https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-dev-s3-keys
     bucket_name = 'physrisk-hazard-indicators-dev01'
     prefix = 'hazard'
-    zarr_storage = 'hazard_consortium.zarr'
+    zarr_storage = 'hazard.zarr'
 
     temp_dir = 'data'
     download_zip = False

@@ -25,11 +25,11 @@ class TUDELFTWildfire_inventory():
         return [
             HazardResource(
                 hazard_type="Fire",
-                indicator_id="fire",
+                indicator_id="fwi",
                 indicator_model_gcm = 'historical',
-                path="fire_tudelft/ecb/v2/fwi20_{scenario}_{year}",
+                path="fire/fire_tudelft/v1/fwi20_{scenario}_{year}",
                 params={},
-                display_name="Fire Probability",
+                display_name="FWI under 20",
                 description="""
                 NetCDF files containing daily probabilities of high forest fire danger in 
                 Europe under present and projected future climates. Includes gridded (NetCDF) 
@@ -38,7 +38,7 @@ class TUDELFTWildfire_inventory():
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050 
                 and 2071-2100). 
                 """,
-                group_id = "ecb",
+                group_id = "fire_tudelft",
                 display_groups=[],
                 map = MapInfo(
                     bounds= [
@@ -86,11 +86,11 @@ class TUDELFTWildfire_inventory():
                     ]),
             HazardResource(
                 hazard_type="Fire",
-                indicator_id="fire",
+                indicator_id="fwi",
                 indicator_model_gcm = 'historical',
-                path="fire_tudelft/ecb/v2/fwi45_{scenario}_{year}",
+                path="fire/fire_tudelft/v1/fwi45_{scenario}_{year}",
                 params={},
-                display_name="Fire Probability",
+                display_name="FWI under 45",
                 description="""
                 NetCDF files containing daily probabilities of high forest fire danger in 
                 Europe under present and projected future climates. Includes gridded (NetCDF) 
@@ -99,7 +99,7 @@ class TUDELFTWildfire_inventory():
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050 
                 and 2071-2100). 
                 """,
-                group_id = "ecb",
+                group_id = "fire_tudelft",
                 display_groups=[],
                 map = MapInfo(
                     bounds= [
@@ -215,9 +215,9 @@ class TUDELFTWildfire():
                 dataset_names.append(dataset_name)
 
         # zarr parameters
-        hazard_type = 'fire_tudelft'
-        data_source_name = 'ecb'
-        version = 'v3'
+        hazard_type = 'fire'
+        data_source_name = 'fire_tudelft'
+        version = 'v1'
         self.group_path_arrays = [os.path.join(hazard_type, data_source_name, version, dataset_name) for dataset_name in dataset_names]
         self.path_to_nc = [os.path.join(self.temp_dir, data_filename) for data_filename in self.data_filenames]
 
@@ -234,6 +234,7 @@ class TUDELFTWildfire():
         self.group_path = os.path.join(self.bucket_name, self.prefix, self.zarr_storage).replace('\\','/')
         self.store = s3fs.S3Map(root=self.group_path, s3=self.s3, check=False)
         self.root = zarr.group(store=self.store, overwrite=False) 
+
 
     def create_OSCZarr_object(self):
         """
@@ -309,7 +310,7 @@ if __name__ == '__main__':
     # https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-dev-s3-keys
     bucket_name = 'physrisk-hazard-indicators-dev01'
     prefix = 'hazard'
-    zarr_storage = 'hazard_consortium.zarr'
+    zarr_storage = 'hazard.zarr'
 
     temp_dir = 'data'
     download_data = False
