@@ -9,6 +9,7 @@ from hazard.onboard.jupiter import Jupiter, JupiterOscFileSource  # type: ignore
 import pytest
 import s3fs
 import zarr
+from hazard.onboard.tudelft_flood import TUDelftRiverFlood
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
@@ -149,3 +150,15 @@ def test_check_result(test_output_dir):
     )
     check = s3.ls(path)
     assert True
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_tudelft(s3_credentials, test_output_dir):
+    source_path = os.path.join(test_output_dir, "tudelft", "tudelft_river")
+    model = TUDelftRiverFlood(source_path)
+    model.prepare()
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    model.run_single(batch_items[0], None, target, None)
+    #model.create_maps(target, target)
