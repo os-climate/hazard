@@ -12,8 +12,7 @@ import xarray as xr
 from attr import dataclass
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import (Indicator,
-                                              ThresholdBasedAverageIndicator)
+from hazard.models.multi_year_average import Indicator, ThresholdBasedAverageIndicator
 from hazard.protocols import Averageable, OpenDataset
 
 logger = logging.getLogger(__name__)

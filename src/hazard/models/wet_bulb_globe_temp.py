@@ -8,8 +8,11 @@ import numpy as np
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import (BatchItem, Indicator,
-                                              ThresholdBasedAverageIndicator)
+from hazard.models.multi_year_average import (
+    BatchItem,
+    Indicator,
+    ThresholdBasedAverageIndicator,
+)
 from hazard.protocols import OpenDataset
 
 logger = logging.getLogger(__name__)

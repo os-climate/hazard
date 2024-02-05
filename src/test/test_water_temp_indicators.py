@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from hazard.models.water_temp import (FutureStreamsSource,
-                                      WaterTemperatureAboveIndicator)
+from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 
 from .utilities import TestSource, TestTarget, _create_test_datasets_tas
 

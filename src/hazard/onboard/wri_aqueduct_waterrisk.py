@@ -2,28 +2,28 @@
 
 import logging
 import os
-import shutil
+from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import pandas as pd
-import requests  # type: ignore
 import xarray as xr
 from dask.distributed import Client
 from rasterio import features
 from rasterio.crs import CRS  # type: ignore
 from rasterio.enums import MergeAlg
-from rasterio.plot import show
 from shapely import union_all
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
-from hazard.utilities.xarray_utilities import (affine_to_coords,
-                                               enforce_conventions_lat_lon,
-                                               global_crs_transform)
+from hazard.utilities.download_utilities import download_and_unzip
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,32 +42,30 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             working_directory, "Aqueduct40_waterrisk_download_Y2023M07D05"
         )
         self.baseline_indicator_map = {
-            "water_stress": "bws",
-            "water_depletion": "bwd",
-            "seasonal_variability": "sev",
-            "interannual_variability": "iav",
-            "groundwater_table_decline": "gtd",
-            "riverine_flood_risk": "rfr",
-            "coastal_flood_risk": "cfr",
-            "drought_risk": "drr",
-            "untreated_connected_wastewater": "ucw",
-            "coastal_eutrophication_potention": "uep",
-            "unimproved_drinking_water": "udw",
-            "unimproved_sanitation": "usa",
+            "water_stress": "bws_cat",
+            "water_depletion": "bwd_cat",
+            "seasonal_variability": "sev_cat",
+            "interannual_variability": "iav_cat",
+            "groundwater_table_decline": "gtd_cat",
+            "riverine_flood_risk": "rfr_cat",
+            "coastal_flood_risk": "cfr_cat",
+            "drought_risk": "drr_cat",
+            "untreated_connected_wastewater": "ucw_cat",
+            "coastal_eutrophication_potention": "uep_cat",
+            "unimproved_drinking_water": "udw_cat",
+            "unimproved_sanitation": "usa_cat",
         }
         self.projection_indicator_map = {
-            "water_demand": "ww",
-            "water_supply": "ba",
-            "water_stress": "ws",
-            "water_depletion": "wd",
-            "seasonal_variability": "sv",
-            "interannual_variability": "iv",
+            "water_demand": "ww_x_r",
+            "water_supply": "ba_x_r",
+            "water_stress": "ws_x_c",
+            "water_depletion": "wd_x_c",
+            "seasonal_variability": "sv_x_c",
+            "interannual_variability": "iv_x_c",
         }
         self.scenario_map = {"ssp245": "opt", "ssp370": "bau", "ssp585": "pes"}
-        if not os.path.exists(self.path):
-            url = "https://files.wri.org/aqueduct/aqueduct-4-0-water-risk-data.zip"
-            file = os.path.join(working_directory, url.split("/")[-1])
-            self._download_and_unzip(url, file, working_directory)
+        url = "https://files.wri.org/aqueduct/aqueduct-4-0-water-risk-data.zip"
+        download_and_unzip(url, working_directory, url.split("/")[-1])
         self.geometry = gpd.read_file(
             os.path.join(os.path.join(self.path, "GDB"), "Aq40_Y2023D07M05.gdb"),
             include_fields=["pfaf_id", "geometry"],
@@ -90,7 +88,11 @@ class WRIAqueductWaterRiskSource(OpenDataset):
                 "Aqueduct40_{}_annual_y2023m07d05.csv".format("baseline"),
             )
             if indicator in self.baseline_indicator_map:
-                scenario_id = "_".join([self.baseline_indicator_map[indicator], "raw"])
+                scenario_id = self.baseline_indicator_map[indicator]
+            else:
+                raise ValueError(
+                    "unexpected indicator {indicator}".format(indicator=indicator)
+                )
         else:
             path = os.path.join(
                 os.path.join(self.path, "CVS"),
@@ -102,48 +104,37 @@ class WRIAqueductWaterRiskSource(OpenDataset):
                         [
                             self.scenario_map[scenario] + str(year)[-2:],
                             self.projection_indicator_map[indicator],
-                            "x",
-                            "r",
                         ]
                     )
+                else:
+                    raise ValueError(
+                        "unexpected scenario {scenario}".format(scenario=scenario)
+                    )
+            else:
+                raise ValueError(
+                    "unexpected indicator {indicator}".format(indicator=indicator)
+                )
 
-        if scenario_id is not None:
-            df = pd.read_csv(path, usecols=["pfaf_id", scenario_id])
-            df = df.merge(
-                self.geometry, how="left", on="pfaf_id", validate="one_to_one"
-            )
-            shapes = [
-                (geometry, value)
-                for geometry, value in zip(df["geometry"], df[scenario_id])
-            ]
-            width, height = 3600, 1800
-            _, transform = global_crs_transform(width, height)
-            rasterized = features.rasterize(
-                shapes,
-                out_shape=[height, width],
-                transform=transform,
-                all_touched=True,
-                fill=float("nan"),  # background value
-                merge_alg=MergeAlg.replace,
-            )
-            _, ax = plt.subplots(1, figsize=(10, 10))
-            show(rasterized, ax=ax)
-            coords = affine_to_coords(
-                transform, width, height, x_dim="lon", y_dim="lat"
-            )
-            da = xr.DataArray(rasterized, coords=coords)
-            dataset = xr.Dataset({indicator: da})
-            return dataset
-        return None
-
-    @staticmethod
-    def _download_and_unzip(url: str, file: str, dir: str):
-        with requests.get(url, stream=True) as r:
-            r.raise_for_status()
-            with open(file, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192 * 4):
-                    f.write(chunk)
-            shutil.unpack_archive(file, dir)
+        df = pd.read_csv(path, usecols=["pfaf_id", scenario_id])
+        df = df.merge(self.geometry, how="left", on="pfaf_id", validate="one_to_one")
+        shapes = [
+            (geometry, value)
+            for geometry, value in zip(df["geometry"], df[scenario_id])
+        ]
+        width, height = 3600, 1800
+        _, transform = global_crs_transform(width, height)
+        rasterized = features.rasterize(
+            shapes,
+            out_shape=[height, width],
+            transform=transform,
+            all_touched=True,
+            fill=float("nan"),  # background value
+            merge_alg=MergeAlg.replace,
+        )
+        coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
+        da = xr.DataArray(rasterized, coords=coords)
+        dataset = xr.Dataset({indicator: da})
+        return dataset
 
 
 class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
@@ -173,11 +164,20 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         self, item: BatchItem, source, target: ReadWriteDataArray, _: Client
     ):
         """Run a single item of the batch."""
-        dataset = source.open_dataset_year("", item.scenario, item.indicator, item.year)
-        da = enforce_conventions_lat_lon(dataset.array)
-        da.attrs["crs"] = CRS.from_epsg(4326)
-        logger.info(f"Writing array to {str(item.resource.path)}")
-        target.write(str(item.resource.path), da)
+        logger.info(
+            f"Starting calculation for scenario {item.scenario}, indicator {item.indicator} and year {item.year}"
+        )
+        with ExitStack() as stack:
+            dataset = stack.enter_context(
+                source.open_dataset_year("", item.scenario, item.indicator, item.year)
+            )
+            da = enforce_conventions_lat_lon(dataset[item.indicator].array)
+            da.attrs["crs"] = CRS.from_epsg(4326)
+            logger.info(f"Writing array to {str(item.resource.path)}")
+            target.write(str(item.resource.path), da)
+        logger.info(
+            f"Calculation complete for scenario {item.scenario}, indicator {item.indicator} and year {item.year}"
+        )
 
     def batch_items(self) -> Iterable[BatchItem]:
         items: List[BatchItem] = []
