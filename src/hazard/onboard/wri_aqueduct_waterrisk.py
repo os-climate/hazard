@@ -18,12 +18,11 @@ from shapely import union_all
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
+from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
-from hazard.utilities.xarray_utilities import (
-    affine_to_coords,
-    enforce_conventions_lat_lon,
-    global_crs_transform,
-)
+from hazard.utilities.xarray_utilities import (affine_to_coords,
+                                               enforce_conventions_lat_lon,
+                                               global_crs_transform)
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +166,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         logger.info(
             f"Starting calculation for scenario {item.scenario}, indicator {item.indicator} and year {item.year}"
         )
+        assert target == None or isinstance(target, OscZarr)
         with ExitStack() as stack:
             dataset = stack.enter_context(
                 source.open_dataset_year("", item.scenario, item.indicator, item.year)
@@ -211,11 +211,13 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
             ),
             "water_stress": (
                 "",
-                "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies",
+                "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies "
+                + "(-1: Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%))",
             ),
             "water_depletion": (
                 "",
-                "Measure of the ratio of total water consumption to available renewable water supplies",
+                "Measure of the ratio of total water consumption to available renewable water supplies "
+                + "(-1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%))",
             ),
         }
         resources: Dict[str, HazardResource] = dict()
