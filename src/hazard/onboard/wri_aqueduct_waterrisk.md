@@ -10,4 +10,4 @@ water users and large dams on downstream water availability. Higher values indic
 3. seasonal variability: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations in available sup ply from year to year.
 
 The grid resolution is 5 × 5 arc minutes which equates roughly to 10 kilometer (km) × 10 km pixels. 
-The future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp245), business-as-usual (ssp370), and pessimistic (ssp585). Data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).
+The future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585). Data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).

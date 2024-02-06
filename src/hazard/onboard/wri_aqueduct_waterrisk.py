@@ -1,15 +1,16 @@
-# https://www.wri.org/data/aqueduct-global-maps-40-data
-
 import logging
 import os
 from contextlib import ExitStack
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, Optional
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
 from dask.distributed import Client
+from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 from rasterio import features
 from rasterio.crs import CRS  # type: ignore
 from rasterio.enums import MergeAlg
@@ -36,37 +37,68 @@ class BatchItem:
 
 
 class WRIAqueductWaterRiskSource(OpenDataset):
-    def __init__(self, working_directory):
-        self.path = os.path.join(
-            working_directory, "Aqueduct40_waterrisk_download_Y2023M07D05"
+    def __init__(self, source_dir, fs: Optional[AbstractFileSystem] = None):
+        """
+        Define every attribute of the onboarding class for the Water Resources Institute (WRI)
+        water-related risk data.
+
+        METADATA:
+        Link: https://www.wri.org/data/aqueduct-global-maps-40-data
+        Data type: baseline and future projection indicators of water-related risk
+        Hazard indicator: water-related risk
+        Region: Global
+        Resolution: 10km
+        Scenarios: business-as-usual SSP 3 RCP 7.0, optimistic SSP 1 RCP 2.6, and pessimistic SSP 5 RCP 8.5
+        Time range: 1979-2019, 2030, 2050, 2080
+        File type: CSV
+
+        DATA DESCRIPTION:
+        The Aqueduct Water Stress Projections Data include indicators of change in water supply,
+        water demand, water stress, and seasonal variability, projected for the coming decades
+        under scenarios of climate and economic growth.
+
+        Args:
+            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            <bucket name>/<prefix> is expected.
+            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+        """
+
+        self.fs = fs if fs else LocalFileSystem()
+        self.source_dir = source_dir
+        self.zip_url = "https://files.wri.org/aqueduct/aqueduct-4-0-water-risk-data.zip"
+        self.prepare()
+
+        self.indicator_map = {
+            "baseline": {
+                "water_stress": "bws",
+                "water_depletion": "bwd",
+                "seasonal_variability": "sev",
+                "interannual_variability": "iav",
+                "groundwater_table_decline": "gtd",
+                "riverine_flood_risk": "rfr",
+                "coastal_flood_risk": "cfr",
+                "drought_risk": "drr",
+                "untreated_connected_wastewater": "ucw",
+                "coastal_eutrophication_potention": "uep",
+                "unimproved_drinking_water": "udw",
+                "unimproved_sanitation": "usa",
+            },
+            "future": {
+                "water_demand": "ww",
+                "water_supply": "ba",
+                "water_stress": "ws",
+                "water_depletion": "wd",
+                "seasonal_variability": "sv",
+                "interannual_variability": "iv",
+            },
+        }
+        self.scenario_map = {"ssp126": "opt", "ssp370": "bau", "ssp585": "pes"}
+        self.file_dir = os.path.join(
+            os.path.join(self.source_dir, self.zip_url.split("/")[-1].split(".")[0]),
+            "Aqueduct40_waterrisk_download_Y2023M07D05",
         )
-        self.baseline_indicator_map = {
-            "water_stress": "bws_cat",
-            "water_depletion": "bwd_cat",
-            "seasonal_variability": "sev_cat",
-            "interannual_variability": "iav_cat",
-            "groundwater_table_decline": "gtd_cat",
-            "riverine_flood_risk": "rfr_cat",
-            "coastal_flood_risk": "cfr_cat",
-            "drought_risk": "drr_cat",
-            "untreated_connected_wastewater": "ucw_cat",
-            "coastal_eutrophication_potention": "uep_cat",
-            "unimproved_drinking_water": "udw_cat",
-            "unimproved_sanitation": "usa_cat",
-        }
-        self.projection_indicator_map = {
-            "water_demand": "ww_x_r",
-            "water_supply": "ba_x_r",
-            "water_stress": "ws_x_c",
-            "water_depletion": "wd_x_c",
-            "seasonal_variability": "sv_x_c",
-            "interannual_variability": "iv_x_c",
-        }
-        self.scenario_map = {"ssp245": "opt", "ssp370": "bau", "ssp585": "pes"}
-        url = "https://files.wri.org/aqueduct/aqueduct-4-0-water-risk-data.zip"
-        download_and_unzip(url, working_directory, url.split("/")[-1])
         self.geometry = gpd.read_file(
-            os.path.join(os.path.join(self.path, "GDB"), "Aq40_Y2023D07M05.gdb"),
+            os.path.join(os.path.join(self.file_dir, "GDB"), "Aq40_Y2023D07M05.gdb"),
             include_fields=["pfaf_id", "geometry"],
         )
         self.geometry = (
@@ -77,51 +109,61 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             .rename(columns={0: "geometry"})
         )
 
+    def prepare(self, working_dir: Optional[str] = None):
+        if not isinstance(self.fs, LocalFileSystem):
+            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
+            download_and_unzip(
+                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
+            for file in os.listdir(working_dir):
+                with open(file, "rb") as f:
+                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
+        else:
+            # download and unzip directly in location
+            download_and_unzip(
+                self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
+
     def open_dataset_year(
         self, _: str, scenario: str, indicator: str, year: int
     ) -> Optional[xr.Dataset]:
-        scenario_id = None
-        if scenario == "historical":
-            path = os.path.join(
-                os.path.join(self.path, "CVS"),
-                "Aqueduct40_{}_annual_y2023m07d05.csv".format("baseline"),
+        key = "baseline" if scenario == "historical" else "future"
+        filename = os.path.join(
+            os.path.join(self.file_dir, "CVS"),
+            "Aqueduct40_{key}_annual_y2023m07d05.csv".format(key=key),
+        )
+        if indicator not in self.indicator_map[key]:
+            raise ValueError(
+                "unexpected indicator {indicator}".format(indicator=indicator)
             )
-            if indicator in self.baseline_indicator_map:
-                scenario_id = self.baseline_indicator_map[indicator]
-            else:
+        column = self.indicator_map[key][indicator]
+        if key == "future":
+            if scenario not in self.scenario_map:
                 raise ValueError(
-                    "unexpected indicator {indicator}".format(indicator=indicator)
+                    "unexpected scenario {scenario}".format(scenario=scenario)
                 )
+            column = "_".join(
+                [self.scenario_map[scenario] + str(year)[-2:], column, "x", "r"]
+            )
         else:
-            path = os.path.join(
-                os.path.join(self.path, "CVS"),
-                "Aqueduct40_{}_annual_y2023m07d05.csv".format("future"),
-            )
-            if indicator in self.projection_indicator_map:
-                if scenario in self.scenario_map:
-                    scenario_id = "_".join(
-                        [
-                            self.scenario_map[scenario] + str(year)[-2:],
-                            self.projection_indicator_map[indicator],
-                        ]
-                    )
-                else:
-                    raise ValueError(
-                        "unexpected scenario {scenario}".format(scenario=scenario)
-                    )
-            else:
-                raise ValueError(
-                    "unexpected indicator {indicator}".format(indicator=indicator)
-                )
+            column = "_".join([column, "raw"])
 
-        df = pd.read_csv(path, usecols=["pfaf_id", scenario_id])
+        if indicator in ["water_stress", "water_depletion"]:
+            extra_column = column.replace("_raw", "_cat").replace("_x_r", "_x_c")
+            df = pd.read_csv(filename, usecols=["pfaf_id", column, extra_column])
+            df[column] = df[[column, extra_column]].apply(
+                lambda x: -x[0] if x[1] == -1 else x[0], axis=1
+            )
+        else:
+            df = pd.read_csv(filename, usecols=["pfaf_id", column])
+
         df = df.merge(self.geometry, how="left", on="pfaf_id", validate="one_to_one")
-        shapes = [
-            (geometry, value)
-            for geometry, value in zip(df["geometry"], df[scenario_id])
-        ]
-        width, height = 3600, 1800
+        width, height = 12 * 360, 12 * 180
         _, transform = global_crs_transform(width, height)
+        coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
+        shapes = [
+            (geometry, value) for geometry, value in zip(df["geometry"], df[column])
+        ]
         rasterized = features.rasterize(
             shapes,
             out_shape=[height, width],
@@ -130,7 +172,6 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             fill=float("nan"),  # background value
             merge_alg=MergeAlg.replace,
         )
-        coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
         da = xr.DataArray(rasterized, coords=coords)
         dataset = xr.Dataset({indicator: da})
         return dataset
@@ -141,7 +182,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         self,
         scenarios: Iterable[str] = [
             "historical",
-            "ssp245",
+            "ssp126",
             "ssp370",
             "ssp585",
         ],
@@ -245,8 +286,8 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                         name="heating",
                         nodata_index=0,
                         min_index=1,
-                        min_value=0.0,
-                        max_value=100,
+                        min_value=-1.0,
+                        max_value=1.0,
                         max_index=255,
                         units=units,
                     ),
@@ -262,7 +303,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                 units=units,
                 scenarios=[
                     Scenario(id="historical", years=[self.central_year_historical]),
-                    Scenario(id="ssp245", years=list(self.central_years)),
+                    Scenario(id="ssp126", years=list(self.central_years)),
                     Scenario(id="ssp370", years=list(self.central_years)),
                     Scenario(id="ssp585", years=list(self.central_years)),
                 ],
