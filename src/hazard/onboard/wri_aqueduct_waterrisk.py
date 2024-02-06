@@ -1,6 +1,5 @@
 import logging
 import os
-from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, Optional
@@ -21,19 +20,20 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
-from hazard.utilities.xarray_utilities import (affine_to_coords,
-                                               enforce_conventions_lat_lon,
-                                               global_crs_transform)
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class BatchItem:
-    resource: HazardResource
-    scenario: str
-    year: str
     indicator: str
+    scenario: str
+    year: int
 
 
 class WRIAqueductWaterRiskSource(OpenDataset):
@@ -136,44 +136,52 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             raise ValueError(
                 "unexpected indicator {indicator}".format(indicator=indicator)
             )
-        column = self.indicator_map[key][indicator]
+        label = self.indicator_map[key][indicator]
         if key == "future":
             if scenario not in self.scenario_map:
                 raise ValueError(
                     "unexpected scenario {scenario}".format(scenario=scenario)
                 )
-            column = "_".join(
-                [self.scenario_map[scenario] + str(year)[-2:], column, "x", "r"]
+            label = "_".join(
+                [self.scenario_map[scenario] + str(year)[-2:], label, "x", "r"]
             )
         else:
-            column = "_".join([column, "raw"])
+            label = "_".join([label, "raw"])
 
         if indicator in ["water_stress", "water_depletion"]:
-            extra_column = column.replace("_raw", "_cat").replace("_x_r", "_x_c")
-            df = pd.read_csv(filename, usecols=["pfaf_id", column, extra_column])
-            df[column] = df[[column, extra_column]].apply(
-                lambda x: -x[0] if x[1] == -1 else x[0], axis=1
+            category = label.replace("_raw", "_cat").replace("_x_r", "_x_c")
+            df = pd.read_csv(filename, usecols=["pfaf_id", label, category]).rename(
+                columns={label: indicator, category: "_".join([indicator, "category"])}
             )
         else:
-            df = pd.read_csv(filename, usecols=["pfaf_id", column])
+            df = pd.read_csv(filename, usecols=["pfaf_id", label]).rename(
+                columns={label: indicator}
+            )
+        df = df.merge(
+            self.geometry, how="left", on="pfaf_id", validate="one_to_one"
+        ).drop(columns=["pfaf_id"])
 
-        df = df.merge(self.geometry, how="left", on="pfaf_id", validate="one_to_one")
         width, height = 12 * 360, 12 * 180
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
-        shapes = [
-            (geometry, value) for geometry, value in zip(df["geometry"], df[column])
-        ]
-        rasterized = features.rasterize(
-            shapes,
-            out_shape=[height, width],
-            transform=transform,
-            all_touched=True,
-            fill=float("nan"),  # background value
-            merge_alg=MergeAlg.replace,
-        )
-        da = xr.DataArray(rasterized, coords=coords)
-        dataset = xr.Dataset({indicator: da})
+
+        da: Dict[str, xr.DataArray] = dict()
+        for column in [column for column in df.columns if column != "geometry"]:
+            shapes = [
+                (geometry, value) for geometry, value in zip(df["geometry"], df[column])
+            ]
+            rasterized = features.rasterize(
+                shapes,
+                out_shape=[height, width],
+                transform=transform,
+                all_touched=True,
+                fill=float("nan"),  # background value
+                merge_alg=MergeAlg.replace,
+            )
+            da[column] = xr.DataArray(rasterized, coords=coords)
+            da[column] = enforce_conventions_lat_lon(da[column])
+            da[column].attrs["crs"] = CRS.from_epsg(4326)
+        dataset = xr.Dataset(da)
         return dataset
 
 
@@ -199,113 +207,132 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         self.scenarios = scenarios
         self.central_years = central_years
         self.central_year_historical = central_year_historical
+        self.resources = self._resources()
 
     def run_single(
         self, item: BatchItem, source, target: ReadWriteDataArray, _: Client
     ):
         """Run a single item of the batch."""
         logger.info(
-            f"Starting calculation for scenario {item.scenario}, indicator {item.indicator} and year {item.year}"
+            "Starting calculation for {indicator}/{scenario}/{year}".format(
+                indicator=item.indicator, scenario=item.scenario, year=str(item.year)
+            )
         )
         assert target == None or isinstance(target, OscZarr)
-        with ExitStack() as stack:
-            dataset = stack.enter_context(
-                source.open_dataset_year("", item.scenario, item.indicator, item.year)
-            )
-            da = enforce_conventions_lat_lon(dataset[item.indicator].array)
-            da.attrs["crs"] = CRS.from_epsg(4326)
-            logger.info(f"Writing array to {str(item.resource.path)}")
-            target.write(str(item.resource.path), da)
+        dataset = source.open_dataset_year("", item.scenario, item.indicator, item.year)
+        for key in dataset:
+            if key in self.resources:
+                logger.info(f"Writing array to {str(self.resources[key].path)}")
+                target.write(str(self.resources[key].path), dataset[key])
         logger.info(
-            f"Calculation complete for scenario {item.scenario}, indicator {item.indicator} and year {item.year}"
+            "Calculation complete for {indicator}/{scenario}/{year}".format(
+                indicator=item.indicator, scenario=item.scenario, year=str(item.year)
+            )
         )
 
     def batch_items(self) -> Iterable[BatchItem]:
         items: List[BatchItem] = []
-        resources = self._resource()
         for indicator in self.indicators:
-            resource = resources[indicator]
             for scenario in self.scenarios:
                 for year in (
                     [self.central_year_historical]
                     if scenario == "historical"
                     else self.central_years
                 ):
-                    items.append(BatchItem(resource, scenario, str(year), indicator))
+                    items.append(BatchItem(indicator, scenario, year))
         return items
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
-        return self._resource().values()  # .expand()
+        return self.resources.values()  # .expand()
 
-    def _resource(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> Dict[str, HazardResource]:
         """Create resource."""
+
+        resource_map = {
+            "water_demand": {
+                "units": "cm/year",
+                "display": "Measure of the total water withdrawals",
+                "min_value": 0.0,
+                "max_value": 100,
+            },
+            "water_supply": {
+                "units": "cm/year",
+                "display": "Measure of the total available renewable surface and ground water supplies",
+                "min_value": 0.0,
+                "max_value": 100,
+            },
+            "water_stress": {
+                "units": "",
+                "display": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies",
+                "min_value": 0.0,
+                "max_value": 100.0,
+            },
+            "water_depletion": {
+                "units": "",
+                "display": "Measure of the ratio of total water consumption to available renewable water supplies",
+                "min_value": 0.0,
+                "max_value": 100.0,
+            },
+            "water_stress_category": {
+                "units": "",
+                "display": "-1: Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%)",
+                "min_value": -2,
+                "max_value": 4,
+            },
+            "water_depletion_category": {
+                "units": "",
+                "display": "-1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%)",
+                "min_value": -2,
+                "max_value": 4,
+            },
+        }
+
         with open(
             os.path.join(os.path.dirname(__file__), "wri_aqueduct_waterrisk.md"), "r"
         ) as f:
             description = f.read()
-        info_map = {
-            "water_demand": ("cm/year", "Measure of the total water withdrawals"),
-            "water_supply": (
-                "cm/year",
-                "Measure of the total available renewable surface and ground water supplies",
-            ),
-            "water_stress": (
-                "",
-                "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies "
-                + "(-1: Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%))",
-            ),
-            "water_depletion": (
-                "",
-                "Measure of the ratio of total water consumption to available renewable water supplies "
-                + "(-1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%))",
-            ),
-        }
+
         resources: Dict[str, HazardResource] = dict()
-        for indicator in self.indicators:
-            path = (
-                "water_risk/wri/v4/{indicator}".format(indicator=indicator)
-                + "_{scenario}_{year}"
-            )
-            units, display_name = (
-                info_map[indicator] if indicator in info_map else ("", "")
-            )
-            resources[indicator] = HazardResource(
-                hazard_type="WaterRisk",
-                indicator_id=indicator,
-                indicator_model_id=None,
-                indicator_model_gcm="combined",
-                params={},
-                path=path,
-                display_name=display_name,
-                description=description,
-                display_groups=[display_name],
-                group_id="",
-                map=MapInfo(
-                    colormap=Colormap(
-                        name="heating",
-                        nodata_index=0,
-                        min_index=1,
-                        min_value=-1.0,
-                        max_value=1.0,
-                        max_index=255,
-                        units=units,
+        for key in resource_map:
+            if key.replace("_category", "") in self.indicators:
+                path = "water_risk/wri/v2/{key}".format(key=key) + "_{scenario}_{year}"
+                resources[key] = HazardResource(
+                    hazard_type="WaterRisk",
+                    indicator_id=key,
+                    indicator_model_id=None,
+                    indicator_model_gcm="combined",
+                    params={},
+                    path=path,
+                    display_name=resource_map[key]["display"],
+                    description=description,
+                    display_groups=[resource_map[key]["display"]],
+                    group_id="",
+                    map=MapInfo(
+                        colormap=Colormap(
+                            name="heating",
+                            nodata_index=0,
+                            min_index=0,
+                            min_value=resource_map[key]["min_value"],
+                            max_value=resource_map[key]["max_value"],
+                            max_index=255,
+                            units=resource_map[key]["units"],
+                        ),
+                        bounds=[
+                            (-180.0, 90.0),
+                            (180.0, 90.0),
+                            (180.0, -90.0),
+                            (-180.0, -90.0),
+                        ],
+                        path=os.path.join("maps", path + "_map"),
+                        source="map_array_pyramid",
                     ),
-                    bounds=[
-                        (-180.0, 85.0),
-                        (180.0, 85.0),
-                        (180.0, -85.0),
-                        (-180.0, -85.0),
+                    units=resource_map[key]["units"],
+                    scenarios=[
+                        Scenario(id="historical", years=[self.central_year_historical]),
+                        Scenario(id="ssp126", years=list(self.central_years)),
+                        Scenario(id="ssp370", years=list(self.central_years)),
+                        Scenario(id="ssp585", years=list(self.central_years)),
                     ],
-                    path=os.path.join("maps", path + "_map"),
-                    source="map_array",
-                ),
-                units=units,
-                scenarios=[
-                    Scenario(id="historical", years=[self.central_year_historical]),
-                    Scenario(id="ssp126", years=list(self.central_years)),
-                    Scenario(id="ssp370", years=list(self.central_years)),
-                    Scenario(id="ssp585", years=list(self.central_years)),
-                ],
-            )
-        return resources
+                )
+            return resources
