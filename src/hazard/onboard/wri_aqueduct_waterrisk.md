@@ -1,11 +1,11 @@
 The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI’s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex 
 hydrological data into intuitive indicators of water-related risk:
 
-* Water use: Aqueduct considers two metrics of water use: gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, 
+* Water use: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, 
 industrial, irrigation, and livestock), and net consumption is the portion of demand that is 
 lost in use—evaporated or incorporated into a product—and not returned to the system.
 
-* Water supply: Aqueduct defines supply as available blue water, i.e. the total 
+* Water supply: available blue water, i.e. the total 
 amount of renewable freshwater available to a sub-basin with upstream consumption removed. 
 The available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. 
 
