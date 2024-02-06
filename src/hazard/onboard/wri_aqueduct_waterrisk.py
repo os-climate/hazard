@@ -20,9 +20,11 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
-from hazard.utilities.xarray_utilities import (affine_to_coords,
-                                               enforce_conventions_lat_lon,
-                                               global_crs_transform)
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +236,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         for indicator in self.indicators:
             for scenario in self.scenarios:
                 for year in (
-                    [self.central_year_historical]
+                    (
+                        [self.central_year_historical]
+                        if indicator not in ["water_demand", "water_supply"]
+                        else []
+                    )
                     if scenario == "historical"
                     else self.central_years
                 ):
@@ -293,7 +299,8 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
 
         resources: Dict[str, HazardResource] = dict()
         for key in resource_map:
-            if key.replace("_category", "") in self.indicators:
+            indicator = key.replace("_category", "")
+            if indicator in self.indicators:
                 path = "water_risk/wri/v2/{key}".format(key=key) + "_{scenario}_{year}"
                 resources[key] = HazardResource(
                     hazard_type="WaterRisk",
@@ -326,8 +333,16 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                         source="map_array_pyramid",
                     ),
                     units=resource_map[key]["units"],
-                    scenarios=[
-                        Scenario(id="historical", years=[self.central_year_historical]),
+                    scenarios=(
+                        [
+                            Scenario(
+                                id="historical", years=[self.central_year_historical]
+                            )
+                        ]
+                        if indicator not in ["water_demand", "water_supply"]
+                        else []
+                    )
+                    + [
                         Scenario(id="ssp126", years=list(self.central_years)),
                         Scenario(id="ssp370", years=list(self.central_years)),
                         Scenario(id="ssp585", years=list(self.central_years)),

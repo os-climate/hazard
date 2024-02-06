@@ -2268,12 +2268,6 @@
             },
             "scenarios": [
                 {
-                    "id": "historical",
-                    "years": [
-                        1999
-                    ]
-                },
-                {
                     "id": "ssp126",
                     "years": [
                         2030,
@@ -2346,12 +2340,6 @@
                 "source": "map_array_pyramid"
             },
             "scenarios": [
-                {
-                    "id": "historical",
-                    "years": [
-                        1999
-                    ]
-                },
                 {
                     "id": "ssp126",
                     "years": [
