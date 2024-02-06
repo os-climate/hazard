@@ -20,11 +20,9 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
-from hazard.utilities.xarray_utilities import (
-    affine_to_coords,
-    enforce_conventions_lat_lon,
-    global_crs_transform,
-)
+from hazard.utilities.xarray_utilities import (affine_to_coords,
+                                               enforce_conventions_lat_lon,
+                                               global_crs_transform)
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +159,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             self.geometry, how="left", on="pfaf_id", validate="one_to_one"
         ).drop(columns=["pfaf_id"])
 
+        # The grid resolution is 5 × 5 arc minutes:
         width, height = 12 * 360, 12 * 180
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
@@ -248,7 +247,6 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
 
     def _resources(self) -> Dict[str, HazardResource]:
         """Create resource."""
-
         resource_map = {
             "water_demand": {
                 "units": "cm/year",
@@ -319,12 +317,12 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                             units=resource_map[key]["units"],
                         ),
                         bounds=[
-                            (-180.0, 90.0),
-                            (180.0, 90.0),
-                            (180.0, -90.0),
-                            (-180.0, -90.0),
+                            (-180.0, 85.0),
+                            (180.0, 85.0),
+                            (180.0, -85.0),
+                            (-180.0, -85.0),
                         ],
-                        path=os.path.join("maps", path + "_map"),
+                        path="maps/" + path + "_map",
                         source="map_array_pyramid",
                     ),
                     units=resource_map[key]["units"],
@@ -335,4 +333,4 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                         Scenario(id="ssp585", years=list(self.central_years)),
                     ],
                 )
-            return resources
+        return resources
