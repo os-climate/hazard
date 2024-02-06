@@ -97,12 +97,27 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             os.path.join(self.source_dir, self.zip_url.split("/")[-1].split(".")[0]),
             "Aqueduct40_waterrisk_download_Y2023M07D05",
         )
-        self.geometry = gpd.read_file(
+
+        geometry = gpd.read_file(
             os.path.join(os.path.join(self.file_dir, "GDB"), "Aq40_Y2023D07M05.gdb"),
-            include_fields=["pfaf_id", "geometry"],
+            include_fields=["aq30_id", "pfaf_id", "geometry"],
         )
-        self.geometry = (
-            self.geometry[self.geometry["pfaf_id"] != -9999]
+
+        self.geometry: Dict[str, pd.DataFrame] = dict()
+
+        # The jointure is based on aq30_id for the baseline:
+        self.geometry["aq30_id"] = (
+            geometry.drop(columns=["pfaf_id"])
+            .groupby("aq30_id")
+            .apply(lambda x: union_all(x))
+            .reset_index()
+            .rename(columns={0: "geometry"})
+        )
+
+        # The jointure is based on pfaf_id for future projections:
+        self.geometry["pfaf_id"] = (
+            geometry[geometry["pfaf_id"] != -9999]
+            .drop(columns=["aq30_id"])
             .groupby("pfaf_id")
             .apply(lambda x: union_all(x))
             .reset_index()
@@ -128,6 +143,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         self, _: str, scenario: str, indicator: str, year: int
     ) -> Optional[xr.Dataset]:
         key = "baseline" if scenario == "historical" else "future"
+        joint_on = "aq30_id" if scenario == "historical" else "pfaf_id"
         filename = os.path.join(
             os.path.join(self.file_dir, "CVS"),
             "Aqueduct40_{key}_annual_y2023m07d05.csv".format(key=key),
@@ -150,16 +166,21 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
         if indicator in ["water_stress", "water_depletion"]:
             category = label.replace("_raw", "_cat").replace("_x_r", "_x_c")
-            df = pd.read_csv(filename, usecols=["pfaf_id", label, category]).rename(
+            df = pd.read_csv(filename, usecols=[joint_on, label, category]).rename(
                 columns={label: indicator, category: "_".join([indicator, "category"])}
             )
         else:
-            df = pd.read_csv(filename, usecols=["pfaf_id", label]).rename(
+            df = pd.read_csv(filename, usecols=[joint_on, label]).rename(
                 columns={label: indicator}
             )
-        df = df.merge(
-            self.geometry, how="left", on="pfaf_id", validate="one_to_one"
-        ).drop(columns=["pfaf_id"])
+        df = (
+            df[df[indicator] != -9999]
+            .drop_duplicates()
+            .merge(
+                self.geometry[joint_on], how="left", on=joint_on, validate="one_to_one"
+            )
+            .drop(columns=[joint_on])
+        )
 
         # The grid resolution is 5 × 5 arc minutes:
         width, height = 12 * 360, 12 * 180
