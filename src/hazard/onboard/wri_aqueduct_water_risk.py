@@ -20,11 +20,10 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
-from hazard.utilities.xarray_utilities import (
-    affine_to_coords,
-    enforce_conventions_lat_lon,
-    global_crs_transform,
-)
+from hazard.utilities.tiles import create_tiles_for_resource
+from hazard.utilities.xarray_utilities import (affine_to_coords,
+                                               enforce_conventions_lat_lon,
+                                               global_crs_transform)
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +270,13 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                     items.append(BatchItem(indicator, scenario, year))
         return items
 
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """
+        Create map images.
+        """
+        for key in self.resources:
+            create_tiles_for_resource(source, target, self.resources[key])
+
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
         return self.resources.values()  # .expand()
@@ -288,33 +294,33 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                 "units": "cm/year",
                 "display": "Measure of the total available renewable surface and ground water supplies.",
                 "min_value": 0.0,
-                "max_value": 100,
+                "max_value": 2000,
             },
             "water_stress": {
                 "units": "",
                 "display": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies.",
                 "min_value": 0.0,
-                "max_value": 100.0,
+                "max_value": 2.0,
             },
             "water_depletion": {
                 "units": "",
                 "display": "Measure of the ratio of total water consumption to available renewable water supplies.",
                 "min_value": 0.0,
-                "max_value": 100.0,
+                "max_value": 2.0,
             },
             "water_stress_category": {
                 "units": "",
                 "display": "Discrete measure of the ratio of total water withdrawals to available renewable surface and ground water supplies:\n-1: "
                 "Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%).",
-                "min_value": -2,
-                "max_value": 4,
+                "min_value": -5,
+                "max_value": 5,
             },
             "water_depletion_category": {
                 "units": "",
                 "display": "Discrete measure of the ratio of total water consumption to available renewable water supplies:\n-1: Arid and "
                 "low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).",
-                "min_value": -2,
-                "max_value": 4,
+                "min_value": -5,
+                "max_value": 5,
             },
         }
 
@@ -342,11 +348,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                     map=MapInfo(
                         colormap=Colormap(
                             name="heating",
-                            nodata_index=0,
-                            min_index=0,
                             min_value=resource_map[key]["min_value"],
                             max_value=resource_map[key]["max_value"],
+                            min_index=0,
                             max_index=255,
+                            nodata_index=0,
                             units=resource_map[key]["units"],
                         ),
                         bounds=[

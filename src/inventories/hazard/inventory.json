@@ -2312,7 +2312,7 @@
                     "min_index": 0,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 2000.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "cm/year"
@@ -2385,7 +2385,7 @@
                     "min_index": 0,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 2.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": ""
@@ -2464,7 +2464,7 @@
                     "min_index": 0,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 2.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": ""
@@ -2541,9 +2541,9 @@
             "map": {
                 "colormap": {
                     "min_index": 0,
-                    "min_value": -2.0,
+                    "min_value": -5.0,
                     "max_index": 255,
-                    "max_value": 4.0,
+                    "max_value": 5.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": ""
@@ -2620,9 +2620,9 @@
             "map": {
                 "colormap": {
                     "min_index": 0,
-                    "min_value": -2.0,
+                    "min_value": -5.0,
                     "max_index": 255,
-                    "max_value": 4.0,
+                    "max_value": 5.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": ""
