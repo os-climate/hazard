@@ -52,9 +52,9 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         File type: CSV
 
         DATA DESCRIPTION:
-        The Aqueduct Water Stress Projections Data include indicators of change in water supply,
-        water demand, water stress, and seasonal variability, projected for the coming decades
-        under scenarios of climate and economic growth.
+        The Aqueduct 4.0 Global Water Risk Indicators include indicators of change in water supply,
+        water demand, water stress, water depletion as well as interannual and seasonal variability, 
+        projected for the coming decades under scenarios of climate and economic growth.
 
         Args:
             source_dir (str): directory containing source files. If fs is a S3FileSystem instance
