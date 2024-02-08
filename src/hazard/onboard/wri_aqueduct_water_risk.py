@@ -350,7 +350,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                             name="heating",
                             min_value=resource_map[key]["min_value"],
                             max_value=resource_map[key]["max_value"],
-                            min_index=0,
+                            min_index=1,
                             max_index=255,
                             nodata_index=0,
                             units=resource_map[key]["units"],
