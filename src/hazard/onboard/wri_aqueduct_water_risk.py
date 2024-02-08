@@ -244,8 +244,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         dataset = source.open_dataset_year("", item.scenario, item.indicator, item.year)
         for key in dataset:
             if key in self.resources:
-                logger.info(f"Writing array to {str(self.resources[key].path)}")
-                target.write(str(self.resources[key].path), dataset[key])
+                path = self.resources[key].path.format(
+                    scenario=item.scenario, year=item.year
+                )
+                logger.info(f"Writing array to {path}")
+                target.write(path, dataset[key])
         logger.info(
             "Calculation complete for {indicator}/{scenario}/{year}".format(
                 indicator=item.indicator, scenario=item.scenario, year=str(item.year)
@@ -277,44 +280,46 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         resource_map = {
             "water_demand": {
                 "units": "cm/year",
-                "display": "Measure of the total water withdrawals",
+                "display": "Measure of the total water withdrawals.",
                 "min_value": 0.0,
                 "max_value": 100,
             },
             "water_supply": {
                 "units": "cm/year",
-                "display": "Measure of the total available renewable surface and ground water supplies",
+                "display": "Measure of the total available renewable surface and ground water supplies.",
                 "min_value": 0.0,
                 "max_value": 100,
             },
             "water_stress": {
                 "units": "",
-                "display": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies",
+                "display": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies.",
                 "min_value": 0.0,
                 "max_value": 100.0,
             },
             "water_depletion": {
                 "units": "",
-                "display": "Measure of the ratio of total water consumption to available renewable water supplies",
+                "display": "Measure of the ratio of total water consumption to available renewable water supplies.",
                 "min_value": 0.0,
                 "max_value": 100.0,
             },
             "water_stress_category": {
                 "units": "",
-                "display": "-1: Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%)",
+                "display": "Discrete measure of the ratio of total water withdrawals to available renewable surface and ground water supplies:\n-1: "
+                "Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%).",
                 "min_value": -2,
                 "max_value": 4,
             },
             "water_depletion_category": {
                 "units": "",
-                "display": "-1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%)",
+                "display": "Discrete measure of the ratio of total water consumption to available renewable water supplies:\n-1: Arid and "
+                "low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).",
                 "min_value": -2,
                 "max_value": 4,
             },
         }
 
         with open(
-            os.path.join(os.path.dirname(__file__), "wri_aqueduct_waterrisk.md"), "r"
+            os.path.join(os.path.dirname(__file__), "wri_aqueduct_water_risk.md"), "r"
         ) as f:
             description = f.read()
 
