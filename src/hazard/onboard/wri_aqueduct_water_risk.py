@@ -53,7 +53,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
         DATA DESCRIPTION:
         The Aqueduct 4.0 Global Water Risk Indicators include indicators of change in water supply,
-        water demand, water stress, water depletion as well as interannual and seasonal variability, 
+        water demand, water stress, water depletion as well as interannual and seasonal variability,
         projected for the coming decades under scenarios of climate and economic growth.
 
         Args:

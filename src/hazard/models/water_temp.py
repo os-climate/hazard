@@ -12,8 +12,11 @@ import xarray as xr
 from attr import dataclass
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import Indicator, ThresholdBasedAverageIndicator
+from hazard.models.multi_year_average import (Indicator,
+                                              ThresholdBasedAverageIndicator)
 from hazard.protocols import Averageable, OpenDataset
+from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
 
@@ -276,6 +279,13 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             )
         return output
 
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """
+        Create map images.
+        """
+        for resource in self.inventory():
+            create_tiles_for_resource(source, target, resource)
+
     def _resource(self) -> HazardResource:
         """Create resource."""
         with open(os.path.join(os.path.dirname(__file__), "water_temp.md"), "r") as f:
@@ -308,7 +318,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
-                source="map_array",
+                source="map_array_pyramid",
             ),
             units="weeks/year",
             scenarios=[
