@@ -11,6 +11,8 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import (BatchItem, Indicator,
                                               ThresholdBasedAverageIndicator)
 from hazard.protocols import OpenDataset
+from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +110,12 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             output[i, :, :] = xr.where(wbgt > threshold_c, scale, 0.0).sum(dim=["time"])
         return output
 
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """
+        Create map images.
+        """
+        create_tiles_for_resource(source, target, self._resource)
+
     def _resource(self) -> HazardResource:
         """Create resource."""
         with open(
@@ -140,7 +148,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 path="maps/chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
-                source="map_array",
+                source="map_array_pyramid",
             ),
             units="days/year",
             scenarios=[

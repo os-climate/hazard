@@ -7,12 +7,12 @@ from hazard.docs_store import DocStore, HazardResources
 from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
-from hazard.models.wet_bulb_globe_temp import \
-    WetBulbGlobeTemperatureAboveIndicator
+from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
+from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.utilities import zarr_utilities  # type: ignore
 
 from .utilities import test_output_dir
@@ -42,6 +42,7 @@ def test_create_inventory(test_output_dir):
         HeatingCoolingDegreeDays(),
         WaterTemperatureAboveIndicator(),
         WetBulbGlobeTemperatureAboveIndicator(),
+        WRIAqueductWaterRisk(),
     ]
 
     docs_store.write_new_empty_inventory()
