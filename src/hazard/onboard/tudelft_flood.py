@@ -93,7 +93,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
     def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
         input = PurePosixPath(self.source_dir, item.input_dataset_filename)
         assert target == None or isinstance(target, OscZarr)
-        shape = [39420, 38374] # y, x not all returns have same size (first one smaller at 38371) 
+        shape = [39420, 38375] # y, x not all returns have same size (first one smaller at 38371) 
         for i, return_period in enumerate(self.return_periods):
             filename = str(input).format(return_period = self.return_period_str[return_period])
             with self.fs.open(filename, 'rb') as f:
