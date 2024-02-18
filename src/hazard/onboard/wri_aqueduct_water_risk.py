@@ -21,9 +21,11 @@ from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
-from hazard.utilities.xarray_utilities import (affine_to_coords,
-                                               enforce_conventions_lat_lon,
-                                               global_crs_transform)
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +208,113 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         return dataset
 
 
+class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
+    def __init__(self, source_dir, fs: Optional[AbstractFileSystem] = None):
+        """
+        Built baseline water demand/supply from the future values as well as their change from baseline.
+
+        METADATA:
+        Link: https://www.wri.org/data/aqueduct-water-stress-projections-data
+        Data type: baseline and future projection indicators of water-related risk
+        Hazard indicator: water-related risk
+        Region: Global
+        Resolution: 22km
+        Scenarios: business-as-usual SSP 2 RCP 8.5, optimistic SSP 2 RCP 4.5, and pessimistic SSP 3 RCP 8.5
+        Time range: 2020, 2030, 2040
+        File type: Shape File (.shx)
+
+        DATA DESCRIPTION:
+        The Aqueduct Global Maps 2.1 include indicators of water stress, seasonal variability, water demand
+        and water supply, projected for the coming decades under scenarios of climate and economic growth.
+
+        Args:
+            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            <bucket name>/<prefix> is expected.
+            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+        """
+
+        self.fs = fs if fs else LocalFileSystem()
+        self.source_dir = source_dir
+        self.zip_url = (
+            "https://files.wri.org/d8/s3fs-public/aqueduct_projections_20150309_shp.zip"
+        )
+        self.prepare()
+
+        self.indicator_map = {
+            "water_demand": "ut",
+            "water_supply": "bt",
+            "water_stress": "ws",
+            "seasonal_variability": "sv",
+        }
+        self.scenario_map = {"ssp245": "24", "ssp285": "28", "ssp385": "38"}
+        self.years = [2020, 2030, 2040]
+        self.filename = os.path.join(
+            self.source_dir,
+            self.zip_url.split("/")[-1].split(".")[0],
+            "aqueduct_projections_20150309.shx",
+        )
+
+    def prepare(self, working_dir: Optional[str] = None):
+        if not isinstance(self.fs, LocalFileSystem):
+            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
+            download_and_unzip(
+                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
+            for file in os.listdir(working_dir):
+                with open(file, "rb") as f:
+                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
+        else:
+            # download and unzip directly in location
+            download_and_unzip(
+                self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
+
+    def open_dataset_year(
+        self, _: str, scenario: str, indicator: str, year: int
+    ) -> Optional[xr.Dataset]:
+        if indicator not in self.indicator_map:
+            raise ValueError(
+                "unexpected indicator {indicator}".format(indicator=indicator)
+            )
+
+        df = gpd.read_file(self.filename)
+        keys = [
+            self.indicator_map[indicator]
+            + str(year)[-2:]
+            + self.scenario_map[scenario_key]
+            for year in self.years
+            for scenario_key in self.scenario_map
+        ]
+        for key in keys:
+            df[key] = df[[key + "tr", key + "cr"]].apply(
+                lambda x: 0.0 if x[1] == 0 else x[0] / x[1], axis=1
+            )
+        df[self.indicator_map[indicator]] = df[keys].mean(axis=1)
+
+        width, height = 12 * 360, 12 * 180
+        _, transform = global_crs_transform(width, height)
+        coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
+
+        shapes = [
+            (geometry, value)
+            for geometry, value in zip(
+                df["geometry"], df[self.indicator_map[indicator]]
+            )
+        ]
+        rasterized = features.rasterize(
+            shapes,
+            out_shape=[height, width],
+            transform=transform,
+            all_touched=True,
+            fill=float("nan"),  # background value
+            merge_alg=MergeAlg.replace,
+        )
+        da = xr.DataArray(rasterized, coords=coords)
+        da = enforce_conventions_lat_lon(da)
+        da.attrs["crs"] = CRS.from_epsg(4326)
+        return xr.Dataset({indicator: da})
+
+
 class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
     def __init__(
         self,
@@ -234,12 +343,29 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         self, item: BatchItem, source, target: ReadWriteDataArray, _: Client
     ):
         """Run a single item of the batch."""
+
+        if isinstance(source, type(WRIAqueductWaterSupplyDemandBaselineSource)):
+            if (
+                item.indicator not in ["water_demand", "water_supply"]
+                or item.year != self.central_year_historical
+            ):
+                return
+
+        if isinstance(source, type(WRIAqueductWaterRiskSource)):
+            if (
+                item.indicator in ["water_demand", "water_supply"]
+                and item.year == self.central_year_historical
+            ):
+                return
+
         logger.info(
             "Starting calculation for {indicator}/{scenario}/{year}".format(
                 indicator=item.indicator, scenario=item.scenario, year=str(item.year)
             )
         )
+
         assert target == None or isinstance(target, OscZarr)
+
         dataset = source.open_dataset_year("", item.scenario, item.indicator, item.year)
         for key in dataset:
             if key in self.resources:
@@ -259,11 +385,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         for indicator in self.indicators:
             for scenario in self.scenarios:
                 for year in (
-                    (
-                        [self.central_year_historical]
-                        if indicator not in ["water_demand", "water_supply"]
-                        else []
-                    )
+                    [self.central_year_historical]
                     if scenario == "historical"
                     else self.central_years
                 ):
@@ -369,15 +491,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                         [
                             Scenario(
                                 id="historical", years=[self.central_year_historical]
-                            )
+                            ),
+                            Scenario(id="ssp126", years=list(self.central_years)),
+                            Scenario(id="ssp370", years=list(self.central_years)),
+                            Scenario(id="ssp585", years=list(self.central_years)),
                         ]
-                        if indicator not in ["water_demand", "water_supply"]
-                        else []
-                    )
-                    + [
-                        Scenario(id="ssp126", years=list(self.central_years)),
-                        Scenario(id="ssp370", years=list(self.central_years)),
-                        Scenario(id="ssp585", years=list(self.central_years)),
-                    ],
+                    ),
                 )
         return resources
