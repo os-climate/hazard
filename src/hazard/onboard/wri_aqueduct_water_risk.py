@@ -21,11 +21,9 @@ from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
-from hazard.utilities.xarray_utilities import (
-    affine_to_coords,
-    enforce_conventions_lat_lon,
-    global_crs_transform,
-)
+from hazard.utilities.xarray_utilities import (affine_to_coords,
+                                               enforce_conventions_lat_lon,
+                                               global_crs_transform)
 
 logger = logging.getLogger(__name__)
 
@@ -344,17 +342,17 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
     ):
         """Run a single item of the batch."""
 
-        if isinstance(source, type(WRIAqueductWaterSupplyDemandBaselineSource)):
+        if type(source).__name__ == "WRIAqueductWaterSupplyDemandBaselineSource":
             if (
                 item.indicator not in ["water_demand", "water_supply"]
-                or item.year != self.central_year_historical
+                or item.scenario != "historical"
             ):
                 return
 
-        if isinstance(source, type(WRIAqueductWaterRiskSource)):
+        if type(source).__name__ == "WRIAqueductWaterRiskSource":
             if (
                 item.indicator in ["water_demand", "water_supply"]
-                and item.year == self.central_year_historical
+                and item.scenario == "historical"
             ):
                 return
 
