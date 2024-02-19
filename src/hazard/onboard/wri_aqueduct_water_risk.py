@@ -285,7 +285,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         ]
         for key in keys:
             df[key] = df[[key + "tr", key + "cr"]].apply(
-                lambda x: 0.0 if x[1] == 0 else x[0] / x[1], axis=1
+                lambda x: 0.0 if x[1] == 0 else 100.0 * x[0] / x[1], axis=1
             )
         df[self.indicator_map[indicator]] = df[keys].mean(axis=1)
 
