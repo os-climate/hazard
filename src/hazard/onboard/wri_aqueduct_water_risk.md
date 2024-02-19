@@ -1,21 +1,15 @@
 The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI’s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex 
 hydrological data into intuitive indicators of water-related risk:
 
-* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, 
-industrial, irrigation, and livestock), and net consumption is the portion of demand that is 
-lost in use—evaporated or incorporated into a product—and not returned to the system.
+* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).
 
-* **Water supply**: available blue water, i.e. the total 
-amount of renewable freshwater available to a sub-basin with upstream consumption removed. 
-The available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. 
+* **Water supply**: available blue water—the total amount of renewable freshwater available to a sub-basin with upstream consumption removed—includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).
 
-* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive 
-water users and large dams on downstream water availability. Higher values indicate more competition among users.
+* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.
 
-* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.
+* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.
 
-*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider 
-variations in available supply from year to year.
+*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.
 
 * **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.
 

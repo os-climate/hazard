@@ -394,7 +394,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         """
         Create map images.
         """
-        for key in self.resources:
+        for key in ["water_supply", "water_demand"]:  # self.resources:
             create_tiles_for_resource(source, target, self.resources[key])
 
     def inventory(self) -> Iterable[HazardResource]:
@@ -406,25 +406,33 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         resource_map = {
             "water_demand": {
                 "units": "cm/year",
-                "display": "Measure of the total water withdrawals.",
+                "display": "Gross demand is the maximum potential water required to "
+                + "meet sectoral demands. Sectoral water demand includes: domestic, "
+                + "industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).",
                 "min_value": 0.0,
                 "max_value": 100,
             },
             "water_supply": {
                 "units": "cm/year",
-                "display": "Measure of the total available renewable surface and ground water supplies.",
+                "display": "Available blue water — the total amount of renewable freshwater available to a sub-basin with upstream consumption "
+                + "removed — includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).",
                 "min_value": 0.0,
                 "max_value": 2000,
             },
             "water_stress": {
                 "units": "",
-                "display": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies.",
+                "display": "Water stress is an indicator of competition for water resources and is defined "
+                + "informally as the ratio of demand for water by human society divided by available water.",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
             "water_depletion": {
                 "units": "",
-                "display": "Measure of the ratio of total water consumption to available renewable water supplies.",
+                "display": "Water depletion measures the ratio of total water consumption to available renewable water supplies. Total water "
+                + "consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies "
+                + "include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate "
+                + "larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water "
+                + "stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
@@ -490,9 +498,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                             Scenario(
                                 id="historical", years=[self.central_year_historical]
                             ),
-                            Scenario(id="ssp126", years=list(self.central_years)),
-                            Scenario(id="ssp370", years=list(self.central_years)),
-                            Scenario(id="ssp585", years=list(self.central_years)),
+                            # Scenario(id="ssp126", years=list(self.central_years)),
+                            # Scenario(id="ssp370", years=list(self.central_years)),
+                            # Scenario(id="ssp585", years=list(self.central_years)),
                         ]
                     ),
                 )
