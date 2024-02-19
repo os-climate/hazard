@@ -387,11 +387,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                 logger.info(f"Writing array to {path}")
                 if "_multiplier" in key:
                     # hard-coded
-                    path = path.replace(item.scenario, "ssp126").replace(
+                    reference_path = path.replace(item.scenario, "ssp126").replace(
                         str(item.year), "2030"
                     )
-                    reference = target.read(path)
-                    dataset[key] *= reference
+                    reference_dataarray = target.read(reference_path)
+                    dataset[key] *= reference_dataarray
                 target.write(path, dataset[key])
         logger.info(
             "Calculation complete for {indicator}/{scenario}/{year}".format(
