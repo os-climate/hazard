@@ -415,7 +415,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         """
         Create map images.
         """
-        for key in ["water_supply", "water_demand"]:  # self.resources:
+        for key in self.resources:
             create_tiles_for_resource(source, target, self.resources[key])
 
     def inventory(self) -> Iterable[HazardResource]:
