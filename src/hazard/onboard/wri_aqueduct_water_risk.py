@@ -21,9 +21,11 @@ from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
-from hazard.utilities.xarray_utilities import (affine_to_coords,
-                                               enforce_conventions_lat_lon,
-                                               global_crs_transform)
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +219,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         Hazard indicator: water-related risk
         Region: Global
         Resolution: 22km
-        Scenarios: business-as-usual SSP 2 RCP 8.5, optimistic SSP 2 RCP 4.5, and pessimistic SSP 3 RCP 8.5
+        Scenarios: optimistic SSP 2 RCP 4.5, business-as-usual SSP 2 RCP 8.5, and pessimistic SSP 3 RCP 8.5
         Time range: 2020, 2030, 2040
         File type: Shape File (.shx)
 
@@ -270,35 +272,43 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
     def open_dataset_year(
         self, _: str, scenario: str, indicator: str, year: int
     ) -> Optional[xr.Dataset]:
-        if indicator not in self.indicator_map:
+        if indicator.replace("_multiplier", "") not in self.indicator_map:
             raise ValueError(
-                "unexpected indicator {indicator}".format(indicator=indicator)
+                "unexpected indicator {indicator}".format(
+                    indicator=indicator.replace("_multiplier", "")
+                )
             )
 
         df = gpd.read_file(self.filename)
-        keys = [
-            self.indicator_map[indicator]
-            + str(year)[-2:]
-            + self.scenario_map[scenario_key]
-            for year in self.years
-            for scenario_key in self.scenario_map
-        ]
-        for key in keys:
-            df[key] = df[[key + "tr", key + "cr"]].apply(
-                lambda x: 0.0 if x[1] == 0 else 100.0 * x[0] / x[1], axis=1
-            )
-        df[self.indicator_map[indicator]] = df[keys].mean(axis=1)
+        if "_multiplier" in indicator:
+            df[indicator] = df[
+                [
+                    self.indicator_map[indicator.replace("_multiplier", "")]
+                    + "3024cr"  # hard-coded
+                ]
+            ].apply(lambda x: 1.0 if x[0] == 0.0 else 1.0 / x[0], axis=1)
+        else:
+            keys = [
+                self.indicator_map[indicator]
+                + str(year)[-2:]
+                + self.scenario_map[scenario_key]
+                for year in self.years
+                for scenario_key in self.scenario_map
+            ]
+            for key in keys:
+                df[key] = df[[key + "tr", key + "cr"]].apply(
+                    lambda x: 0.0 if x[1] == 0 else 100.0 * x[0] / x[1], axis=1
+                )
+            df[indicator] = df[keys].mean(axis=1)
 
         width, height = 12 * 360, 12 * 180
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
 
         shapes = [
-            (geometry, value)
-            for geometry, value in zip(
-                df["geometry"], df[self.indicator_map[indicator]]
-            )
+            (geometry, value) for geometry, value in zip(df["geometry"], df[indicator])
         ]
+
         rasterized = features.rasterize(
             shapes,
             out_shape=[height, width],
@@ -342,7 +352,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
     ):
         """Run a single item of the batch."""
 
+        indicator_suffix = ""
         if type(source).__name__ == "WRIAqueductWaterSupplyDemandBaselineSource":
+            indicator_suffix = "_multiplier"
             if (
                 item.indicator not in ["water_demand", "water_supply"]
                 or item.scenario != "historical"
@@ -364,13 +376,22 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
 
         assert target == None or isinstance(target, OscZarr)
 
-        dataset = source.open_dataset_year("", item.scenario, item.indicator, item.year)
+        dataset = source.open_dataset_year(
+            "", item.scenario, item.indicator + indicator_suffix, item.year
+        )
         for key in dataset:
             if key in self.resources:
                 path = self.resources[key].path.format(
                     scenario=item.scenario, year=item.year
                 )
                 logger.info(f"Writing array to {path}")
+                if "_multiplier" in key:
+                    # hard-coded
+                    path = path.replace(item.scenario, "ssp126").replace(
+                        str(item.year), "2030"
+                    )
+                    reference = target.read(path)
+                    dataset[key] *= reference
                 target.write(path, dataset[key])
         logger.info(
             "Calculation complete for {indicator}/{scenario}/{year}".format(
@@ -498,9 +519,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                             Scenario(
                                 id="historical", years=[self.central_year_historical]
                             ),
-                            # Scenario(id="ssp126", years=list(self.central_years)),
-                            # Scenario(id="ssp370", years=list(self.central_years)),
-                            # Scenario(id="ssp585", years=list(self.central_years)),
+                            Scenario(id="ssp126", years=list(self.central_years)),
+                            Scenario(id="ssp370", years=list(self.central_years)),
+                            Scenario(id="ssp585", years=list(self.central_years)),
                         ]
                     ),
                 )
