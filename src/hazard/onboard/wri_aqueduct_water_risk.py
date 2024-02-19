@@ -380,8 +380,8 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
             "", item.scenario, item.indicator + indicator_suffix, item.year
         )
         for key in dataset:
-            if key in self.resources:
-                path = self.resources[key].path.format(
+            if key.replace("_multiplier", "") in self.resources:
+                path = self.resources[key.replace("_multiplier", "")].path.format(
                     scenario=item.scenario, year=item.year
                 )
                 logger.info(f"Writing array to {path}")
@@ -390,8 +390,8 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                     reference_path = path.replace(item.scenario, "ssp126").replace(
                         str(item.year), "2030"
                     )
-                    reference_dataarray = target.read(reference_path)
-                    dataset[key] *= reference_dataarray
+                    reference_data = target.read(reference_path)
+                    dataset[key].values *= reference_data[0].values
                 target.write(path, dataset[key])
         logger.info(
             "Calculation complete for {indicator}/{scenario}/{year}".format(
