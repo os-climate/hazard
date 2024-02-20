@@ -158,11 +158,11 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                         id="historical",
                         years=[1971]),
                     Scenario(
-                        id="rcp45",
-                        years=[2050, 2070]),
+                        id="rcp4p5",
+                        years=[2035, 2085]),
                     Scenario(
-                        id="rcp85",
-                        years=[2050, 2070]),
+                        id="rcp8p5",
+                        years=[2035, 2085]),
 
                     ])]
     
@@ -308,10 +308,10 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItem]):
                         id="historical",
                         years=[1971]),
                     Scenario(
-                        id="rcp45",
-                        years=[2050, 2070]),
+                        id="rcp4p5",
+                        years=[2035, 2085]),
                     Scenario(
-                        id="rcp85",
-                        years=[2050, 2070]),
+                        id="rcp8p5",
+                        years=[2035, 2085]),
 
                     ])]
