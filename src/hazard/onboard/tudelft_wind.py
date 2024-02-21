@@ -40,7 +40,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
         METADATA:
         Link: https://data.4tu.nl/datasets/93463344-a63d-4ab2-a16a-f69b989b0e13
         Data type: historical and scenario probability
-        Hazard indicator: Probability
+        Hazard indicator: Probability of wind gusts > 25 m/s and 32 m/s
         Region: Pan-Europe
         Resolution: 49km
         Time range: 1971-2000,2021-2050,2071-2100
@@ -55,7 +55,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
         (CORDEX).
 
         IMPORTANT NOTES:
-        Tile maps do not work because very high resolution data
+        Tile maps do not work because very low resolution data.
         Coordinate system is rotated longitud and latitude. Needs to be transformed.
 
         Args:
