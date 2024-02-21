@@ -59,11 +59,15 @@ class JRCLandslides(IndicatorModel[BatchItem]):
         Kosovo, Liechtenstein, Montenegro, Norway, San Marino, Serbia, and Switzerland.
 
         IMPORTANT NOTES:
-        The dimesnion of the data has has been reduced by 10 (see reducing_factor variable).
         After downloading the data, the file elsus_v2.asc must be placed in a directory to read it from
         the onboarding script. Another option is to onboard the raw file to a folder in the S3 bucket
         to read it from there in the onboarding process.
         Map tile creation is not working for CRS 3035.
+
+        Args:
+            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            <bucket name>/<prefix> is expected. 
+            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
         """
 
         self.fs = fs if fs else LocalFileSystem()
@@ -72,7 +76,6 @@ class JRCLandslides(IndicatorModel[BatchItem]):
         self._resource = self.inventory()[0]
 
         # Affine matrix metadata
-        self.crs_latlon = CRS.from_epsg(4326)
         self.cell_size = 200
         self.XLLCORNER = 2636073.6872550002  
         self.YLLCORNER = 1385914.3968890002
@@ -82,9 +85,6 @@ class JRCLandslides(IndicatorModel[BatchItem]):
         self.height = 20151
         self.crs = '3035'
 
-        # Factor to reduce dimension
-        self.reducing_factor = 1
-
     def batch_items(self) -> Iterable[BatchItem]:
         return [ BatchItem(scenario="historical", central_year=1980, input_dataset_filename="susceptability_{scenario}_{year}")
                  ]
@@ -92,10 +92,6 @@ class JRCLandslides(IndicatorModel[BatchItem]):
     def read_raw_data(self, filename: str) -> np.array:
         data = np.loadtxt(filename, skiprows=6)
         return data
-    
-    def reduce_dimension_of_data(self, data: np.array) -> np.array:
-        data_ = data[0:self.height:self.reducing_factor, 0:self.width:self.reducing_factor]
-        return data_
     
     def create_affine_transform_from_mapbounds_3035(self) -> Affine:
         """
@@ -130,9 +126,6 @@ class JRCLandslides(IndicatorModel[BatchItem]):
         # Read raw data 
         raw_data = self.read_raw_data(filename)
 
-        # Reduce dimension of data
-        reduced_data = self.reduce_dimension_of_data(raw_data)
-
         transform = self.create_affine_transform_from_mapbounds_3035()
 
         z = target.create_empty(
@@ -142,7 +135,7 @@ class JRCLandslides(IndicatorModel[BatchItem]):
             transform,
             self.crs
         )
-        z[0, :, :] = reduced_data[:, :]   
+        z[0, :, :] = raw_data[:, :]   
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """
