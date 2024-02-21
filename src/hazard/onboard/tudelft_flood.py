@@ -230,16 +230,6 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItem]):
             source = PurePosixPath(self.source_dir)    
             download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
 
-    def run_single1(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
-        input = PurePosixPath(self.source_dir, 'data', item.input_dataset_filename)
-        assert target == None or isinstance(target, OscZarr)
-        shape = [40245, 38897] # y, x not all returns have same size (first one smaller at 38371) 
-        for i, return_period in enumerate(self.return_periods):
-            filename = str(input).format(return_period = self.return_period_str[return_period])
-            with self.fs.open(filename, 'rb') as f:
-                da = xr.open_rasterio(f).isel(band=0)
-                print(da.shape)
-
     def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
         input = PurePosixPath(self.source_dir, 'data', item.input_dataset_filename)
         assert target == None or isinstance(target, OscZarr)
