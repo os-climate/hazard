@@ -16,7 +16,11 @@ from hazard.models.wet_bulb_globe_temp import \
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jupiter import Jupiter  # type: ignore
 from hazard.onboard.jupiter import JupiterOscFileSource
-from hazard.onboard.tudelft_flood import TUDelftRiverFlood
+from hazard.onboard.tudelft_flood import TUDelftRiverFlood, TUDelftCoastalFlood
+from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
+from hazard.onboard.tudelft_wildfire import TUDelftFire
+from hazard.onboard.jrc_landslides import JRCLandslides
+from hazard.onboard.jrc_subsidence import JRCSubsidence
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (WRIAqueductWaterRisk,
                                                     WRIAqueductWaterRiskSource)
