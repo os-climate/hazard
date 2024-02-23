@@ -9,10 +9,8 @@ import s3fs
 import zarr
 
 from hazard.docs_store import DocStore
-from hazard.models.water_temp import (FutureStreamsSource,
-                                      WaterTemperatureAboveIndicator)
-from hazard.models.wet_bulb_globe_temp import \
-    WetBulbGlobeTemperatureAboveIndicator
+from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
+from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jupiter import Jupiter  # type: ignore
 from hazard.onboard.jupiter import JupiterOscFileSource
@@ -22,8 +20,11 @@ from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.jrc_landslides import JRCLandslides
 from hazard.onboard.jrc_subsidence import JRCSubsidence
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
-from hazard.onboard.wri_aqueduct_water_risk import (WRIAqueductWaterRisk,
-                                                    WRIAqueductWaterRiskSource)
+from hazard.onboard.wri_aqueduct_water_risk import (
+    WRIAqueductWaterRisk,
+    WRIAqueductWaterRiskSource,
+    WRIAqueductWaterSupplyDemandBaselineSource,
+)
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
@@ -182,12 +183,16 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
 @pytest.mark.skip(reason="on-boarding script")
 def test_wri_aqueduct_water_risk(test_output_dir):
     source_dir = os.path.join(test_output_dir, "wri_aqueduct_water_risk")
-    source = WRIAqueductWaterRiskSource(
-        source_dir=source_dir, fs=local.LocalFileSystem()
-    )
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
     model = WRIAqueductWaterRisk()
+    source = WRIAqueductWaterRiskSource(
+        source_dir=source_dir, fs=local.LocalFileSystem()
+    )
+    model.run_all(source, target)
+    source = WRIAqueductWaterSupplyDemandBaselineSource(
+        source_dir=source_dir, fs=local.LocalFileSystem()
+    )
     model.run_all(source, target)
     model.create_maps(target, target)
 
