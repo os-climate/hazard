@@ -23,6 +23,8 @@ mkdocs = "*"
 pymdown-extensions = "*"
 mercantile = "*"
 xclim = "==0.45.0"
+geopandas = "*"
+shapely = "*"
 pyproj = "*"
 
 [dev-packages]
