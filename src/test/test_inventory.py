@@ -6,6 +6,7 @@ import pytest
 from hazard.docs_store import DocStore, HazardResources
 from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
+from hazard.models.drought_index import DroughtIndicator
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import \
     WetBulbGlobeTemperatureAboveIndicator
@@ -42,6 +43,7 @@ def test_create_inventory(test_output_dir):
         HeatingCoolingDegreeDays(),
         WaterTemperatureAboveIndicator(),
         WetBulbGlobeTemperatureAboveIndicator(),
+        DroughtIndicator(None)
     ]
 
     docs_store.write_new_empty_inventory()

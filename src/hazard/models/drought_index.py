@@ -16,6 +16,7 @@ import numpy as np # type: ignore
 import s3fs # type: ignore
 import xarray as xr
 import xclim.indices # type: ignore
+from hazard.indicator_model import IndicatorModel # type: ignore
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import MultiYearAverageIndicatorBase # type: ignore
 
@@ -104,7 +105,7 @@ class ProgressStore():
             f.write(json.dumps(indices.model_dump()))
 
 
-class DroughtIndicator:
+class DroughtIndicator(IndicatorModel[BatchItem]):
     def __init__(self,
                 working_zarr_store: ZarrWorkingStore,
                 window_years: int=MultiYearAverageIndicatorBase._default_window_years,
@@ -310,6 +311,14 @@ class DroughtIndicator:
             self.calculate_spei(item.gcm, item.scenario)
         if calculate_average_spei:
             self.calculate_annual_average_spei(item.gcm, item.scenario, item.central_year, target)
+
+    def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
+        ...
+
+    def inventory(self) -> Iterable[HazardResource]:
+        """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
+        return [self._resource()]
 
     def _resource(self) -> HazardResource:
         #with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
