@@ -129,10 +129,10 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_gcm="{gcm}",
             params={"gcm": self.gcms},
             path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
-            display_name="Days with wet-bulb globe temperature above threshold in degrees celsius/{gcm}",
+            display_name="Days with wet-bulb globe temperature above threshold in °C/{gcm}",
             description=description,
             display_groups=[
-                "Days with wet-bulb globe temperature above threshold in degrees celsius"
+                "Days with wet-bulb globe temperature above threshold in °C"
             ],  # display names of groupings
             group_id="",
             map=MapInfo(
