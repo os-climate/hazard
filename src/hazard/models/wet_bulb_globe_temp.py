@@ -114,7 +114,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         """
         Create map images.
         """
-        create_tiles_for_resource(source, target, self._resource)
+        create_tiles_for_resource(source, target, self._resource())
 
     def _resource(self) -> HazardResource:
         """Create resource."""
