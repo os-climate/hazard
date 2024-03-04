@@ -426,48 +426,38 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         """Create resource."""
         resource_map = {
             "water_demand": {
-                "units": "cm/year",
-                "display": "Gross demand is the maximum potential water required to "
-                + "meet sectoral demands. Sectoral water demand includes: domestic, "
-                + "industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).",
+                "units": "centimeters/year",
+                "display": "Water demand in centimeters/year (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 100,
             },
             "water_supply": {
-                "units": "cm/year",
-                "display": "Available blue water — the total amount of renewable freshwater available to a sub-basin with upstream consumption "
-                + "removed — includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).",
+                "units": "centimeters/year",
+                "display": "Water supply in centimeters/year (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 2000,
             },
             "water_stress": {
                 "units": "",
-                "display": "Water stress is an indicator of competition for water resources and is defined "
-                + "informally as the ratio of demand for water by human society divided by available water.",
+                "display": "Water stress (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
             "water_depletion": {
                 "units": "",
-                "display": "Water depletion measures the ratio of total water consumption to available renewable water supplies. Total water "
-                + "consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies "
-                + "include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate "
-                + "larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water "
-                + "stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.",
+                "display": "Water depletion (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
             "water_stress_category": {
                 "units": "",
-                "display": "Discrete measure of the ratio of total water withdrawals to available renewable surface and ground water supplies:\n-1: "
-                "Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%).",
+                "display": "Water stress category (Aqueduct 4.0)",
                 "min_value": -5,
                 "max_value": 5,
             },
             "water_depletion_category": {
                 "units": "",
-                "display": "Discrete measure of the ratio of total water consumption to available renewable water supplies:\n-1: Arid and "
-                "low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).",
+                "display": "Water depletion category (Aqueduct 4.0)",
                 "min_value": -5,
                 "max_value": 5,
             },
