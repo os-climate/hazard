@@ -70,7 +70,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
 
     def _resource(self) -> HazardResource:
         with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:
-            description = f.read()
+            description = f.read().replace('\u00c2\u00b0', 'u00b0')
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="mean_work_loss/{intensity}",

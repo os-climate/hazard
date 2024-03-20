@@ -99,7 +99,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
 
     def _resource(self):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
-            description = f.read()
+            description = f.read().replace('\u00c2\u00b0', 'u00b0')
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="mean_degree_days/above/32c",
