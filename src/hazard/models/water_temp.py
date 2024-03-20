@@ -289,7 +289,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
     def _resource(self) -> HazardResource:
         """Create resource."""
         with open(os.path.join(os.path.dirname(__file__), "water_temp.md"), "r") as f:
-            description = f.read()
+            description = f.read().replace('\u00c2\u00b0', '\u00b0')
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="weeks_water_temp_above",
