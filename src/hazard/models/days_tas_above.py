@@ -86,7 +86,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         with open(
             os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r"
         ) as f:
-            description = f.read().replace('\u00c2\u00b0', 'u00b0')
+            description = f.read().replace('\u00c2\u00b0', '\u00b0')
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_tas/above/{temp_c}c",

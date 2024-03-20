@@ -121,7 +121,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         with open(
             os.path.join(os.path.dirname(__file__), "wet_bulb_globe_temp.md"), "r"
         ) as f:
-            description = f.read().replace('\u00c2\u00b0', 'u00b0')
+            description = f.read().replace('\u00c2\u00b0', '\u00b0')
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_wbgt_above",
