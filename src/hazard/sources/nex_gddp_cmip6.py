@@ -8,6 +8,7 @@ import s3fs, fsspec  # type: ignore
 import xarray as xr
 
 from hazard.protocols import OpenDataset
+from hazard.utilities import stac_utilities
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,8 @@ class NexGddpCmip6(OpenDataset):
     https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6
     """
 
-    bucket: str = "nex-gddp-cmip6"
+    catalog_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"
+    collection_id: str = "nasa-nex-gddp-cmip6"
 
     def __init__(
         self,
@@ -51,20 +53,15 @@ class NexGddpCmip6(OpenDataset):
         self.quantities = {"tas": {"name": "Daily average temperature"}}
 
     def path(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
-        component = self.subset[gcm]
-        variant_label = component["variant_label"]
-        grid_label = component["grid_label"]
-        filename = (
-            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
-        )
-        return (
-            posixpath.join(
-                self.root,
-                f"NEX-GDDP-CMIP6/{gcm}/{scenario}/{variant_label}/{quantity}/",
-            )
-            + filename,
-            filename,
-        )
+        items = stac_utilities.search_stac_items(catalog_url=self.catalog_url, search_params={"collection": self.collection_id ,"datetime": year, "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}}})
+        if len(items) == 0:
+            raise ValueError(f"No items found for gcm={gcm}, scenario={scenario}, year={year}")
+        elif len(items) > 1:
+            raise ValueError(f"Multiple items found for gcm={gcm}, scenario={scenario}, year={year}")
+        else:
+            item = items[0]
+        href = item.assets[quantity].href
+        return href.replace("https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6","s3://nex-gddp-cmip6/NEX-GDDP-CMIP6")
 
     def gcms(self) -> List[str]:
         return list(self.subset.keys())

@@ -26,6 +26,8 @@ xclim = "*"
 geopandas = "*"
 shapely = "*"
 pyproj = "*"
+pystac_client = "*"
+pystac = "*"
 
 [dev-packages]
 isort = "*"
