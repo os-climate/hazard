@@ -1,5 +1,6 @@
-from typing import Iterable, List, Optional, Protocol
 import typing
+from typing import Iterable, List, Optional, Protocol
+
 import xarray as xr
 
 
@@ -12,51 +13,41 @@ class Averageable(Protocol):
 class OpenDataset(Protocol):
     """Open XArray Dataset for Global Circulation Model (GCM), scenario and quantity for whole year specified."""
 
-    def gcms(self) -> Iterable[str]:
-        ...
+    def gcms(self) -> Iterable[str]: ...
 
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
-    ) -> xr.Dataset:
+    ):  # -> Generator[xr.Dataset, None, None]:
         ...
 
 
 class ReadDataArray(Protocol):
     """Read DataArray."""
 
-    def read(self, path: str) -> xr.DataArray:
-        ...
+    def read(self, path: str) -> xr.DataArray: ...
 
 
 class WriteDataArray(Protocol):
     """Write DataArray."""
 
-    def write(
-        self, path: str, data_array: xr.DataArray, chunks: Optional[List[int]] = None
-    ):
-        ...
+    def write(self, path: str, data_array: xr.DataArray, chunks: Optional[List[int]] = None): ...
 
 
-class ReadWriteDataArray(ReadDataArray, WriteDataArray):
-    ...
+class ReadWriteDataArray(ReadDataArray, WriteDataArray): ...  # noqa: E701
 
 
 class WriteDataset(Protocol):
     """Write DataArray."""
 
-    def write(self, path: str, dataset: xr.Dataset):
-        ...
+    def write(self, path: str, dataset: xr.Dataset): ...
 
 
 T = typing.TypeVar("T")
 
 
 class PTransform(Protocol):
-    def batch_items(self) -> Iterable[T]:
-        ...
+    def batch_items(self) -> Iterable[T]: ...
 
-    def process_item(self, item: T) -> xr.DataArray:
-        ...
+    def process_item(self, item: T) -> xr.DataArray: ...
 
-    def item_path(self, item: T) -> str:
-        ...
+    def item_path(self, item: T) -> str: ...

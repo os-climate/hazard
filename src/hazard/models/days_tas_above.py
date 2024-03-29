@@ -1,10 +1,9 @@
-from abc import abstractmethod
-from contextlib import ExitStack
-from dataclasses import dataclass
 import logging
 import os
+from contextlib import ExitStack
 from typing import Iterable, List
-from hazard.indicator_model import IndicatorModel
+
+import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import (
@@ -14,8 +13,6 @@ from hazard.models.multi_year_average import (
     ThresholdBasedAverageIndicator,
 )
 from hazard.protocols import OpenDataset
-
-import xarray as xr
 
 logger = logging.getLogger(__name__)
 
@@ -28,19 +25,22 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         gcms: Iterable[str] = MultiYearAverageIndicatorBase._default_gcms,
         scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
         central_year_historical: int = MultiYearAverageIndicatorBase._default_central_year_historical,
-        central_years: Iterable[
-            int
-        ] = MultiYearAverageIndicatorBase._default_central_years,
+        central_years: Iterable[int] = MultiYearAverageIndicatorBase._default_central_years,
     ):
         """Create indicators based on average number of days above different temperature thresholds.
 
         Args:
-            threshold_temps_c (List[float], optional): Temperature thresholds in degrees C. Defaults to [25, 30, 35, 40, 45, 50, 55].
+            threshold_temps_c (List[float], optional): Temperature thresholds in degrees C.
+            Defaults to [25, 30, 35, 40, 45, 50, 55].
             window_years (int, optional): Number of years for average. Defaults to 20.
-            gcms (Iterable[str], optional): Global Circulation Models to include in calculation. Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
-            scenarios (Iterable[str], optional): Scenarios to include in calculation. Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
-            central_year_historical (int): Central year to include in calculation for historical scenario. Defaults to 2005.
-            central_years (Iterable[int], optional): Central years to include in calculation. Defaults to [2010, 2030, 2040, 2050].
+            gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
+            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
+            scenarios (Iterable[str], optional): Scenarios to include in calculation.
+            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+            central_year_historical (int): Central year to include in calculation for historical scenario.
+            Defaults to 2005.
+            central_years (Iterable[int], optional): Central years to include in calculation.
+            Defaults to [2010, 2030, 2040, 2050].
         """
         super().__init__(
             window_years=window_years,
@@ -51,15 +51,11 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         )
         self.threshold_temps_c = threshold_temps_c
 
-    def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    def _calculate_single_year_indicators(self, source: OpenDataset, item: BatchItem, year: int) -> List[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
-            tas = stack.enter_context(
-                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
-            ).tas
+            tas = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "tas", year)).tas
             results = self._days_tas_above_indicators(tas, year, self.threshold_temps_c)
         logger.info(f"Calculation complete for year {year}")
         # Get Indicators for reach array, looking up path using "threshold"
@@ -83,10 +79,8 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _resource(self) -> HazardResource:
         """Create resource."""
-        with open(
-            os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r"
-        ) as f:
-            description = f.read().replace('\u00c2\u00b0', '\u00b0')
+        with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
+            description = f.read().replace("\u00c2\u00b0", "\u00b0")
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_tas/above/{temp_c}c",
@@ -99,9 +93,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
             display_name="Days with average temperature above {temp_c}°C/{gcm}",
             description=description,
-            display_groups=[
-                "Days with average temperature above"
-            ],  # display names of groupings
+            display_groups=["Days with average temperature above"],  # display names of groupings
             group_id="",
             map=MapInfo(
                 colormap=Colormap(
@@ -114,6 +106,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                     units="days/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                index_values=None,
                 path="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
                 source="map_array",
             ),

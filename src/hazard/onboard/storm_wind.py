@@ -1,29 +1,18 @@
+import os
 from contextlib import ExitStack
 from dataclasses import dataclass
-import os
-from pathlib import PosixPath, PurePosixPath
-from affine import Affine  # type: ignore
-from dask.distributed import Client
-from fsspec.spec import AbstractFileSystem  # type: ignore
+from typing import Dict, Iterable
+
 import numpy as np  # type: ignore
-import pandas as pd  # type: ignore
-import rasterio  # type: ignore
-from rasterio.crs import CRS  # type: ignore
-import rasterio.enums  # type: ignore
 import requests  # type: ignore
 import rioxarray  # type: ignore
 import xarray as xr
-from typing import Any, Dict, Iterable, List, Tuple
+from affine import Affine  # type: ignore
+from dask.distributed import Client
+
 from hazard.indicator_model import IndicatorModel
-from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import OpenDataset, WriteDataArray, WriteDataset
-from hazard.sources.osc_zarr import OscZarr
+from hazard.inventory import HazardResource
 from hazard.utilities import xarray_utilities
-from hazard.utilities.map_utilities import (
-    check_map_bounds,
-    transform_epsg4326_to_epsg3857,
-)
-import zarr  # type: ignore
 
 
 @dataclass
@@ -63,7 +52,7 @@ class STORMIndicator(IndicatorModel[BatchItem]):
         #    1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
         self._return_periods = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
         self._urls = {
-            "STORM_FIXED_RETURN_PERIODS_HADGEM3-GC31-HM_TIF_FILES.zip": "https://data.4tu.nl/file/504c838e-2bd8-4d61-85a1-d495bdc560c3/856f9530-56d7-489e-8005-18ae36db4804"
+            "STORM_FIXED_RETURN_PERIODS_HADGEM3-GC31-HM_TIF_FILES.zip": "https://data.4tu.nl/file/504c838e-2bd8-4d61-85a1-d495bdc560c3/856f9530-56d7-489e-8005-18ae36db4804"  # noqa: E501
         }
         # present=1979-2014
         # future=2015-2050
@@ -82,7 +71,9 @@ class STORMIndicator(IndicatorModel[BatchItem]):
             with ExitStack() as stack:
                 for basin_id in self._basin_ids:
                     file_name = f"STORM_FIXED_RETURN_PERIODS_{item.gcm}_{basin_id}_{return_period}_YR_RP.tif"
-                    da: xr.DataArray = stack.enter_context(rioxarray.open_rasterio(os.path.join(self._temp_dir, file_name)))  # type: ignore
+                    da: xr.DataArray = stack.enter_context(
+                        rioxarray.open_rasterio(os.path.join(self._temp_dir, file_name))  # type: ignore
+                    )
                     # TODO: enforce that da follows standard conventions
                     data_arrays[basin_id] = da
 
@@ -90,12 +81,8 @@ class STORMIndicator(IndicatorModel[BatchItem]):
             xarray_utilities.assert_sources_combinable(list(data_arrays.values()))
 
             # infer parent size from first child array, assuming global coverage
-            _, transform0, crs0 = xarray_utilities.get_array_components(
-                list(data_arrays.values())[0]
-            )
-            size = np.array(~transform0 * (180, -90)) - np.array(
-                ~transform0 * (-180, 90)
-            )
+            _, transform0, crs0 = xarray_utilities.get_array_components(list(data_arrays.values())[0])
+            size = np.array(~transform0 * (180, -90)) - np.array(~transform0 * (-180, 90))
             width, height = np.array(np.round(size), dtype=int)
             if not np.allclose([width, height], size):
                 raise ValueError("size is not integer.")
@@ -123,17 +110,12 @@ class STORMIndicator(IndicatorModel[BatchItem]):
                     x = np.where(x > 180 + 1e-6, x - 360, x)
                     da_child["x"] = x
                 da_child = da_child.squeeze(dim="band")
-                xarray_utilities.add_children_to_parent(
-                    da_parent, zarr_parent, index, da_child
-                )
+                xarray_utilities.add_children_to_parent(da_parent, zarr_parent, index, da_child)
 
             for da in data_arrays.values():
                 xi, yi = len(da["x"]) // 2, len(da["y"]) // 2
                 value = da.data[0, yi, xi]
-                xip, yip = np.round(
-                    np.array(~trans_parent * (float(da["x"][xi]), float(da["y"][yi])))
-                    - [0.5, 0.5]
-                )
+                xip, yip = np.round(np.array(~trans_parent * (float(da["x"][xi]), float(da["y"][yi]))) - [0.5, 0.5])
                 check_value = zarr_parent[index, int(yip), int(xip)]
                 if not np.allclose([value], [check_value]):
                     raise ValueError("check failed.")

@@ -58,3 +58,4 @@ credentials.env
 src/inventories/hazard/inventory_live.json
 .vscode/launch.json
 .vscode/settings.json
+.pdm-python
