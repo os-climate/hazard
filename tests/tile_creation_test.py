@@ -21,6 +21,7 @@ from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
 from .utilities import test_output_dir
 
 
+@pytest.mark.skip(reason="Example not test")
 def test_xarray_writing(test_output_dir):
     lat = np.arange(90, -90, -0.01)
     lon = np.arange(-180, 180, 0.01)
