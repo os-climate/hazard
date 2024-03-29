@@ -1,10 +1,7 @@
 import json
-from pathlib import PosixPath
-from typing import Any, Iterable, List, Optional
-from pydantic import BaseModel, Field
-from enum import Flag, auto
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from pydantic import BaseModel, Field
 
 # region HazardModel
 
@@ -60,9 +57,7 @@ class Period(BaseModel):
     """Provides information about a period, which currently corresponds to a year, belonging to a scenario."""
 
     year: int
-    map_id: str = Field(
-        description="If present, identifier to be used for looking up map tiles from server."
-    )
+    map_id: str = Field(description="If present, identifier to be used for looking up map tiles from server.")
 
 
 class Scenario(BaseModel):
@@ -93,22 +88,14 @@ class HazardResource(BaseModel):
     indicator_model_gcm: str = Field(
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )
-    params: Dict[str, List[str]] = Field(
-        {}, description="Parameters used to expand wild-carded fields."
-    )
+    params: Dict[str, Sequence[str]] = Field({}, description="Parameters used to expand wild-carded fields.")
     display_name: str = Field(description="Text used to display indicator.")
-    display_groups: List[str] = Field(
-        [], description="Text used to group the (expanded) indicators for display."
-    )
+    display_groups: List[str] = Field([], description="Text used to group the (expanded) indicators for display.")
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
-    map: Optional[MapInfo] = Field(
-        description="Optional information used for display of the indicator in a map."
-    )
-    scenarios: List[Scenario] = Field(
-        description="Climate change scenarios for which the indicator is available."
-    )
+    map: Optional[MapInfo] = Field(description="Optional information used for display of the indicator in a map.")
+    scenarios: List[Scenario] = Field(description="Climate change scenarios for which the indicator is available.")
     units: str = Field(description="Units of the hazard indicator.")
 
     def expand(self):
@@ -142,11 +129,13 @@ def expand_resource(
                         "id": expand(item.indicator_id, key, param),
                         "display_name": expand(item.display_name, key, param),
                         "path": expand(item.path, key, param),
-                        "map": None
-                        if item.map is None
-                        else item.map.copy(
-                            deep=True,
-                            update={"path": expand(item.map.path, key, param)},
+                        "map": (
+                            None
+                            if item.map is None
+                            else item.map.copy(
+                                deep=True,
+                                update={"path": expand(item.map.path, key, param)},
+                            )
                         ),
                     },
                 )

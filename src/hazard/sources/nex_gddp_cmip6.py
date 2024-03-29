@@ -1,10 +1,11 @@
+import logging
+import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-import logging, os
-import posixpath
 from typing import Dict, Generator, List, Optional
 
-import s3fs, fsspec  # type: ignore
+import fsspec
+import s3fs  # type: ignore
 import xarray as xr
 
 from hazard.protocols import OpenDataset
@@ -54,9 +55,7 @@ class NexGddpCmip6(OpenDataset):
         component = self.subset[gcm]
         variant_label = component["variant_label"]
         grid_label = component["grid_label"]
-        filename = (
-            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
-        )
+        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
         return (
             posixpath.join(
                 self.root,

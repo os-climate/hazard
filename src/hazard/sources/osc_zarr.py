@@ -138,9 +138,7 @@ class OscZarr(WriteDataArray):
             da (xr.DataArray): The DataArray.
         """
         da_norm = xarray_utilities.normalize_array(da)
-        data, transform, crs = xarray_utilities.get_array_components(
-            da_norm, assume_normalized=True
-        )
+        data, transform, crs = xarray_utilities.get_array_components(da_norm, assume_normalized=True)
         z = self._zarr_create(
             path,
             da_norm.shape,
@@ -151,9 +149,7 @@ class OscZarr(WriteDataArray):
         )
         z[:, :, :] = data[:, :, :]
 
-    def write_slice(
-        self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray
-    ):
+    def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
 
@@ -203,9 +199,7 @@ class OscZarr(WriteDataArray):
             renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(
-            self.root.store, compute=True, group=path, mode="w", consolidated=False
-        )
+        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
@@ -260,9 +254,7 @@ class OscZarr(WriteDataArray):
         self._add_attributes(z.attrs, transform, crs, indexes)
         return z
 
-    def _add_attributes(
-        self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None
-    ):
+    def _add_attributes(self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None):
         trans_members = [
             transform.a,
             transform.b,
@@ -275,9 +267,7 @@ class OscZarr(WriteDataArray):
         attrs["crs"] = crs
         use_xy = crs.upper() == "EPSG:3857"
         attrs["transform_mat3x3"] = mat3x3
-        attrs["dimensions"] = (
-            ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
-        )
+        attrs["dimensions"] = ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
         if indexes is not None:
             attrs["index_values"] = list(indexes)
             attrs["index_name"] = "return period (years)"

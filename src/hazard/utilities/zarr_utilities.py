@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 import sys
-from pathlib import PurePosixPath
 from typing import List, Tuple
 
 import numpy as np
@@ -15,9 +14,7 @@ from dotenv import load_dotenv
 def add_logging_output_to_stdout(LOG):
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     LOG.addHandler(handler)
 

@@ -44,7 +44,7 @@ def test_create_inventory(test_output_dir):
         WaterTemperatureAboveIndicator(),
         WetBulbGlobeTemperatureAboveIndicator(),
         WRIAqueductWaterRisk(),
-        DroughtIndicator(None)
+        DroughtIndicator(None),
     ]
 
     docs_store.write_new_empty_inventory()

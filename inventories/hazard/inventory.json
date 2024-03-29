@@ -976,7 +976,7 @@
             "params": {},
             "display_name": "Fire probability (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location based on several parameters from multiple bias corrected\nand downscaled Global Climate Models (GCMs).\nFor example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September and 0% for other months, the hazard indicator value is 20%.\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis fire model computes the maximum monthly probability per annum of a wildfire within 100 km of\na given location based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs).\nFor example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September\nand 0% for other months, the hazard indicator value is 20%.\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1045,7 +1045,7 @@
             "params": {},
             "display_name": "Drought (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI).\nThe SPEl is an extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET) in determining drought events.\nThe SPEl is calculated from a log-logistic probability distribution function of climatic water balance (precipitation minus evapotranspiration) over a given time scale.\nThe SPEI itself is a standardized variable with a mean value 0 and standard deviation 1.\nThis drought model computes the number of months per annum where the 3-month rolling average of SPEI is below -2 based on the mean values of several parameters from\nbias-corrected and downscaled multiple Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI).\nThe SPEl is an extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET)\nin determining drought events.\nThe SPEl is calculated from a log-logistic probability distribution function of climatic water balance\n(precipitation minus evapotranspiration) over a given time scale.\nThe SPEI itself is a standardized variable with a mean value 0 and standard deviation 1.\nThis drought model computes the number of months per annum where the 3-month rolling average\nof SPEI is below -2 based on the mean values of several parameters from\nbias-corrected and downscaled multiple Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1114,7 +1114,7 @@
             "params": {},
             "display_name": "Precipitation (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year return period based on the mean of the precipitation distribution\nfrom multiple bias corrected and downscaled Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year\nreturn period based on the mean of the precipitation distribution from multiple bias corrected and\ndownscaled Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1183,7 +1183,7 @@
             "params": {},
             "display_name": "Large hail days per year (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible based on the mean distribution of several parameters\nacross multiple bias-corrected and downscaled Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible\nbased on the mean distribution of several parameters\nacross multiple bias-corrected and downscaled Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1252,7 +1252,7 @@
             "params": {},
             "display_name": "Days per year above 35\u00b0C (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis heat model computes the number of days exceeding 35\u00b0C per annum based on the mean of distribution fits to the bias-corrected and downscaled high temperature distribution\nacross multiple Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis heat model computes the number of days exceeding 35\u00b0C per annum based on the mean of distribution fits\nto the bias-corrected and downscaled high temperature distribution\nacross multiple Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1321,7 +1321,7 @@
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a 100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a\n100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1390,7 +1390,7 @@
             "params": {},
             "display_name": "Flooded fraction (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.\nFor higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nFlooded fraction provides the spatial fraction of land flooded in a defined grid.\nIt is derived from higher-resolution flood hazards, and computed directly as the fraction of cells within the 30-km cell that have non-zero flooding at that return period.\nThis model uses a 30-km grid that experiences flooding at the 200-year return period.\nOpen oceans are excluded.\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nFlooded fraction provides the spatial fraction of land flooded in a defined grid.\nIt is derived from higher-resolution flood hazards, and computed directly as the fraction of\ncells within the 30-km cell that have non-zero flooding at that return period.\nThis model uses a 30-km grid that experiences flooding at the 200-year return period.\nOpen oceans are excluded.\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,

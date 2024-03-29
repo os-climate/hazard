@@ -1,34 +1,15 @@
-from contextlib import ExitStack
-from dataclasses import dataclass
 import os
-from pathlib import PosixPath, PurePosixPath
-from affine import Affine  # type: ignore
-from dask.distributed import Client
-from fsspec.spec import AbstractFileSystem  # type: ignore
-import numpy as np  # type: ignore
-import pandas as pd  # type: ignore
-import rasterio  # type: ignore
-from rasterio.crs import CRS  # type: ignore
-import rasterio.enums  # type: ignore
-import requests  # type: ignore
-import rioxarray  # type: ignore
+from dataclasses import dataclass
+from typing import Iterable
+
 import xarray as xr
-from typing import Any, Dict, Iterable, List, Tuple
+from dask.distributed import Client
+
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import (
-    OpenDataset,
-    ReadWriteDataArray,
-    WriteDataArray,
-    WriteDataset,
-)
+from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities import tiles, xarray_utilities
-from hazard.utilities.map_utilities import (
-    check_map_bounds,
-    transform_epsg4326_to_epsg3857,
-)
-import zarr  # type: ignore
+from hazard.utilities import tiles
 
 
 @dataclass
@@ -48,39 +29,14 @@ class IRISIndicator(IndicatorModel[BatchItem]):
             input_dir (str): Directory containing IRIS inputs.
         """
         self.input_dir = input_dir
-        return_periods = [
-            10,
-            20,
-            30,
-            40,
-            50,
-            60,
-            70,
-            80,
-            90,
-            100,
-            200,
-            300,
-            400,
-            500,
-            600,
-            700,
-            800,
-            900,
-            1000,
-        ]
 
-    def run_single(
-        self, item: BatchItem, source, target: ReadWriteDataArray, client: Client
-    ):
+    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, client: Client):
         file_name = self._file_name(item.scenario, item.year)
         ds = xr.open_dataset(file_name.format(year=item.year, scenario=item.scenario))
         # dimensions: (rp: 19, latitude: 1200, longitude: 3600)
         da = OscZarr.normalize_dims(ds.vmax)
         # if the coordinates give the left, bottom of each pixel:
-        da = da.assign_coords(
-            latitude=da.latitude.data + 0.05, longitude=da.longitude.data + 0.05
-        )
+        da = da.assign_coords(latitude=da.latitude.data + 0.05, longitude=da.longitude.data + 0.05)
         target.write(
             item.resource.path.format(scenario=item.scenario, year=item.year),
             da,
@@ -88,15 +44,11 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         )
         self.generate_single_map(item, target, target)
 
-    def generate_single_map(
-        self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray
-    ):
+    def generate_single_map(self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray):
         source_path = item.resource.path.format(scenario=item.scenario, year=item.year)
         assert item.resource.map is not None
         assert isinstance(source, OscZarr) and isinstance(target, OscZarr)
-        target_path = item.resource.map.path.format(
-            scenario=item.scenario, year=item.year
-        )
+        target_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
         tiles.create_tile_set(source, source_path, target, target_path, check_fill=True)
         # tiles.create_image_set(source, source_path, target, target_path)
 
@@ -157,6 +109,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
                     max_value=120.0,
                     units="m/s",
                 ),
+                index_values=None,
                 path="wind/iris/v1/max_speed_{scenario}_{year}_map",
                 source="map_array_pyramid",
             ),

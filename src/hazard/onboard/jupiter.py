@@ -1,24 +1,21 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import PosixPath
-from dask.distributed import Client
-from fsspec.spec import AbstractFileSystem  # type: ignore
+from typing import Dict, Iterable
+
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
 import rasterio  # type: ignore
-from rasterio.crs import CRS  # type: ignore
 import rasterio.enums  # type: ignore
-import rioxarray
 import xarray as xr
-from typing import Dict, Iterable
+from dask.distributed import Client
+from fsspec.spec import AbstractFileSystem  # type: ignore
+from rasterio.crs import CRS  # type: ignore
+
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import OpenDataset, WriteDataArray, WriteDataset
-from hazard.utilities import xarray_utilities
-from hazard.utilities.map_utilities import (
-    check_map_bounds,
-    transform_epsg4326_to_epsg3857,
-)
+from hazard.protocols import WriteDataArray
+from hazard.utilities.map_utilities import transform_epsg4326_to_epsg3857
 
 
 @dataclass
@@ -35,7 +32,8 @@ class JupiterOscFileSource:
         The data is provided as a set of csv files.
 
         Args:
-            dir (str): Directory containing OSC_Distribution; path to files are e.g. {dir}/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv.
+            dir (str): Directory containing OSC_Distribution; path to files are
+            e.g. {dir}/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv.
             fs (AbstractFileSystem): File system.
         """
         self._dir = dir
@@ -50,11 +48,7 @@ class JupiterOscFileSource:
         Returns:
             Dict[str, xr.DataArray]: Data arrays, keyed by Jupiter name.
         """
-        df = pd.read_csv(
-            os.path.join(
-                self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename
-            )
-        )
+        df = pd.read_csv(os.path.join(self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename))
         ids = [c for c in df.columns if c not in ["key", "latitude", "longitude"]]
         df_pv = df.pivot(index="latitude", columns="longitude", values=ids)
         arrays: Dict[str, xr.DataArray] = {}
@@ -71,8 +65,9 @@ class Jupiter(IndicatorModel):
     """
 
     _jupiter_description = """
-These data should not be used in any manner relating to emergency management or planning, public safety, physical safety or property endangerment.
-For higher-resolution data based on up-to-date methods, subject to greater validation, and suitable for bottom-up risk analysis please contact
+These data should not be used in any manner relating to emergency management or planning, public safety,
+physical safety or property endangerment. For higher-resolution data based on up-to-date methods,
+subject to greater validation, and suitable for bottom-up risk analysis please contact
 [Jupiter Intelligence](https://www.jupiterintel.com).
 """
 
@@ -128,9 +123,10 @@ For higher-resolution data based on up-to-date methods, subject to greater valid
                 display_name="Fire probability (Jupiter)",
                 description=self._jupiter_description
                 + """
-This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location based on several parameters from multiple bias corrected
-and downscaled Global Climate Models (GCMs).
-For example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September and 0% for other months, the hazard indicator value is 20%.
+This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of
+a given location based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs).
+For example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September
+and 0% for other months, the hazard indicator value is 20%.
                 """,
                 group_id="jupiter_osc",
                 display_groups=[],
@@ -150,6 +146,7 @@ For example, if the probability of occurrence of a wildfire is 5% in July, 20% i
                         max_value=0.7,
                         units="",
                     ),
+                    index_values=None,
                     path="fire_probability_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -170,10 +167,13 @@ For example, if the probability of occurrence of a wildfire is 5% in July, 20% i
                 description=self._jupiter_description
                 + """
 This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI).
-The SPEl is an extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET) in determining drought events.
-The SPEl is calculated from a log-logistic probability distribution function of climatic water balance (precipitation minus evapotranspiration) over a given time scale.
+The SPEl is an extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET)
+in determining drought events.
+The SPEl is calculated from a log-logistic probability distribution function of climatic water balance
+(precipitation minus evapotranspiration) over a given time scale.
 The SPEI itself is a standardized variable with a mean value 0 and standard deviation 1.
-This drought model computes the number of months per annum where the 3-month rolling average of SPEI is below -2 based on the mean values of several parameters from
+This drought model computes the number of months per annum where the 3-month rolling average
+of SPEI is below -2 based on the mean values of several parameters from
 bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 """,
                 group_id="jupiter_osc",
@@ -194,6 +194,7 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                         max_value=12.0,
                         units="months/year",
                     ),
+                    index_values=None,
                     path="months_spei3m_below_-2_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -213,8 +214,9 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 display_name="Precipitation (Jupiter)",
                 description=self._jupiter_description
                 + """
-This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year return period based on the mean of the precipitation distribution
-from multiple bias corrected and downscaled Global Climate Models (GCMs).
+This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year
+return period based on the mean of the precipitation distribution from multiple bias corrected and
+downscaled Global Climate Models (GCMs).
                 """,
                 group_id="jupiter_osc",
                 display_groups=[],
@@ -234,6 +236,7 @@ from multiple bias corrected and downscaled Global Climate Models (GCMs).
                         max_value=1000.0,
                         units="mm",
                     ),
+                    index_values=None,
                     path="max_daily_water_equivalent_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -253,7 +256,8 @@ from multiple bias corrected and downscaled Global Climate Models (GCMs).
                 display_name="Large hail days per year (Jupiter)",
                 description=self._jupiter_description
                 + """
-This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible based on the mean distribution of several parameters
+This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible
+based on the mean distribution of several parameters
 across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 """,
                 group_id="jupiter_osc",
@@ -274,6 +278,7 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                         max_value=10.0,
                         units="days/year",
                     ),
+                    index_values=None,
                     path="days_above_5cm_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -293,7 +298,8 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 display_name="Days per year above 35°C (Jupiter)",
                 description=self._jupiter_description
                 + """
-This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits to the bias-corrected and downscaled high temperature distribution
+This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits
+to the bias-corrected and downscaled high temperature distribution
 across multiple Global Climate Models (GCMs).
                 """,
                 group_id="jupiter_osc",
@@ -314,6 +320,7 @@ across multiple Global Climate Models (GCMs).
                         max_value=365.0,
                         units="days/year",
                     ),
+                    index_values=None,
                     path="days_above_35c_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -333,7 +340,8 @@ across multiple Global Climate Models (GCMs).
                 display_name="Max 1 minute sustained wind speed (Jupiter)",
                 description=self._jupiter_description
                 + """
-This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a 100 year return period based on mean wind speed distributions
+This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a
+100 year return period based on mean wind speed distributions
 from multiple Global Climate Models (GCMs).
                 """,
                 group_id="jupiter_osc",
@@ -354,6 +362,7 @@ from multiple Global Climate Models (GCMs).
                         max_value=120.0,
                         units="km/hour",
                     ),
+                    index_values=None,
                     path="max_1min_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -374,7 +383,8 @@ from multiple Global Climate Models (GCMs).
                 description=self._jupiter_description
                 + """
 Flooded fraction provides the spatial fraction of land flooded in a defined grid.
-It is derived from higher-resolution flood hazards, and computed directly as the fraction of cells within the 30-km cell that have non-zero flooding at that return period.
+It is derived from higher-resolution flood hazards, and computed directly as the fraction of
+cells within the 30-km cell that have non-zero flooding at that return period.
 This model uses a 30-km grid that experiences flooding at the 200-year return period.
 Open oceans are excluded.
                 """,
@@ -396,6 +406,7 @@ Open oceans are excluded.
                         max_value=1.0,
                         units="",
                     ),
+                    index_values=None,
                     path="fraction_{scenario}_{year}_map",
                     source="map_array",
                 ),
@@ -419,22 +430,16 @@ Open oceans are excluded.
         (min, max) = (float("inf"), float("-inf"))
         for scenario in item.model.scenarios:
             for year in scenario.years:
-                da = arrays[
-                    item.jupiter_array_name.format(scenario=scenario.id, year=year)
-                ]
-                da = da.reindex(
-                    latitude=da.latitude[::-1]
-                )  # by convention latitude reversed
+                da = arrays[item.jupiter_array_name.format(scenario=scenario.id, year=year)]
+                da = da.reindex(latitude=da.latitude[::-1])  # by convention latitude reversed
                 (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())  # type: ignore
                 pp = PosixPath(item.model.path.format(scenario=scenario.id, year=year))  # type: ignore
                 target.write(str(pp), da)
-                reprojected = transform_epsg4326_to_epsg3857(
-                    da.sel(latitude=slice(85, -85))
-                )
+                reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
                 reprojected = da.sel(latitude=slice(85, -85)).rio.reproject(
                     "EPSG:3857", resampling=rasterio.enums.Resampling.max
                 )  # , shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
-                bounds = check_map_bounds(reprojected)
+                # bounds = check_map_bounds(reprojected)
                 pp_map = pp.with_name(pp.name + "_map")
                 target.write(str(pp_map), reprojected)
         print(min, max)

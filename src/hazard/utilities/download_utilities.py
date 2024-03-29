@@ -12,9 +12,7 @@ def download_file(url: str, directory: str, filename: Optional[str] = None):
         if filename is None:
             filename = get_filename_from_cd(r.headers["content-disposition"])
             if not filename:
-                raise ValueError(
-                    "filename not provided and cannot infer from content-disposition"
-                )
+                raise ValueError("filename not provided and cannot infer from content-disposition")
         r.raise_for_status()
         with open(os.path.join(directory, filename), "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
