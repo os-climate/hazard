@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any, Iterable, Optional
 
+import rioxarray  # noqa: F401
 import xarray as xr
 from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
