@@ -32,7 +32,7 @@ testing or development, `pdm add -dG <group> <package-name>`.
 ### JupyterHub and requirements.txt
 It may be useful to generate a requirements.txt file:
 ```
-pipenv requirements > requirements.txt
+pdm export -o requirements.txt --without-hashes
 ```
 
 ## Development
