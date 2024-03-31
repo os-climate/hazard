@@ -8,10 +8,10 @@ from hazard.onboard.storm_wind import BatchItem, STORMIndicator  # type: ignore
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.xarray_utilities import data_array, empty_data_array, global_crs_transform
 
-from .utilities import test_output_dir
+from .conftest import test_output_dir
 
 
-def test_xarray_write_small(test_output_dir):
+def test_xarray_write_small(test_output_dir):  # noqa: F811
     _, affine = global_crs_transform(3600, 1800)
     da = empty_data_array(3600, 1800, affine)
     x = np.linspace(0, 1, 3600)

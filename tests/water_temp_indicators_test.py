@@ -4,7 +4,7 @@ import xarray as xr
 
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 
-from .utilities import TestSource, TestTarget, _create_test_datasets_tas
+from .conftest import TestSource, TestTarget, _create_test_datasets_tas
 
 
 def test_future_streams_source():

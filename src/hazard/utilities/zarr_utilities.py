@@ -11,12 +11,12 @@ from affine import Affine  # type: ignore
 from dotenv import load_dotenv
 
 
-def add_logging_output_to_stdout(LOG):
+def add_logging_output_to_stdout(log):
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
-    LOG.addHandler(handler)
+    log.addHandler(handler)
 
 
 def get_coordinates(longitudes, latitudes, transform):

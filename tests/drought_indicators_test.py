@@ -1,22 +1,16 @@
 import json
 import os
 from datetime import datetime, timedelta
-from os import path
 
 import dask.array as da
-import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import pytest
-import s3fs  # type: ignore
 import xarray as xr
 import zarr  # type: ignore
 
 from hazard.docs_store import DocStore
 from hazard.models.drought_index import DroughtIndicator, LocalZarrWorkingStore, ProgressStore, S3ZarrWorkingStore
-from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.tiles import create_tiles_for_resource
-
-from .utilities import TestTarget, s3_credentials, test_output_dir
+from tests.conftest import TestTarget
 
 
 @pytest.mark.skip(reason="incomplete")
@@ -28,7 +22,7 @@ def test_spei_indicator(test_output_dir, s3_credentials):
     working_store = LocalZarrWorkingStore(test_output_dir)
     model = DroughtIndicator(working_store)
     model.calculate_spei(gcm, scenario, progress_store=ProgressStore(test_output_dir, "spei_prog_store"))
-    target = TestTarget()
+    # target = TestTarget()
     data_chunks = model.get_datachunks()
     test_chunk = data_chunks["Chunk_0255"]
     lat_min, lat_max = test_chunk["lat_min"], test_chunk["lat_max"]
@@ -44,9 +38,9 @@ def test_spei_indicator(test_output_dir, s3_credentials):
     )
     ds_tas_local = ds_tas.compute()
     series_tas = ds_tas_local["tas"][0, 0, :].values
-    ds_pr = model.read_quantity_from_s3_store(gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max).chunk(
-        {"time": 100000}
-    )
+    # ds_pr = model.read_quantity_from_s3_store(gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max).chunk(
+    #    {"time": 100000}
+    # )
     series_pr = ds_tas_local["tas"][0, 0, :].values
 
     with open(os.path.join(test_output_dir, "drought", "data.json")) as f:
@@ -74,7 +68,7 @@ def test_partial_write_zarr(test_output_dir):
     ).chunk(chunks={"lat": 40, "lon": 40, "time": 100000})
     ds_spei = da_spei.to_dataset(name="spei")
     ds_spei.to_zarr(store=zarr_store, mode="w", compute=False)
-    # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
+    # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores # noqa: E501
     sliced = ds_spei.sel(lat=slice(10, 20), lon=slice(30, 40))
     lat_indexes = np.where(np.logical_and(ds_spei["lat"].values >= 10, ds_spei["lat"].values <= 20))[0]
     lon_indexes = np.where(np.logical_and(ds_spei["lon"].values >= 30, ds_spei["lon"].values <= 40))[0]

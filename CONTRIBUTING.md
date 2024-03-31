@@ -13,7 +13,7 @@ consistent working environment. Install via, e.g.:
 pip install pdm
 ```
 
-For use with Jupyter, the configuration is convenient: 
+For use with Jupyter and mypy, the configuration is needed:
 ```
 pdm config venv.with_pip True
 ```
@@ -32,7 +32,7 @@ testing or development, `pdm add -dG <group> <package-name>`.
 ### JupyterHub and requirements.txt
 It may be useful to generate a requirements.txt file:
 ```
-pipenv requirements > requirements.txt
+pdm export -o requirements.txt --without-hashes
 ```
 
 ## Development
@@ -41,6 +41,11 @@ https://github.com/os-climate/hazard.
 
 All changes must pass the automated test suite, along with various static
 checks.
+
+The easiest way to run these is via:
+```
+pdm run all
+```
 
 [Black](https://black.readthedocs.io/) code style and
 [isort](https://pycqa.github.io/isort/) import ordering are enforced
@@ -58,18 +63,6 @@ E.g.,
 isort .
 # auto-format code
 black .
-```
-
-Code can then be tested using tox.
-```
-# run static checks and unit tests
-tox
-# run only tests
-tox -e py3
-# run only static checks
-tox -e static
-# run unit tests and produce an HTML code coverage report (/htmlcov)
-tox -e cov
 ```
 
 ## IDE set-up

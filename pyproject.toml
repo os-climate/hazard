@@ -32,7 +32,7 @@ classifiers = [
 dependencies = [
   "cftime",
   "dask[distributed]",
-  "fsspec", 
+  "fsspec",
   "geopandas",
   "h5netcdf",
   "mapbox",
@@ -93,11 +93,10 @@ test = [
 lint = [
   "isort",
   "black",
-  "pyproject-flake8",
   "flake8",
+  "Flake8-pyproject",
   "mypy",
   "pre-commit",
-  "tox"
 ]
 "black[jupyter]" = []
 
@@ -105,9 +104,14 @@ lint = [
 pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
 test = "pytest"
-tox = "tox"
 docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
+isort = { cmd = "isort --check ." }
+black = { cmd = "black --check ." }
+flake8 = { cmd = "flake8 src" }
+mypy = { cmd = "mypy --install-types --non-interactive src" }
+all = {composite = ["pytest", "mypy", "isort", "black", "flake8"]}
+
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [tool.pytest.ini_options]
@@ -155,4 +159,6 @@ exclude = '''
 max-line-length = "120"
 extend-ignore = [
   "E501",
+  "E203", # Allow spacing before colon (to favor Black).
 ]
+
