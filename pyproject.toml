@@ -93,8 +93,8 @@ test = [
 lint = [
   "isort",
   "black",
-  "pyproject-flake8",
   "flake8",
+  "Flake8-pyproject",
   "mypy",
   "pre-commit",
 ]
@@ -160,3 +160,4 @@ max-line-length = "120"
 extend-ignore = [
   "E501",
 ]
+
