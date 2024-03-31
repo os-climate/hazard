@@ -135,7 +135,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 values = da.data
                 no_data = da.attrs["nodatavals"]
                 values[values == no_data] = float("nan")
-                z[i, 0:len(da.y), 0:len(da.x)] = values[:, :]
+                z[i, 0 : len(da.y), 0 : len(da.x)] = values[:, :]
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """

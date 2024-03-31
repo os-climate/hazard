@@ -13,7 +13,7 @@ consistent working environment. Install via, e.g.:
 pip install pdm
 ```
 
-For use with Jupyter, the configuration is convenient (e.g. for VS Code to install additional dependencies):
+For use with Jupyter and mypy, the configuration is needed:
 ```
 pdm config venv.with_pip True
 ```
@@ -44,11 +44,7 @@ checks.
 
 The easiest way to run these is via:
 ```
-pdm test
-```
-and
-```
-pdm lint
+pdm run all
 ```
 
 [Black](https://black.readthedocs.io/) code style and
@@ -67,18 +63,6 @@ E.g.,
 isort .
 # auto-format code
 black .
-```
-
-Code can then be tested using tox.
-```
-# run static checks and unit tests
-tox
-# run only tests
-tox -e py3
-# run only static checks
-tox -e static
-# run unit tests and produce an HTML code coverage report (/htmlcov)
-tox -e cov
 ```
 
 ## IDE set-up
