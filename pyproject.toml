@@ -32,7 +32,7 @@ classifiers = [
 dependencies = [
   "cftime",
   "dask[distributed]",
-  "fsspec", 
+  "fsspec",
   "geopandas",
   "h5netcdf",
   "mapbox",
@@ -98,6 +98,20 @@ lint = [
   "mypy",
   "pre-commit",
   "tox"
+]
+dev = [
+    "pdm[pytest]",
+    "pytest",
+    "pytest-cov",
+    "sphinx-pyproject",
+    "isort",
+    "black",
+    "pyproject-flake8",
+    "flake8",
+    "mypy",
+    "pre-commit",
+    "tox",
+    "tox-pdm>=0.7.2",
 ]
 "black[jupyter]" = []
 

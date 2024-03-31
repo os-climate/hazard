@@ -55,7 +55,7 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     model = WRIAqueductFlood()
     items = model.batch_items()
     print(items)
-    source = WRIAqueductSource()
+    # source = WRIAqueductSource()
     target = OscZarr()
     # target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
     s3 = s3fs.S3FileSystem(
@@ -78,7 +78,8 @@ def test_iris(test_output_dir, s3_credentials):
     # copy_iris_files(s3_credentials)
     # promote_iris(s3_credentials)
     model = IRISIndicator(test_output_dir)
-    # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
+    # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+    # secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
     target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))  # save locally
     # target = OscZarr() # default dev bucket
     for item in model.batch_items():
@@ -150,7 +151,7 @@ def test_check_result(test_output_dir):
         "v1",
     )
     check = s3.ls(path)
-    assert True
+    assert check is not None
 
 
 @pytest.mark.skip(reason="on-boarding script")

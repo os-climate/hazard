@@ -13,7 +13,7 @@ consistent working environment. Install via, e.g.:
 pip install pdm
 ```
 
-For use with Jupyter, the configuration is convenient: 
+For use with Jupyter, the configuration is convenient (e.g. for VS Code to install additional dependencies):
 ```
 pdm config venv.with_pip True
 ```
@@ -41,6 +41,15 @@ https://github.com/os-climate/hazard.
 
 All changes must pass the automated test suite, along with various static
 checks.
+
+The easiest way to run these is via:
+```
+pdm test
+```
+and
+```
+pdm lint
+```
 
 [Black](https://black.readthedocs.io/) code style and
 [isort](https://pycqa.github.io/isort/) import ordering are enforced

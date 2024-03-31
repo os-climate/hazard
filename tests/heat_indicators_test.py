@@ -19,9 +19,9 @@ from hazard.models.work_loss import WorkLossIndicator
 from hazard.protocols import OpenDataset, WriteDataset
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
-from tests.utilities import TestSource, TestTarget, _create_test_dataset_averaged, _create_test_datasets_tas
+from tests.conftest import TestSource, TestTarget, _create_test_dataset_averaged, _create_test_datasets_tas
 
-from .utilities import _create_test_datasets_hurs, test_output_dir
+from .conftest import _create_test_datasets_hurs, test_output_dir  # noqa: F401; pylint: disable=unused-variable
 
 
 def test_degree_days_mocked():
@@ -84,7 +84,7 @@ def test_work_loss_mocked():
     )
 
 
-def test_zarr_read_write(test_output_dir):
+def test_zarr_read_write(test_output_dir):  # noqa: F811
     """Test that an xarray can be stored in xarray's native zarr format and then
     read from the zarr array alone using attributes and ignoring coordinates.
     """
@@ -98,7 +98,7 @@ def test_zarr_read_write(test_output_dir):
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_degree_days(test_output_dir):
+def test_degree_days(test_output_dir):  # noqa: F811
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -131,7 +131,7 @@ def test_degree_days(test_output_dir):
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_work_loss(test_output_dir):
+def test_work_loss(test_output_dir):  # noqa: F811
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -145,9 +145,9 @@ def test_work_loss(test_output_dir):
     target = OscZarr(store=store)
     # cut down the model and run
     model = WorkLossIndicator(window_years=3, gcms=[gcm], scenarios=[scenario], central_years=[years[1]])
-    resources = list(model.inventory())
-    models = HazardResources(resources=resources)
-    json_str = json.dumps(models.dict(), indent=4)  # pretty print
+    # resources = list(model.inventory())
+    # models = HazardResources(resources=resources)
+    # json_str = json.dumps(models.dict(), indent=4)  # pretty print
 
     local_fs = local.LocalFileSystem()
     docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
@@ -161,7 +161,7 @@ def test_example_run_degree_days():
     zarr_utilities.set_credential_env_variables()
 
     docs_store = DocStore(prefix="hazard_test")
-    json = docs_store.read_inventory_json()
+    # json = docs_store.read_inventory_json()
 
     cluster = LocalCluster(processes=False)
     client = Client(cluster)
@@ -181,7 +181,7 @@ def test_example_run_degree_days():
     assert True
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tasmax"]):
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tasmax"]):  # noqa: F811
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:
@@ -193,7 +193,7 @@ def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["t
 
 
 @pytest.mark.skip(reason="just example")
-def test_load_dataset(test_output_dir):
+def test_load_dataset(test_output_dir):  # noqa: F811
     fs = local.LocalFileSystem()
     store = NexGddpCmip6(root=os.path.join(test_output_dir, "nex-gddp-cmip6"), fs=fs)
     with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2029) as ds:

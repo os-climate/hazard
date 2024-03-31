@@ -13,7 +13,7 @@ from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndica
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr  # type: ignore
 
-from .utilities import TestSource, TestTarget, _create_test_datasets_hurs, _create_test_datasets_tas, test_output_dir
+from .conftest import TestSource, TestTarget, _create_test_datasets_hurs, _create_test_datasets_tas, test_output_dir
 
 
 def test_days_tas_above_mocked():
@@ -86,7 +86,7 @@ def test_days_wbgt_above_mocked():
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_days_tas_above(test_output_dir):
+def test_days_tas_above(test_output_dir):  # noqa: F811
     """Test an air temperature indicator that provides days over $x$ degrees."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -109,7 +109,7 @@ def test_days_tas_above(test_output_dir):
     model.run_all(source, target)
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tas"]):
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tas"]):  # noqa: F811
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:
