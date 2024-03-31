@@ -24,6 +24,7 @@ jobs:
   
       - name: Install dependencies
         run: |
+          pdm config venv.with_pip True
           pdm sync -d -G testing
       - name: Run Tests and Checks
         run: |
