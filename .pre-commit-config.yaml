@@ -1,7 +1,42 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.5.0
     hooks:
+      - id: trailing-whitespace
       - id: check-merge-conflict
-      
+      - id: end-of-file-fixer
+      - id: name-tests-test
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-symlinks
+      - id: detect-private-key
+      - id: check-ast
+      - id: debug-statements
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+
+  - repo: https://github.com/psf/black
+    rev: '24.2.0'
+    hooks:
+      - id: black
+      - id: black-jupyter
+
+  - repo: https://github.com/s-weigand/flake8-nb
+    rev: v0.5.3
+    hooks:
+      - id: flake8-nb
+        additional_dependencies:
+          - pep8-naming
+        # Ignore all format-related checks as Black takes care of those.
+        args:
+          - --ignore=E2, W5, F401, E401, E704
+          - --select=E, W, F, N
+          - --max-line-length=120

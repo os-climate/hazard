@@ -16,17 +16,17 @@ from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.utilities import zarr_utilities  # type: ignore
 
-from .utilities import test_output_dir
+from .conftest import test_output_dir
 
 
-def test_create_inventory(test_output_dir):
+def test_create_inventory(test_output_dir):  # noqa: F811
     """Create inventory for all indicators and write into this repo."""
     zarr_utilities.set_credential_env_variables()
     local_fs = local.LocalFileSystem()
 
     from pathlib import Path
 
-    path = os.path.join(Path(__file__).parents[1], "inventories")
+    path = os.path.join(Path(__file__).parents[1], "src", "inventories")
 
     # path = os.path.join(test_output_dir)
 
@@ -44,7 +44,7 @@ def test_create_inventory(test_output_dir):
         WaterTemperatureAboveIndicator(),
         WetBulbGlobeTemperatureAboveIndicator(),
         WRIAqueductWaterRisk(),
-        DroughtIndicator(None)
+        DroughtIndicator(None),
     ]
 
     docs_store.write_new_empty_inventory()
@@ -54,7 +54,7 @@ def test_create_inventory(test_output_dir):
 
 
 @pytest.mark.skip(reason="just example")
-def test_check_inventory(test_output_dir):
+def test_check_inventory(test_output_dir):  # noqa: F811
     zarr_utilities.set_credential_env_variables()
     prefix = "hazard"
     docs_store = DocStore(prefix=prefix)

@@ -1,4 +1,4 @@
-The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI’s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex 
+The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI’s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex
 hydrological data into intuitive indicators of water-related risk:
 
 * **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).
@@ -11,5 +11,5 @@ hydrological data into intuitive indicators of water-related risk:
 
 [Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.
 
-The spatial resolution is 5 × 5 arc minutes which equates roughly to 10 kilometer (km) × 10 km pixels. 
+The spatial resolution is 5 × 5 arc minutes which equates roughly to 10 kilometer (km) × 10 km pixels.
 The future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).

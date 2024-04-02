@@ -1,10 +1,11 @@
+import logging
+import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-import logging, os
-import posixpath
 from typing import Dict, Generator, List, Optional
 
-import s3fs, fsspec  # type: ignore
+import fsspec
+import s3fs  # type: ignore
 import xarray as xr
 
 from hazard.protocols import OpenDataset

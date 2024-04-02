@@ -4,7 +4,7 @@ $$
 I =  \frac{365}{n_y} \sum_{i = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^\text{WBGT}_i > T^\text{ref}} \nonumber
 $$
 
-$I$ is the indicator, $n_y$ is the number of days in the sample and $T^\text{ref}$ is the reference temperature. 
+$I$ is the indicator, $n_y$ is the number of days in the sample and $T^\text{ref}$ is the reference temperature.
 
 The 'Wet-Bulb Globe Temperature' (WBGT) indicator is calculated from both the average daily near-surface surface temperature in °C denoted $T^\text{avg}$ and the water vapour partial pressure in kPa denoted $p^\text{vapour}$:
 

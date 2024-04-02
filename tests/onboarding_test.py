@@ -50,12 +50,12 @@ def test_output_dir():
     yield output_dir
 
 
-@pytest.mark.skip(reason="example")
+@pytest.mark.skip(reason="on-boarding script")
 def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     model = WRIAqueductFlood()
     items = model.batch_items()
     print(items)
-    source = WRIAqueductSource()
+    # source = WRIAqueductSource()
     target = OscZarr()
     # target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
     s3 = s3fs.S3FileSystem(
@@ -72,18 +72,15 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
         model.generate_tiles_single(item, target, target)
 
 
-@pytest.mark.skip(reason="requires input data")
+@pytest.mark.skip(reason="on-boarding script")
 def test_iris(test_output_dir, s3_credentials):
     # upload IRIS
     # copy_iris_files(s3_credentials)
     # promote_iris(s3_credentials)
     model = IRISIndicator(test_output_dir)
-    # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
-    target = OscZarr(
-        store=zarr.DirectoryStore(
-            os.path.join(test_output_dir, "hazard", "hazard.zarr")
-        )
-    )  # save locally
+    # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+    # secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))  # save locally
     # target = OscZarr() # default dev bucket
     for item in model.batch_items():
         model.generate_single_map(item, target, target)
@@ -95,9 +92,7 @@ def promote_iris(s3_credentials):
     for name in ["max_speed_ssp585_2050_map"]:
         prefix = "hazard/hazard.zarr/wind/iris/v1/" + name
         s3_utilities.remove_from_prod(prefix, dry_run=False)
-        s3_utilities.copy_dev_to_prod(
-            "hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True
-        )
+        s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True)
 
 
 def copy_iris_files(s3_credentials):
@@ -121,7 +116,7 @@ def copy_iris_files(s3_credentials):
         s3.put(filepath, s3_path, recursive=True)
 
 
-@pytest.mark.skip(reason="requires input data")
+@pytest.mark.skip(reason="on-boarding script")
 def test_jupiter(test_output_dir, s3_credentials):
     # we need Jupiter OSC_Distribution to be in test_output, e.g.:
     # hazard/src/test/test_output/OSC_Distribution/OS-C-DATA/OS-C Tables/etlfire.csv
@@ -129,11 +124,7 @@ def test_jupiter(test_output_dir, s3_credentials):
     source = JupiterOscFileSource(test_output_dir, local_fs)
     # target = OscZarr(prefix='hazard') # hazard_test
     # docs_store = DocStore(prefix="hazard")
-    target = OscZarr(
-        store=zarr.DirectoryStore(
-            os.path.join(test_output_dir, "hazard", "hazard.zarr")
-        )
-    )
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))
     docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard")
 
     jupiter = Jupiter()
@@ -160,7 +151,7 @@ def test_check_result(test_output_dir):
         "v1",
     )
     check = s3.ls(path)
-    assert True
+    assert check is not None
 
 
 @pytest.mark.skip(reason="on-boarding script")
@@ -182,13 +173,9 @@ def test_wri_aqueduct_water_risk(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
     model = WRIAqueductWaterRisk()
-    source = WRIAqueductWaterRiskSource(
-        source_dir=source_dir, fs=local.LocalFileSystem()
-    )
+    source = WRIAqueductWaterRiskSource(source_dir=source_dir, fs=local.LocalFileSystem())
     model.run_all(source, target)
-    source = WRIAqueductWaterSupplyDemandBaselineSource(
-        source_dir=source_dir, fs=local.LocalFileSystem()
-    )
+    source = WRIAqueductWaterSupplyDemandBaselineSource(source_dir=source_dir, fs=local.LocalFileSystem())
     model.run_all(source, target)
     model.create_maps(target, target)
 

@@ -7,7 +7,7 @@ import s3fs  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
 from pydantic import BaseModel, parse_obj_as
 
-from hazard.sources.osc_zarr import OscZarr, default_dev_bucket
+from hazard.sources.osc_zarr import default_dev_bucket
 
 from .inventory import HazardResource
 
@@ -59,7 +59,7 @@ class DocStore:
             fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
         self._fs = fs
-        if type(self._fs) == s3fs.S3FileSystem:
+        if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
             bucket = get_env(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
         else:
@@ -95,15 +95,11 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(
-        self, resources: Iterable[HazardResource], remove_existing: bool = False
-    ):
+    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
         path = self._full_path_inventory()
-        combined = (
-            {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
-        )
+        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))

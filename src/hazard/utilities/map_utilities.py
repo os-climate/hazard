@@ -1,11 +1,8 @@
-import base64
 import hashlib
 import json
 import logging
 import os
 from math import atan, exp, log, pi, tan
-from os import listdir
-from os.path import isfile, join
 from time import sleep
 from typing import List, Optional, Tuple
 
@@ -83,17 +80,12 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(
         src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top]
     )
-    dst_transform = rasterio.transform.from_bounds(
-        dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height
-    )
-    reprojected = src.rio.reproject(
-        dst_crs, shape=(dst_height, dst_width), transform=dst_transform
-    )
+    dst_transform = rasterio.transform.from_bounds(dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height)
+    reprojected = src.rio.reproject(dst_crs, shape=(dst_height, dst_width), transform=dst_transform)
     return reprojected
 
 
-def highest_zoom_slippy_maps(src: xr.DataArray):
-    ...
+def highest_zoom_slippy_maps(src: xr.DataArray): ...
 
 
 def check_map_bounds(da: xr.DataArray):
@@ -164,16 +156,12 @@ def load_dataset(dataset, target_width=None):
     data = (
         dataset.read(1)
         if scaling == 1
-        else dataset.read(
-            1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear
-        )
+        else dataset.read(1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear)
     )
 
     # scale image transform
     t = dataset.transform
-    transform = Affine(
-        t.a / scaling, t.b / scaling, t.c, t.d / scaling, t.e / scaling, t.f
-    )
+    transform = Affine(t.a / scaling, t.b / scaling, t.c, t.d / scaling, t.e / scaling, t.f)
     transform = dataset.transform * dataset.transform.scale(
         (float(dataset.width) / data.shape[-1]),
         (float(dataset.height) / data.shape[-2]),
@@ -203,9 +191,7 @@ def write_map_geotiff(
     output_s3=None,
     lowest_bin_transparent=False,
 ):
-    (data, profile, width, height, transform) = load(
-        os.path.join(input_dir, filename), s3=input_s3
-    )
+    (data, profile, width, height, transform) = load(os.path.join(input_dir, filename), s3=input_s3)
     logger.info("Loaded")
 
     write_map_geotiff_data(
@@ -245,10 +231,8 @@ def write_map_geotiff_data(
             return cmap(0.5 + 0.5 * i / 256.0)
         else:
             cmap = (
-                sns.color_palette(palette, as_cmap=True)
-                if palette == "flare"
-                else plt.get_cmap(palette)
-            )  #  plt.get_cmap("Reds") as alternative
+                sns.color_palette(palette, as_cmap=True) if palette == "flare" else plt.get_cmap(palette)
+            )  # plt.get_cmap("Reds") as alternative
             return cmap(i)
 
     map = {}
@@ -279,14 +263,8 @@ def write_map_geotiff_data(
     alpha = alphanumeric(filename_stub)[0:6]
     logger.info(f"Hashing {filename_stub} as code: {alpha}")
 
-    colormap_path_out = os.path.join(
-        output_dir, "colormap_" + alpha + "_" + filename_stub + ".json"
-    )
-    with (
-        s3.open(colormap_path_out, "w")
-        if s3 is not None
-        else open(colormap_path_out, "w")
-    ) as f:
+    colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
+    with s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w") as f:
         json_dict = {
             "colormap": map_for_json,
             "nodata": {"color_index": 0},
@@ -303,9 +281,7 @@ def write_map_geotiff_data(
 
     # by zero_transparent, we mean, _exactly_ zero
     np.multiply(data, 254.0 / max_intensity, out=data, casting="unsafe")
-    np.add(
-        data, 1.0, out=data, casting="unsafe"
-    )  # np.clip seems a bit slow so we do not use
+    np.add(data, 1.0, out=data, casting="unsafe")  # np.clip seems a bit slow so we do not use
 
     # 0 is no data
     # 1 is zero (to max_intensity / 254)

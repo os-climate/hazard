@@ -1,15 +1,11 @@
-from abc import ABC, abstractmethod
 import logging
-from typing import Any, Generic, Iterable, List, Optional, TypeVar
+from abc import ABC, abstractmethod
+from typing import Any, Generic, Iterable, Optional, TypeVar
+
 from dask.distributed import Client, LocalCluster
-from pydantic import BaseModel, Field
+
 from hazard.inventory import HazardResource
-from hazard.protocols import (
-    OpenDataset,
-    ReadWriteDataArray,
-    WriteDataArray,
-    WriteDataset,
-)
+from hazard.protocols import OpenDataset, ReadWriteDataArray
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +33,7 @@ class IndicatorModel(ABC, Generic[T]):
             for item in self.batch_items():
                 try:
                     self.run_single(item, source, target, client)
-                except:
+                except Exception:
                     logger.error("Batch item failed", exc_info=True)
 
     @abstractmethod
@@ -51,8 +47,6 @@ class IndicatorModel(ABC, Generic[T]):
         ...
 
     @abstractmethod
-    def run_single(
-        self, item: T, source: Any, target: ReadWriteDataArray, client: Client
-    ):
+    def run_single(self, item: T, source: Any, target: ReadWriteDataArray, client: Client):
         """Run a single item of the batch."""
         ...

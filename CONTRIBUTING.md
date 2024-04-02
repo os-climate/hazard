@@ -7,22 +7,32 @@ git clone git@github.com:os-climate/hazard.git
 cd hazard
 ```
 
-We recommend using [pipenv](https://pipenv.pypa.io/en/latest/) for a
-consistent working environment.
+We recommend using [pdm](https://pdm-project.org/latest/) for a
+consistent working environment. Install via, e.g.:
 ```
-pip install pipenv
-pipenv install --dev
-pipenv shell
+pip install pdm
 ```
 
+For use with Jupyter and mypy, the configuration is needed:
+```
+pdm config venv.with_pip True
+```
+
+The command:
+```
+pdm install
+```
+will create a virtual environment (typically .venv folder in the project folder) and install the dependencies.
+We recommend that the IDE workspace uses this virtual environment when developing.
+
 When adding a package for use in new or improved functionality,
-`pipenv install <package-name>`. Or, when adding something helpful for
-testing or development, `pipenv install -d <package-name>`.
+`pdm add <package-name>`. Or, when adding something helpful for
+testing or development, `pdm add -dG <group> <package-name>`.
 
 ### JupyterHub and requirements.txt
 It may be useful to generate a requirements.txt file:
 ```
-pipenv requirements > requirements.txt
+pdm export -o requirements.txt --without-hashes
 ```
 
 ## Development
@@ -31,6 +41,11 @@ https://github.com/os-climate/hazard.
 
 All changes must pass the automated test suite, along with various static
 checks.
+
+The easiest way to run these is via:
+```
+pdm run all
+```
 
 [Black](https://black.readthedocs.io/) code style and
 [isort](https://pycqa.github.io/isort/) import ordering are enforced
@@ -48,18 +63,6 @@ E.g.,
 isort .
 # auto-format code
 black .
-```
-
-Code can then be tested using tox.
-```
-# run static checks and unit tests
-tox
-# run only tests
-tox -e py3
-# run only static checks
-tox -e static
-# run unit tests and produce an HTML code coverage report (/htmlcov)
-tox -e cov
 ```
 
 ## IDE set-up
