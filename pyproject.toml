@@ -44,6 +44,8 @@ dependencies = [
   "pyproj",
   "pydantic",
   "pymdown-extensions",
+  "pystac",
+  "pystac-client",
   "rasterio",
   "rioxarray",
   "seaborn",
