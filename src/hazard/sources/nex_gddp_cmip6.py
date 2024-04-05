@@ -50,7 +50,6 @@ class NexGddpCmip6(OpenDataset):
         }
         # <variable_id>_<table_id>_<source_id>_<experiment_id>_<variant_label>_<grid_label>_<time_range>.nc
         self.fs = s3fs.S3FileSystem(anon=True) if fs is None else fs
-        self.root = NexGddpCmip6.bucket if root is None else root
         self.quantities = {"tas": {"name": "Daily average temperature"}}
 
     def path(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
