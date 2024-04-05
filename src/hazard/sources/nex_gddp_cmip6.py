@@ -1,5 +1,4 @@
 import logging
-import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Optional
@@ -53,7 +52,14 @@ class NexGddpCmip6(OpenDataset):
         self.quantities = {"tas": {"name": "Daily average temperature"}}
 
     def path(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
-        items = stac_utilities.search_stac_items(catalog_url=self.catalog_url, search_params={"collection": self.collection_id ,"datetime": year, "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}}})
+        items = stac_utilities.search_stac_items(
+            catalog_url=self.catalog_url,
+            search_params={
+                "collection": self.collection_id,
+                "datetime": year,
+                "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}},
+            },
+        )
         if len(items) == 0:
             raise ValueError(f"No items found for gcm={gcm}, scenario={scenario}, year={year}")
         elif len(items) > 1:
@@ -61,7 +67,9 @@ class NexGddpCmip6(OpenDataset):
         else:
             item = items[0]
         href = item.assets[quantity].href
-        return href.replace("https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6","s3://nex-gddp-cmip6/NEX-GDDP-CMIP6")
+        return href.replace(
+            "https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6", "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6"
+        )
 
     def gcms(self) -> List[str]:
         return list(self.subset.keys())
