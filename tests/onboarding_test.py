@@ -11,6 +11,7 @@ import zarr
 from hazard.docs_store import DocStore
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
+from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jupiter import Jupiter  # type: ignore
 from hazard.onboard.jupiter import JupiterOscFileSource
@@ -201,4 +202,13 @@ def test_wet_bulb_globe_temp(test_output_dir):
     target = OscZarr(store=store)
     model = WetBulbGlobeTemperatureAboveIndicator()
     model.run_all(source, target)
+    model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_litpop(test_output_dir):
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    model = ETHZurichLitPop(source_dir=test_output_dir)
+    model.run_all(None, target)
     model.create_maps(target, target)
