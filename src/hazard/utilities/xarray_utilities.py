@@ -9,6 +9,7 @@ import zarr  # type: ignore
 import zarr.core
 from affine import Affine  # type: ignore
 from rasterio.crs import CRS  # type: ignore
+import rioxarray
 
 
 def add_children_to_parent(
@@ -124,6 +125,7 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
         da.rio.write_crs(4326, inplace=True)
         da = da.rename({"dim_0": "index", "dim_1": "latitude", "dim_2": "longitude"})
     else:
+        da.rio.write_crs(crs, inplace=True)
         da = da.rename({"dim_0": "index", "dim_1": "y", "dim_2": "x"})
     return da
 

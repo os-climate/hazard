@@ -25,6 +25,7 @@ from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities import s3_utilities, zarr_utilities
+from hazard.utilities.tiles import create_tile_set
 
 
 @pytest.fixture
@@ -154,7 +155,7 @@ def test_check_result(test_output_dir):
     assert check is not None
 
 
-@pytest.mark.skip(reason="on-boarding script")
+#@pytest.mark.skip(reason="on-boarding script")
 def test_onboard_tudelft(s3_credentials, test_output_dir):
     source_path = os.path.join(test_output_dir, "tudelft", "tudelft_river")
     model = TUDelftRiverFlood(source_path)
@@ -163,7 +164,13 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     batch_items = model.batch_items()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    model.run_single(batch_items[0], None, target, None)
+    #model.run_all(None, target)
+    #model.run_single(batch_items[4], None, target, None)
+    model.create_maps(target, target)
+    #path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
+    #map_path = "inundation/river_tudelft/v2/flood_depth_historical_1971_map"
+    #create_tile_set(target, path, target, map_path, max_zoom=10)
+
     # model.create_maps(target, target)
 
 

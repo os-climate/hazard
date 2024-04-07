@@ -12,6 +12,7 @@ from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndica
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
+from hazard.onboard.tudelft_flood import TUDelftRiverFlood
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.utilities import zarr_utilities  # type: ignore
@@ -45,6 +46,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
         WetBulbGlobeTemperatureAboveIndicator(),
         WRIAqueductWaterRisk(),
         DroughtIndicator(None),
+        TUDelftRiverFlood(None)
     ]
 
     docs_store.write_new_empty_inventory()

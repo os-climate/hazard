@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any, Iterable, Optional
 
+import numpy as np
 import rioxarray  # noqa: F401
 import xarray as xr
 from dask.distributed import Client
@@ -24,7 +25,8 @@ logger = logging.getLogger(__name__)
 class BatchItem:
     scenario: str
     central_year: int
-    input_dataset_filename: str
+    flood_depth_filename: str
+    extent_protected_filename: str
 
 
 class TUDelftRiverFlood(IndicatorModel[BatchItem]):
@@ -72,31 +74,37 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         self._resource = list(self.inventory())[0]
 
     def batch_items(self) -> Iterable[BatchItem]:
+        
         return [
             BatchItem(
                 scenario="historical",
                 central_year=1971,
-                input_dataset_filename="River_flood_depth_1971_2000_hist_{return_period}.tif",
+                flood_depth_filename="River_flood_depth_1971_2000_hist_{return_period}.tif",
+                extent_protected_filename="River_flood_extent_1971_2000_hist_with_protection.tif"
             ),
             BatchItem(
                 scenario="rcp4p5",
                 central_year=2035,
-                input_dataset_filename="River_flood_depth_2021_2050_RCP45_{return_period}.tif",
+                flood_depth_filename="River_flood_depth_2021_2050_RCP45_{return_period}.tif",
+                extent_protected_filename="River_flood_extent_2021_2050_RCP45_with_protection.tif"
             ),
             BatchItem(
                 scenario="rcp8p5",
                 central_year=2035,
-                input_dataset_filename="River_flood_depth_2021_2050_RCP85_{return_period}.tif",
+                flood_depth_filename="River_flood_depth_2021_2050_RCP85_{return_period}.tif",
+                extent_protected_filename="River_flood_extent_2021_2050_RCP85_with_protection.tif"
             ),
             BatchItem(
                 scenario="rcp4p5",
                 central_year=2085,
-                input_dataset_filename="River_flood_depth_2071_2100_RCP45_{return_period}.tif",
+                flood_depth_filename="River_flood_depth_2071_2100_RCP45_{return_period}.tif",
+                extent_protected_filename="River_flood_extent_2071_2100_RCP45_with_protection.tif"
             ),
             BatchItem(
                 scenario="rcp8p5",
                 central_year=2085,
-                input_dataset_filename="River_flood_depth_2071_2100_RCP85_{return_period}.tif",
+                flood_depth_filename="River_flood_depth_2071_2100_RCP85_{return_period}.tif",
+                extent_protected_filename="River_flood_extent_2071_2100_RCP85_with_protection.tif"
             ),
         ]
 
@@ -115,34 +123,52 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
     def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
         assert isinstance(target, OscZarr)
-        input = PurePosixPath(self.source_dir, item.input_dataset_filename)
+        full_path_depth_format = PurePosixPath(self.source_dir, item.flood_depth_filename)
+        full_path_extent = PurePosixPath(self.source_dir, item.extent_protected_filename)
         assert target is None or isinstance(target, OscZarr)
         shape = [39420, 38374]  # y, x not all returns have same size (first one smaller at 38371)
         for i, return_period in enumerate(self.return_periods):
-            filename = str(input).format(return_period=self.return_period_str[return_period])
-            with self.fs.open(filename, "rb") as f:
-                da = xr.open_rasterio(f).isel(band=0)
-                # bounds = da.rio.bounds()
-                if return_period == self.return_periods[0]:
-                    z = target.create_empty(
-                        self._resource.path.format(scenario=item.scenario, year=item.central_year),
-                        shape[1],
-                        shape[0],
-                        da.rio.transform(),
-                        str(da.crs),
-                        indexes=self.return_periods,
-                    )
-                values = da.data
-                no_data = da.attrs["nodatavals"]
-                values[values == no_data] = float("nan")
-                z[i, 0 : len(da.y), 0 : len(da.x)] = values[:, :]
+            full_path_depth = str(full_path_depth_format).format(return_period=self.return_period_str[return_period])
+            with self.fs.open(full_path_depth, "rb") as fd:
+                dad = xr.open_rasterio(fd).isel(band=0)
+                with self.fs.open(full_path_extent, "rb") as fe:
+                    dae = xr.open_rasterio(fe).isel(band=0)
+                    # bounds = da.rio.bounds()
+                    if return_period == self.return_periods[0]:
+                        z = target.create_empty(
+                            self._resource.path.format(scenario=item.scenario, year=item.central_year),
+                            shape[1],
+                            shape[0],
+                            dad.rio.transform(),
+                            str(dad.crs),
+                            indexes=self.return_periods,
+                        )
+                dad_nodata = 65535
+                if dad.shape[1] == 38371: # corrections for various possible errors whereby coordinates are missing for certain files:
+                    dae = dae[:, 0:38371]
+                if dae.shape[1] == 38375: 
+                    dae = dae[:, 0:38374]
+                if dad.shape[1] == 38375: 
+                    dad = dad[:, 0:38374]
+                if dae.shape[0] == 39385: 
+                    dad = dad[35:, :]
+
+                # not quite the same coordinates: check if close, within rounding error, and align exactly
+                assert np.abs(np.array(dae.x) - np.array(dad.x)).max() < 1e-4
+                assert np.abs(np.array(dae.y) - np.array(dad.y)).max() < 1e-4
+                dae = dae.assign_coords({"x": dad.x, "y": dad.y})
+                da_combined = xr.where(dae <= return_period, dad, 0)
+                values = da_combined.data
+                depth_no_data = dad.attrs["nodatavals"]
+                values[values == depth_no_data] = float("nan")
+                z[i, 0 : len(da_combined.y), 0 : len(da_combined.x)] = values[:, :]
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """
         Create map images.
         """
         ...
-        create_tiles_for_resource(source, target, self._resource)
+        create_tiles_for_resource(source, target, self._resource, max_zoom=10)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
@@ -182,8 +208,8 @@ climate simulation (EURO-CORDEX).
                 units="metres",
                 scenarios=[
                     Scenario(id="historical", years=[1971]),
-                    Scenario(id="rcp45", years=[2050, 2070]),
-                    Scenario(id="rcp85", years=[2050, 2070]),
+                    Scenario(id="rcp4p5", years=[2035, 2085]),
+                    Scenario(id="rcp8p5", years=[2035, 2085]),
                 ],
             )
         ]
