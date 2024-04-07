@@ -48,8 +48,10 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         File type: File type: CSV
 
         DATA DESCRIPTION:
-        CSV files containing LitPop values for a set of
-        of latitudes and longitudes within the region.
+        CSV files containing the estimated physical asset values of 2014 at grid point in current USD of 224
+        countries. The dataset is generated from national total physical asset values downscaled proportionally
+        to the normalised product of nightlight intensity (Lit, based on NASA Earth at Night) and population count
+        (Pop, based on Gridded Population of the World, Version 4.1).
 
         Args:
             source_dir (str): directory containing source files. If fs is a S3FileSystem instance
@@ -139,7 +141,13 @@ territories, and special areas of geographical interest.
 Asset exposure data being either unavailable or restricted to single countries or regions, ETH Zurich produced
 a global high-resolution asset exposure dataset using “lit population” (LitPop), a globally consistent methodology
 to disaggregate asset value data proportional to a combination of nightlight intensity (NASA) and geographical
-population data (SEDAC).
+population data (SEDAC). National total physical asset values are downscaled proportionally to the normalised
+product of nightlight intensity (Lit, based on NASA Earth at Night) and population count (Pop, based on Gridded
+Population  of the World, Version 4.1) using the LitPop-module of the probabilistic natural catastrophe damage
+model CLIMADA. National total physical asset values are produced capital of 2014 from The World Bank's "Wealth
+Accounting" available for 140 countries. For 84 countries, non-financial wealth is estimated from the country's
+GDP in 2014 and the GDP-to-wealth ratios as estimated in the Credit Suisse Research Institute's "Global Wealth
+Report 2017".
 """,
             },
         }
@@ -169,12 +177,12 @@ population data (SEDAC).
                         name="heating",
                         min_value=0.0,
                         max_value=resource_map[key]["max_value"],
-                        units="",
+                        units="USD",
                     ),
                     path="maps/" + path + "_map",
                     source="map_array_pyramid",
                 ),
-                units="",
+                units="USD",
                 scenarios=[
                     Scenario(id="historical", years=[2014]),
                 ],
