@@ -44,7 +44,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         Hazard indicator: LitPop
         Region: Global
         Resolution: 30 arc-seconds (or 1km roughly)
-        Time range: 2015-2016
+        Time range: 2014
         File type: File type: CSV
 
         DATA DESCRIPTION:
@@ -65,7 +65,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         self.resources = self._resources()
 
     def batch_items(self) -> Iterable[BatchItem]:
-        return [BatchItem(scenario="historical", year=2016, key=key) for key in self.resources]
+        return [BatchItem(scenario="historical", year=2014, key=key) for key in self.resources]
 
     def prepare(self, working_dir: Optional[str] = None):
         if not isinstance(self.fs, LocalFileSystem):
@@ -176,7 +176,7 @@ population data (SEDAC).
                 ),
                 units="",
                 scenarios=[
-                    Scenario(id="historical", years=[2016]),
+                    Scenario(id="historical", years=[2014]),
                 ],
             )
         return resources
