@@ -6,12 +6,14 @@ from typing import Optional, Sequence, Tuple
 
 import mercantile
 import numpy as np  # type: ignore
-import rasterio, rasterio.coords, rasterio.warp  # type: ignore
+import rasterio  # type: ignore
+import rasterio.coords
+import rasterio.transform
+import rasterio.warp
+import rioxarray  # noqa: F401
 import xarray as xr
 from rasterio import CRS  # type: ignore
 from rasterio.warp import Resampling  # type: ignore
-import rasterio.transform
-import rioxarray
 
 from hazard.inventory import HazardResource  # type: ignore
 from hazard.sources.osc_zarr import OscZarr
@@ -20,7 +22,9 @@ from hazard.utilities import xarray_utilities
 logger = logging.getLogger(__name__)
 
 
-def create_tiles_for_resource(source: OscZarr, target: OscZarr, resource: HazardResource, max_zoom: Optional[int] = None):
+def create_tiles_for_resource(
+    source: OscZarr, target: OscZarr, resource: HazardResource, max_zoom: Optional[int] = None
+):
     if resource.map is None or resource.map.source != "map_array_pyramid":
         raise ValueError("resource does not specify 'map_array_pyramid' map source.")
     indices = None
@@ -170,7 +174,9 @@ def create_tile_set(
 
     # to calculate the maximum zoom level we find the bounds in the map projection
     # and calculate the number of pixels across full x range
-    left, bottom, right, top = da.rio.transform_bounds("EPSG:4326") # left, bottom, right, top or west, south, east, north
+    left, bottom, right, top = da.rio.transform_bounds(
+        "EPSG:4326"
+    )  # left, bottom, right, top or west, south, east, north
     ulx, uly = mercantile.xy(left, top)
     lrx, lry = mercantile.xy(right, bottom)
     ulx_whole, uly_whole = mercantile.xy(*mercantile.ul(mercantile.Tile(0, 0, 0)))
@@ -188,25 +194,29 @@ def create_tile_set(
 
     _create_empty_tile_pyramid(target, target_path, max_zoom, chunk_size, return_periods)
 
-    #_coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
+    # _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
 
     # here we reproject and write the maximum zoom level
-    _write_zoom_level(da, target, target_path, max_zoom, indices, 
-                        max_tile_batch_size=max_tile_batch_size, 
-                        reprojection_threads=reprojection_threads,
-                        nodata=nodata,
-                        nodata_as_zero=nodata_as_zero,
-                        check_fill=check_fill)
-    
+    _write_zoom_level(
+        da,
+        target,
+        target_path,
+        max_zoom,
+        indices,
+        max_tile_batch_size=max_tile_batch_size,
+        reprojection_threads=reprojection_threads,
+        nodata=nodata,
+        nodata_as_zero=nodata_as_zero,
+        check_fill=check_fill,
+    )
+
     # and then progressively coarsen each level and write until we reach level 0"
     _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
 
 
-def _create_empty_tile_pyramid(target: OscZarr,
-                               target_path: str,
-                               max_zoom: int,
-                               chunk_size: int,
-                               return_periods: Sequence[float]):
+def _create_empty_tile_pyramid(
+    target: OscZarr, target_path: str, max_zoom: int, chunk_size: int, return_periods: Sequence[float]
+):
     pixels_per_tile: int = 256
     ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=0, y=0, z=0)))
     lrx, lry = mercantile.xy(*mercantile.ul(mercantile.Tile(x=1, y=1, z=0)))
@@ -215,9 +225,7 @@ def _create_empty_tile_pyramid(target: OscZarr,
         tiles = 2**zoom
         dst_dim = tiles * pixels_per_tile
         zoom_level_path = posixpath.join(target_path, f"{zoom}")
-        whole_map_transform = rasterio.transform.from_bounds(
-            ulx, lry, lrx, uly, dst_dim, dst_dim
-        )
+        whole_map_transform = rasterio.transform.from_bounds(ulx, lry, lrx, uly, dst_dim, dst_dim)
         # i.e. chunks are <path>/<z>/<index>.<y>.<x>, e.g. flood/4/4.2.3
         # we create an array for the whole world, but if the map covers just a fraction then all other
         # chunks will be empty
@@ -232,16 +240,18 @@ def _create_empty_tile_pyramid(target: OscZarr,
         )
 
 
-def _write_zoom_level(da: xr.DataArray,
-                    target: OscZarr,
-                    target_path: str,
-                    zoom: int,
-                    indices: Optional[Sequence[int]] = None,
-                    max_tile_batch_size: int = 32,
-                    reprojection_threads: int = 8,
-                    nodata = None,
-                    nodata_as_zero = False,
-                    check_fill = False): 
+def _write_zoom_level(
+    da: xr.DataArray,
+    target: OscZarr,
+    target_path: str,
+    zoom: int,
+    indices: Optional[Sequence[int]] = None,
+    max_tile_batch_size: int = 32,
+    reprojection_threads: int = 8,
+    nodata=None,
+    nodata_as_zero=False,
+    check_fill=False,
+):
     logger.info(f"Starting writing of level {zoom}.")
     pixels_per_tile: int = 256
 
@@ -254,7 +264,7 @@ def _write_zoom_level(da: xr.DataArray,
     ntiles = max(xmax - xmin + 1, ymax - ymin + 1)
     num_batches = max(1, ntiles // max_tile_batch_size)
     tile_batch_size = min(ntiles, max_tile_batch_size)
-    for index in (indices if indices is not None else [0]):
+    for index in indices if indices is not None else [0]:
         logger.info(f"Starting index {index}.")
         da_index = da[index, :, :]  # .compute()
         if nodata_as_zero:
@@ -269,19 +279,9 @@ def _write_zoom_level(da: xr.DataArray,
                 y_slice = slice(
                     ymin + batch_y * tile_batch_size, min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level)
                 )
-                ulx, uly = mercantile.xy(
-                    *mercantile.ul(
-                        mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom)
-                    )
-                )
-                lrx, lry = mercantile.xy(
-                    *mercantile.ul(
-                        mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom)
-                    )
-                )
-                logger.info(
-                    f"Processing batch ({batch_x}/{num_batches}, {batch_y}/{num_batches})."
-                )
+                ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom)))
+                lrx, lry = mercantile.xy(*mercantile.ul(mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom)))
+                logger.info(f"Processing batch ({batch_x}/{num_batches}, {batch_y}/{num_batches}).")
                 dst_transform = rasterio.transform.from_bounds(
                     ulx,
                     lry,
@@ -305,7 +305,7 @@ def _write_zoom_level(da: xr.DataArray,
                     resampling=Resampling.bilinear,
                     shape=(
                         (y_slice.stop - y_slice.start) * pixels_per_tile,
-                        (x_slice.stop - x_slice.start) * pixels_per_tile
+                        (x_slice.stop - x_slice.start) * pixels_per_tile,
                     ),
                     transform=dst_transform,
                     num_threads=reprojection_threads,
@@ -340,15 +340,17 @@ def get_tile_bounds(left: float, bottom: float, right: float, top: float, zoom: 
     return ul.x, lr.x, ul.y, lr.y
 
 
-def _coarsen(target: OscZarr, 
-            target_path: str,
-            max_zoom: int,
-            bounds: Tuple[float, float, float, float], 
-            indices: Optional[Sequence[int]],
-            max_tile_batch_size: int = 16):
+def _coarsen(
+    target: OscZarr,
+    target_path: str,
+    max_zoom: int,
+    bounds: Tuple[float, float, float, float],
+    indices: Optional[Sequence[int]],
+    max_tile_batch_size: int = 16,
+):
     pixels_per_tile = 256
     bounds1 = rasterio.coords.BoundingBox(*bounds)
-    for index in (indices if indices is not None else [0]):
+    for index in indices if indices is not None else [0]:
         for zoom in range(max_zoom, 1, -1):
             current_zoom_level_path = posixpath.join(target_path, f"{zoom}")
             next_zoom_level_path = posixpath.join(target_path, f"{zoom - 1}")
@@ -360,23 +362,20 @@ def _coarsen(target: OscZarr,
             for batch_x in range(0, num_batches):
                 for batch_y in range(0, num_batches):
                     # the slices are over tiles for the maximum zoom level
-                    x_slice = slice(
-                        batch_x * tile_batch_size, (batch_x + 1) * tile_batch_size
-                    )
-                    y_slice = slice(
-                        batch_y * tile_batch_size, (batch_y + 1) * tile_batch_size
-                    )
+                    x_slice = slice(batch_x * tile_batch_size, (batch_x + 1) * tile_batch_size)
+                    y_slice = slice(batch_y * tile_batch_size, (batch_y + 1) * tile_batch_size)
                     ulx, uly = mercantile.ul(mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom))
                     lrx, lry = mercantile.ul(mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom))
                     if rasterio.coords.disjoint_bounds(bounds1, rasterio.coords.BoundingBox(ulx, lry, lrx, uly)):
                         continue
-                    da_slice = da_current[index,
-                                y_slice.start * pixels_per_tile: y_slice.stop * pixels_per_tile,
-                                x_slice.start * pixels_per_tile: x_slice.stop * pixels_per_tile
-                                ].compute()
-                    #if np.isnan(da_slice).all():
+                    da_slice = da_current[
+                        index,
+                        y_slice.start * pixels_per_tile : y_slice.stop * pixels_per_tile,
+                        x_slice.start * pixels_per_tile : x_slice.stop * pixels_per_tile,
+                    ].compute()
+                    # if np.isnan(da_slice).all():
                     #    continue
-                    da_slice = da_slice.coarsen(x=2, y=2).mean() # type:ignore
+                    da_slice = da_slice.coarsen(x=2, y=2).mean()  # type:ignore
                     target.write_slice(
                         next_zoom_level_path,
                         slice(index, index + 1),
@@ -393,7 +392,9 @@ def _coarsen(target: OscZarr,
 
 
 def trim_array(da_index: xr.DataArray, crs, left, bottom, right, top):
-    da_left, da_bottom, da_right, da_top = rasterio.warp.transform_bounds(crs, da_index.rio.crs, left, bottom, right, top)
+    da_left, da_bottom, da_right, da_top = rasterio.warp.transform_bounds(
+        crs, da_index.rio.crs, left, bottom, right, top
+    )
     # find pixels required in order to add a pixel buffer
     x = np.where((da_index.x >= da_left) & (da_index.x <= da_right))[0]
     y = np.where((da_index.y >= da_bottom) & (da_index.y <= da_top))[0]
@@ -402,6 +403,4 @@ def trim_array(da_index: xr.DataArray, crs, left, bottom, right, top):
     # add a 2 pixel buffer
     xmin, xmax = max(0, x[0] - 2), min(len(da_index.x), x[-1] + 2)
     ymin, ymax = max(0, y[0] - 2), min(len(da_index.y), y[-1] + 2)
-    return da_index[ymin: ymax, xmin: xmax]
-    
-    
+    return da_index[ymin:ymax, xmin:xmax]

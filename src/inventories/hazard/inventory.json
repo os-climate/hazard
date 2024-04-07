@@ -2787,7 +2787,7 @@
                     "nodata_index": 0,
                     "units": "metres"
                 },
-                "path": "inundation/river_tudelft/v2/flood_depth_{scenario}_{year}_map",
+                "path": "maps/inundation/river_tudelft/v2/flood_depth_{scenario}_{year}_map",
                 "bounds": [],
                 "index_values": null,
                 "source": "map_array_pyramid"
@@ -2800,17 +2800,17 @@
                     ]
                 },
                 {
-                    "id": "rcp45",
+                    "id": "rcp4p5",
                     "years": [
-                        2050,
-                        2070
+                        2035,
+                        2085
                     ]
                 },
                 {
-                    "id": "rcp85",
+                    "id": "rcp8p5",
                     "years": [
-                        2050,
-                        2070
+                        2035,
+                        2085
                     ]
                 }
             ],

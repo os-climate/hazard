@@ -74,37 +74,37 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         self._resource = list(self.inventory())[0]
 
     def batch_items(self) -> Iterable[BatchItem]:
-        
+
         return [
             BatchItem(
                 scenario="historical",
                 central_year=1971,
                 flood_depth_filename="River_flood_depth_1971_2000_hist_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_1971_2000_hist_with_protection.tif"
+                extent_protected_filename="River_flood_extent_1971_2000_hist_with_protection.tif",
             ),
             BatchItem(
                 scenario="rcp4p5",
                 central_year=2035,
                 flood_depth_filename="River_flood_depth_2021_2050_RCP45_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2021_2050_RCP45_with_protection.tif"
+                extent_protected_filename="River_flood_extent_2021_2050_RCP45_with_protection.tif",
             ),
             BatchItem(
                 scenario="rcp8p5",
                 central_year=2035,
                 flood_depth_filename="River_flood_depth_2021_2050_RCP85_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2021_2050_RCP85_with_protection.tif"
+                extent_protected_filename="River_flood_extent_2021_2050_RCP85_with_protection.tif",
             ),
             BatchItem(
                 scenario="rcp4p5",
                 central_year=2085,
                 flood_depth_filename="River_flood_depth_2071_2100_RCP45_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2071_2100_RCP45_with_protection.tif"
+                extent_protected_filename="River_flood_extent_2071_2100_RCP45_with_protection.tif",
             ),
             BatchItem(
                 scenario="rcp8p5",
                 central_year=2085,
                 flood_depth_filename="River_flood_depth_2071_2100_RCP85_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2071_2100_RCP85_with_protection.tif"
+                extent_protected_filename="River_flood_extent_2071_2100_RCP85_with_protection.tif",
             ),
         ]
 
@@ -143,14 +143,16 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                             str(dad.crs),
                             indexes=self.return_periods,
                         )
-                dad_nodata = 65535
-                if dad.shape[1] == 38371: # corrections for various possible errors whereby coordinates are missing for certain files:
+                # dad_nodata = 65535
+                if (
+                    dad.shape[1] == 38371
+                ):  # corrections for various possible errors whereby coordinates are missing for certain files:
                     dae = dae[:, 0:38371]
-                if dae.shape[1] == 38375: 
+                if dae.shape[1] == 38375:
                     dae = dae[:, 0:38374]
-                if dad.shape[1] == 38375: 
+                if dad.shape[1] == 38375:
                     dad = dad[:, 0:38374]
-                if dae.shape[0] == 39385: 
+                if dae.shape[0] == 39385:
                     dad = dad[35:, :]
 
                 # not quite the same coordinates: check if close, within rounding error, and align exactly

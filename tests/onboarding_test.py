@@ -155,23 +155,20 @@ def test_check_result(test_output_dir):
     assert check is not None
 
 
-#@pytest.mark.skip(reason="on-boarding script")
+@pytest.mark.skip(reason="on-boarding script")
 def test_onboard_tudelft(s3_credentials, test_output_dir):
     source_path = os.path.join(test_output_dir, "tudelft", "tudelft_river")
     model = TUDelftRiverFlood(source_path)
     model.prepare()
-
-    batch_items = model.batch_items()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    #model.run_all(None, target)
-    #model.run_single(batch_items[4], None, target, None)
+    # batch_items = model.batch_items()
+    # model.run_all(None, target)
+    # model.run_single(batch_items[4], None, target, None)
     model.create_maps(target, target)
-    #path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
-    #map_path = "inundation/river_tudelft/v2/flood_depth_historical_1971_map"
-    #create_tile_set(target, path, target, map_path, max_zoom=10)
-
-    # model.create_maps(target, target)
+    # path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
+    # map_path = "inundation/river_tudelft/v2/flood_depth_historical_1971_map"
+    # create_tile_set(target, path, target, map_path, max_zoom=10)
 
 
 @pytest.mark.skip(reason="on-boarding script")

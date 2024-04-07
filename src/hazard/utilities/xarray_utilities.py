@@ -4,12 +4,12 @@ import dask  # type: ignore
 import dask.array
 import numpy as np
 import rasterio  # type: ignore
+import rioxarray  # noqa: F401
 import xarray as xr
 import zarr  # type: ignore
 import zarr.core
 from affine import Affine  # type: ignore
 from rasterio.crs import CRS  # type: ignore
-import rioxarray
 
 
 def add_children_to_parent(

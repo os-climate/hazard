@@ -46,7 +46,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
         WetBulbGlobeTemperatureAboveIndicator(),
         WRIAqueductWaterRisk(),
         DroughtIndicator(None),
-        TUDelftRiverFlood(None)
+        TUDelftRiverFlood(None),
     ]
 
     docs_store.write_new_empty_inventory()
