@@ -126,6 +126,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         resources: Dict[str, HazardResource] = dict()
         resource_map = {
             "country_code": {
+                "units": "",
                 "max_value": 999,
                 "display_name": "ISO 3166-1 numeric code",
                 "description": """
@@ -135,6 +136,7 @@ territories, and special areas of geographical interest.
 """,
             },
             "litpop": {
+                "units": "USD",
                 "max_value": 500000000,
                 "display_name": "LitPop (ETH Zurich)",
                 "description": """
@@ -177,12 +179,12 @@ Report 2017".
                         name="heating",
                         min_value=0.0,
                         max_value=resource_map[key]["max_value"],
-                        units="USD",
+                        units=resource_map[key]["units"],
                     ),
                     path="maps/" + path + "_map",
                     source="map_array_pyramid",
                 ),
-                units="USD",
+                units=resource_map[key]["units"],
                 scenarios=[
                     Scenario(id="historical", years=[2014]),
                 ],
