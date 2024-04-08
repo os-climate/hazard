@@ -42,9 +42,6 @@ def create_tiles_for_resource(
                 create_tile_set(source, path, target, map_path, indices=indices, max_zoom=max_zoom)
 
 
-# def create_image_set_for_resource(source: OscZarr, target: OscZarr, resource: HazardResource):
-
-
 def create_image_set(
     source: OscZarr,
     source_path: str,
@@ -164,12 +161,8 @@ def create_tile_set(
         da.sizes["latitude"] if "latitude" in da.sizes else da.sizes["y"],
         da.sizes["longitude"] if "longitude" in da.sizes else da.sizes["x"],
     )
-
     chunk_size: int = 512
     pixels_per_tile = 256
-
-    target.remove(target_path)
-
     os.environ["CHECK_WITH_INVERT_PROJ"] = "YES"
 
     # to calculate the maximum zoom level we find the bounds in the map projection
@@ -192,9 +185,9 @@ def create_tile_set(
     logger.info(f"Indices (z) subset to be processed: {indices}.")
     logger.info(f"Maximum zoom is level is {max_zoom}.")
 
-    _create_empty_tile_pyramid(target, target_path, max_zoom, chunk_size, return_periods)
-
     # _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
+    target.remove(target_path)
+    _create_empty_tile_pyramid(target, target_path, max_zoom, chunk_size, return_periods)
 
     # here we reproject and write the maximum zoom level
     _write_zoom_level(
@@ -349,33 +342,38 @@ def _coarsen(
     max_tile_batch_size: int = 16,
 ):
     pixels_per_tile = 256
-    bounds1 = rasterio.coords.BoundingBox(*bounds)
+    bbox = rasterio.coords.BoundingBox(*bounds)
     for index in indices if indices is not None else [0]:
         for zoom in range(max_zoom, 1, -1):
             current_zoom_level_path = posixpath.join(target_path, f"{zoom}")
             next_zoom_level_path = posixpath.join(target_path, f"{zoom - 1}")
-            da_current = target.read(current_zoom_level_path)
-            tiles = 2**zoom
-            num_batches = max(1, tiles // max_tile_batch_size)
-            tile_batch_size = min(tiles, max_tile_batch_size)
+            z = target.read_zarr(current_zoom_level_path)
+            # we go down a zoom level to find the bounds
+            xmin, xmax, ymin, ymax = get_tile_bounds(bbox.left, bbox.bottom, bbox.right, bbox.top, zoom - 1)
+            xmin, ymin = xmin * 2, ymin * 2
+            xmax, ymax = xmax * 2 + 1, ymax * 2 + 1
+            ntiles_in_level = 2**zoom
+            ntiles = max(xmax - xmin + 1, ymax - ymin + 1)
+            num_batches = max(1, ntiles // max_tile_batch_size)
+            tile_batch_size = min(ntiles, max_tile_batch_size)
             # in this case we can process the batches in parallel: consider multi-threading this part?
             for batch_x in range(0, num_batches):
                 for batch_y in range(0, num_batches):
-                    # the slices are over tiles for the maximum zoom level
-                    x_slice = slice(batch_x * tile_batch_size, (batch_x + 1) * tile_batch_size)
-                    y_slice = slice(batch_y * tile_batch_size, (batch_y + 1) * tile_batch_size)
-                    ulx, uly = mercantile.ul(mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom))
-                    lrx, lry = mercantile.ul(mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom))
-                    if rasterio.coords.disjoint_bounds(bounds1, rasterio.coords.BoundingBox(ulx, lry, lrx, uly)):
-                        continue
-                    da_slice = da_current[
+                    x_slice = slice(
+                        xmin + batch_x * tile_batch_size, min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level)
+                    )
+                    y_slice = slice(
+                        ymin + batch_y * tile_batch_size, min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level)
+                    )
+                    zslice = z[
                         index,
                         y_slice.start * pixels_per_tile : y_slice.stop * pixels_per_tile,
                         x_slice.start * pixels_per_tile : x_slice.stop * pixels_per_tile,
-                    ].compute()
-                    # if np.isnan(da_slice).all():
-                    #    continue
-                    da_slice = da_slice.coarsen(x=2, y=2).mean()  # type:ignore
+                    ]
+
+                    # use Zarr array directly, as opposed to e.g.:
+                    # da_slice = da_slice.coarsen(x=2, y=2).mean()  # type:ignore
+                    zslice = (zslice[::2, ::2] + zslice[1::2, ::2] + zslice[::2, 1::2] + zslice[1::2, 1::2]) / 4
                     target.write_slice(
                         next_zoom_level_path,
                         slice(index, index + 1),
@@ -387,7 +385,7 @@ def _coarsen(
                             int(x_slice.start * pixels_per_tile / 2),
                             int(x_slice.stop * pixels_per_tile / 2),
                         ),
-                        da_slice.values,
+                        zslice,
                     )
 
 

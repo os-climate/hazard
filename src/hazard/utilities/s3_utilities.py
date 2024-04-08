@@ -1,10 +1,54 @@
 import logging
 import os
+import pathlib
+import sys
 from typing import Callable, Optional, Sequence
 
 import boto3
 
 logger = logging.getLogger(__name__)
+
+
+def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
+    """Copy zarr array from a local directory to the development bucket.
+    Requires environment variables:
+    OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_ACCESS_KEY_DEV=...
+    OSC_S3_SECRET_KEY_DEV=...
+
+    Args:
+        zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
+        array_path (str): The path of the array within the group.
+        dry_run (bool, optional): If True, log the action that would be taken without actually executing. Defaults to False.
+    """
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(filename="batch.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+
+    s3_target_client = boto3.client(
+        "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
+    )
+    target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
+    logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
+
+    files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
+    logger.info(f"Copying {len(files)} files")
+    if not dry_run:
+        for i, file in enumerate(files):
+            with open(file, "rb") as f:
+                data = f.read()
+            target_key = str(pathlib.PurePosixPath("hazard", "hazard.zarr", array_path, file.name))
+            s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
+            if i % 100 == 0:
+                logger.info(f"Completed {i}/{len(files)}")
 
 
 def copy_dev_to_prod(prefix: str, dry_run=False):

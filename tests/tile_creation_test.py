@@ -75,7 +75,6 @@ def test_convert_tiles_mocked(test_output_dir):
         "EPSG:4236", "EPSG:3857", feat_left, feat_bottom, feat_right, feat_top
     )
     mapped_region = da_map.sel(index=2, x=slice(m_left, m_right), y=slice(m_top, m_bottom))
-    print(mapped_region.values)
     # this should contain our original feature
     assert mapped_region.max().values == 1
 

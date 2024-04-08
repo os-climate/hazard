@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import sys
 from pathlib import PurePosixPath
 
@@ -7,6 +8,7 @@ import fsspec.implementations.local as local  # type: ignore
 import pytest
 import s3fs
 import zarr
+import zarr.convenience
 
 from hazard.docs_store import DocStore
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
@@ -162,13 +164,22 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     model.prepare()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
+    model.run_all(None, target)
     # batch_items = model.batch_items()
-    # model.run_all(None, target)
     # model.run_single(batch_items[4], None, target, None)
     model.create_maps(target, target)
     # path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
-    # map_path = "inundation/river_tudelft/v2/flood_depth_historical_1971_map"
+    # map_path = "maps/inundation/river_tudelft/v2/flood_depth_historical_1971_map"
     # create_tile_set(target, path, target, map_path, max_zoom=10)
+    for i in range(10, 0, -1):
+        s3_utilities.copy_local_to_dev(
+            str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+            f"maps/inundation/river_tudelft/v2/flood_depth_historical_1971_map/{i}",
+        )
+    s3_utilities.copy_local_to_dev(
+        str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+        "inundation/river_tudelft/v2/flood_depth_historical_1971",
+    )
 
 
 @pytest.mark.skip(reason="on-boarding script")
