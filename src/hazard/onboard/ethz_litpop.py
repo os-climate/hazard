@@ -73,6 +73,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         if not isinstance(self.fs, LocalFileSystem):
             # e.g. we are copying to S3; download to specified working directory,
             # but then copy to self.source_dir
+            assert working_dir is not None
             download_and_unzip(self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0])
             for file in os.listdir(working_dir):
                 with open(file, "rb") as f:
@@ -159,10 +160,11 @@ Report 2017".
                 hazard_type="SpatialDistribution",
                 indicator_id=key,
                 indicator_model_gcm="",
+                indicator_model_id=None,
                 path=path,
                 params={},
-                display_name=resource_map[key]["display_name"],
-                description=resource_map[key]["description"],
+                display_name=str(resource_map[key]["display_name"]),
+                description=str(resource_map[key]["description"]),
                 group_id="",
                 display_groups=[],
                 map=MapInfo(
@@ -178,13 +180,14 @@ Report 2017".
                         nodata_index=0,
                         name="heating",
                         min_value=0.0,
-                        max_value=resource_map[key]["max_value"],
-                        units=resource_map[key]["units"],
+                        max_value=resource_map[key]["max_value"],  # type:ignore
+                        units=resource_map[key]["units"],  # type:ignore
                     ),
+                    index_values=None,
                     path="maps/" + path + "_map",
                     source="map_array_pyramid",
                 ),
-                units=resource_map[key]["units"],
+                units=str(resource_map[key]["units"]),
                 scenarios=[
                     Scenario(id="historical", years=[2014]),
                 ],

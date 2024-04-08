@@ -2765,6 +2765,56 @@
                 }
             ],
             "units": "months/year"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "",
+            "path": "inundation/river_tudelft/v2/flood_depth_{scenario}_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_id": "tudelft",
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
+            "params": {},
+            "display_name": "Flood depth (TUDelft)",
+            "display_groups": [],
+            "description": "\nFlood water depth, part of data set containing data related to the probability of\nriver floods occurring in Europe under present and future climate.\nBased upon CLMcom-CCLM4-8-17-EC-EARTH regional\nclimate simulation (EURO-CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "metres"
+                },
+                "path": "maps/inundation/river_tudelft/v2/flood_depth_{scenario}_{year}_map",
+                "bounds": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "metres"
         }
     ]
 }

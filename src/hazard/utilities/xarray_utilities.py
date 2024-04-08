@@ -4,6 +4,7 @@ import dask  # type: ignore
 import dask.array
 import numpy as np
 import rasterio  # type: ignore
+import rioxarray  # noqa: F401
 import xarray as xr
 import zarr  # type: ignore
 import zarr.core
@@ -124,6 +125,7 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
         da.rio.write_crs(4326, inplace=True)
         da = da.rename({"dim_0": "index", "dim_1": "latitude", "dim_2": "longitude"})
     else:
+        da.rio.write_crs(crs, inplace=True)
         da = da.rename({"dim_0": "index", "dim_1": "y", "dim_2": "x"})
     return da
 
