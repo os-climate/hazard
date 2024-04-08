@@ -161,4 +161,3 @@ extend-ignore = [
   "E501",
   "E203", # Allow spacing before colon (to favor Black).
 ]
-
