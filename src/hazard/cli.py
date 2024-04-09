@@ -13,7 +13,6 @@ logging.basicConfig(
     format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
 )
 
-
 def days_tas_above_indicator(bucket: str, prefix: str, gcm: str, scenario: str, year: int, threshold: int):
     """
     Run the days_tas_above indicator generation for a given gcm, scenario, year and temperature threshold.
@@ -42,6 +41,9 @@ def days_tas_above_indicator(bucket: str, prefix: str, gcm: str, scenario: str, 
 
     model.run_all(source, target, client=client)
 
-
-if __name__ == "__main__":
-    fire.Fire(days_tas_above_indicator)
+class Cli(object):
+    def __init__(self) -> None:
+        self.days_tas_above_indicator = days_tas_above_indicator
+        
+def cli():
+    fire.Fire(Cli)
