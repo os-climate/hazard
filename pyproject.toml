@@ -163,3 +163,5 @@ extend-ignore = [
   "E203", # Allow spacing before colon (to favor Black).
 ]
 
+[project.scripts]
+os_climate_hazard = "hazard.cli:cli"
