@@ -174,7 +174,8 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
+        with open(os.path.join(os.path.dirname(__file__), "tudelft_flood.md"), "r") as f:
+            description = f.read()
         return [
             HazardResource(
                 hazard_type="RiverineInundation",
@@ -184,12 +185,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 path="inundation/river_tudelft/v2/flood_depth_{scenario}_{year}",
                 params={},
                 display_name="Flood depth (TUDelft)",
-                description="""
-Flood water depth, part of data set containing data related to the probability of
-river floods occurring in Europe under present and future climate.
-Based upon CLMcom-CCLM4-8-17-EC-EARTH regional
-climate simulation (EURO-CORDEX).
-                """,
+                description=description,
                 group_id="",
                 display_groups=[],
                 map=MapInfo(

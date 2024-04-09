@@ -172,15 +172,23 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     # path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
     # map_path = "maps/inundation/river_tudelft/v2/flood_depth_historical_1971_map"
     # create_tile_set(target, path, target, map_path, max_zoom=10)
-    for i in range(10, 0, -1):
-        s3_utilities.copy_local_to_dev(
-            str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
-            f"maps/inundation/river_tudelft/v2/flood_depth_historical_1971_map/{i}",
-        )
-    s3_utilities.copy_local_to_dev(
-        str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
-        "inundation/river_tudelft/v2/flood_depth_historical_1971",
-    )
+
+    # "flood_depth_historical_1971",
+    files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085", "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
+
+    # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/river_tudelft/v2", False)
+    # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/river_tudelft/v2", False)
+
+    # for file in files:
+    #     s3_utilities.copy_local_to_dev(
+    #         str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+    #         f"inundation/river_tudelft/v2/{file}",
+    #     )
+    #     for i in range(10, 0, -1):
+    #         s3_utilities.copy_local_to_dev(
+    #             str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+    #             f"maps/inundation/river_tudelft/v2/{file}_map/{i}",
+    #         )
 
 
 @pytest.mark.skip(reason="on-boarding script")
