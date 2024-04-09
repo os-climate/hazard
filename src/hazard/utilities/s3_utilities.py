@@ -1,13 +1,13 @@
 import asyncio
 import concurrent.futures
-import functools
 import logging
 import os
 import pathlib
 import sys
 from typing import Callable, Optional, Sequence
 
-import boto3, botocore.client
+import boto3
+import botocore.client
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
         "s3",
         aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
         aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
-        config=botocore.client.Config(max_pool_connections=32)
+        config=botocore.client.Config(max_pool_connections=32),
     )
     target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
     logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
@@ -56,7 +56,7 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
         loop = asyncio.get_running_loop()
         futures = [loop.run_in_executor(executor, copy_file, file) for file in files]
-        
+
         completed = []
         for coro in asyncio.as_completed(futures):
             completed.append(await coro)
@@ -82,13 +82,13 @@ def copy_dev_to_prod(prefix: str, dry_run=False):
         "s3",
         aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
         aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
-        config=botocore.client.Config(max_pool_connections=32)
+        config=botocore.client.Config(max_pool_connections=32),
     )
     s3_target_client = boto3.client(
         "s3",
         aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
         aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
-        config=botocore.client.Config(max_pool_connections=32)
+        config=botocore.client.Config(max_pool_connections=32),
     )
 
     source_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
@@ -149,7 +149,7 @@ def copy_prod_to_public(prefix: str, dry_run=False):
 
 
 def list_objects(client, bucket_name, prefix):
-    paginator = client.get_paginator("list_objects_v2") #, PaginationConfig={"MaxItems": 10000})
+    paginator = client.get_paginator("list_objects_v2")  # , PaginationConfig={"MaxItems": 10000})
     pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
     # get the list of keys with the given prefix
     keys = []
@@ -204,7 +204,7 @@ def copy_objects(
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
         loop = asyncio.get_running_loop()
         futures = [loop.run_in_executor(executor, copy_object, key) for key in keys]
-        
+
         completed = []
         for coro in asyncio.as_completed(futures):
             completed.append(await coro)
@@ -213,7 +213,7 @@ def copy_objects(
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(copy_all(keys))
-    logger.info(f"Completed.")
+    logger.info("Completed.")
 
 
 def remove_objects(keys: Sequence[str], s3_client, bucket_name: str):
