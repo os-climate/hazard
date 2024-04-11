@@ -174,7 +174,8 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     # create_tile_set(target, path, target, map_path, max_zoom=10)
 
     # "flood_depth_historical_1971",
-    files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085", "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
+    # files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085",
+    # "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
 
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/river_tudelft/v2", False)
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/river_tudelft/v2", False)

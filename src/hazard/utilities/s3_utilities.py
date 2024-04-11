@@ -22,7 +22,8 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
         array_path (str): The path of the array within the group.
-        dry_run (bool, optional): If True, log the action that would be taken without actually executing. Defaults to False.
+        dry_run (bool, optional): If True, log the action that would be taken without
+        actually executing. Defaults to False.
     """
 
     logging.basicConfig(
