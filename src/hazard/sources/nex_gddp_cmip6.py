@@ -2,6 +2,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Optional
+import posixpath
 
 import fsspec
 import s3fs  # type: ignore
@@ -27,6 +28,7 @@ class NexGddpCmip6(OpenDataset):
 
     catalog_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"
     collection_id: str = "nasa-nex-gddp-cmip6"
+    bucket: str = "nex-gddp-cmip6"
 
     def __init__(
         self,
@@ -50,8 +52,27 @@ class NexGddpCmip6(OpenDataset):
         # <variable_id>_<table_id>_<source_id>_<experiment_id>_<variant_label>_<grid_label>_<time_range>.nc
         self.fs = s3fs.S3FileSystem(anon=True) if fs is None else fs
         self.quantities = {"tas": {"name": "Daily average temperature"}}
+        self.root = NexGddpCmip6.bucket if root is None else root
 
     def path(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
+        """directly construct the S3 path to input dataset"""
+
+        component = self.subset[gcm]
+        variant_label = component["variant_label"]
+        grid_label = component["grid_label"]
+        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
+        return (
+            posixpath.join(
+                self.root,
+                f"NEX-GDDP-CMIP6/{gcm}/{scenario}/{variant_label}/{quantity}/",
+            )
+            + filename,
+            filename,
+        )
+
+    def path_stac(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
+        """Retrieves the path to the input dataset from STAC metadata"""
+
         items = stac_utilities.search_stac_items(
             catalog_url=self.catalog_url,
             search_params={
@@ -76,15 +97,13 @@ class NexGddpCmip6(OpenDataset):
 
     @contextmanager
     def open_dataset_year(
-        self,  # type: ignore
-        gcm: str,
-        scenario: str,
-        quantity: str,
-        year: int,
-        chunks=None,
+        self, gcm: str, scenario: str, quantity: str, year: int, chunks=None, use_stac: bool = False  # type: ignore
     ) -> Generator[xr.Dataset, None, None]:
         # use "s3://bucket/root" ?
-        path = self.path(gcm, scenario, quantity, year)
+        if use_stac:
+            path = self.path_stac(gcm, scenario, quantity, year)
+        else:
+            path = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
         ds: Optional[xr.Dataset] = None
         f = None
