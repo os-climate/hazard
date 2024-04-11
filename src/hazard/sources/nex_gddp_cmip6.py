@@ -55,9 +55,8 @@ class NexGddpCmip6(OpenDataset):
         items = stac_utilities.search_stac_items(
             catalog_url=self.catalog_url,
             search_params={
-                "collection": self.collection_id,
-                "datetime": year,
-                "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}},
+                "collections": [self.collection_id],
+                "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}, "cmip6:year": {"eq": year}},
             },
         )
         if len(items) == 0:
@@ -67,9 +66,10 @@ class NexGddpCmip6(OpenDataset):
         else:
             item = items[0]
         href = item.assets[quantity].href
-        return href.replace(
+        href_replaced = href.replace(
             "https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6", "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6"
         )
+        return href_replaced
 
     def gcms(self) -> List[str]:
         return list(self.subset.keys())
@@ -84,7 +84,7 @@ class NexGddpCmip6(OpenDataset):
         chunks=None,
     ) -> Generator[xr.Dataset, None, None]:
         # use "s3://bucket/root" ?
-        path, _ = self.path(gcm, scenario, quantity, year)
+        path = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
         ds: Optional[xr.Dataset] = None
         f = None
