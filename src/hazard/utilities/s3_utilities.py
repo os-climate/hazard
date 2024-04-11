@@ -1,10 +1,71 @@
+import asyncio
+import concurrent.futures
 import logging
 import os
+import pathlib
+import sys
 from typing import Callable, Optional, Sequence
 
 import boto3
+import botocore.client
 
 logger = logging.getLogger(__name__)
+
+
+def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
+    """Copy zarr array from a local directory to the development bucket.
+    Requires environment variables:
+    OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_ACCESS_KEY_DEV=...
+    OSC_S3_SECRET_KEY_DEV=...
+
+    Args:
+        zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
+        array_path (str): The path of the array within the group.
+        dry_run (bool, optional): If True, log the action that would be taken without actually executing. Defaults to False.
+    """
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(filename="batch.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+
+    s3_target_client = boto3.client(
+        "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
+        config=botocore.client.Config(max_pool_connections=32),
+    )
+    target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
+    logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
+
+    files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
+    logger.info(f"Copying {len(files)} files in array {array_path}")
+
+    def copy_file(file: pathlib.Path):
+        with open(file, "rb") as f:
+            data = f.read()
+            target_key = str(pathlib.PurePosixPath("hazard", "hazard.zarr", array_path, file.name))
+            s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
+
+    async def copy_all():
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
+        loop = asyncio.get_running_loop()
+        futures = [loop.run_in_executor(executor, copy_file, file) for file in files]
+
+        completed = []
+        for coro in asyncio.as_completed(futures):
+            completed.append(await coro)
+            if len(completed) % 100 == 0:
+                logger.info(f"Completed {len(completed)}/{len(files)}")
+
+    if not dry_run:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(copy_all())
 
 
 def copy_dev_to_prod(prefix: str, dry_run=False):
@@ -21,11 +82,13 @@ def copy_dev_to_prod(prefix: str, dry_run=False):
         "s3",
         aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
         aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
+        config=botocore.client.Config(max_pool_connections=32),
     )
     s3_target_client = boto3.client(
         "s3",
         aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
         aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
+        config=botocore.client.Config(max_pool_connections=32),
     )
 
     source_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
@@ -86,7 +149,7 @@ def copy_prod_to_public(prefix: str, dry_run=False):
 
 
 def list_objects(client, bucket_name, prefix):
-    paginator = client.get_paginator("list_objects_v2", PaginationConfig={"MaxItems": 10000})
+    paginator = client.get_paginator("list_objects_v2")  # , PaginationConfig={"MaxItems": 10000})
     pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
     # get the list of keys with the given prefix
     keys = []
@@ -130,14 +193,27 @@ def copy_objects(
 
     logger.info(f"Source bucket {source_bucket_name}; target bucket {target_bucket_name}")
 
-    for i, key in enumerate(keys):
+    def copy_object(key):
         obj = s3_source_client.get_object(Bucket=source_bucket_name, Key=key)
         data = obj["Body"].read()
         target_key = rename(key) if rename is not None else key
         # target_key = key.replace('hazard_test/hazard.zarr', 'hazard/hazard.zarr')
-        s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
-        if i % 100 == 0:
-            logger.info(f"Completed {i}/{len(keys)}")
+        return s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
+
+    async def copy_all(keys: Sequence[str]):
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
+        loop = asyncio.get_running_loop()
+        futures = [loop.run_in_executor(executor, copy_object, key) for key in keys]
+
+        completed = []
+        for coro in asyncio.as_completed(futures):
+            completed.append(await coro)
+            if len(completed) % 100 == 0:
+                logger.info(f"Completed {len(completed)}/{len(keys)}")
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(copy_all(keys))
+    logger.info("Completed.")
 
 
 def remove_objects(keys: Sequence[str], s3_client, bucket_name: str):

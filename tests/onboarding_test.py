@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import sys
 from pathlib import PurePosixPath
 
@@ -7,10 +8,12 @@ import fsspec.implementations.local as local  # type: ignore
 import pytest
 import s3fs
 import zarr
+import zarr.convenience
 
 from hazard.docs_store import DocStore
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
+from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jupiter import Jupiter  # type: ignore
 from hazard.onboard.jupiter import JupiterOscFileSource
@@ -25,6 +28,7 @@ from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities import s3_utilities, zarr_utilities
+from hazard.utilities.tiles import create_tile_set
 
 
 @pytest.fixture
@@ -159,12 +163,32 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     source_path = os.path.join(test_output_dir, "tudelft", "tudelft_river")
     model = TUDelftRiverFlood(source_path)
     model.prepare()
-
-    batch_items = model.batch_items()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    model.run_single(batch_items[0], None, target, None)
-    # model.create_maps(target, target)
+    model.run_all(None, target)
+    # batch_items = model.batch_items()
+    # model.run_single(batch_items[4], None, target, None)
+    model.create_maps(target, target)
+    # path = "inundation/river_tudelft/v2/flood_depth_historical_1971"
+    # map_path = "maps/inundation/river_tudelft/v2/flood_depth_historical_1971_map"
+    # create_tile_set(target, path, target, map_path, max_zoom=10)
+
+    # "flood_depth_historical_1971",
+    files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085", "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
+
+    # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/river_tudelft/v2", False)
+    # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/river_tudelft/v2", False)
+
+    # for file in files:
+    #     s3_utilities.copy_local_to_dev(
+    #         str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+    #         f"inundation/river_tudelft/v2/{file}",
+    #     )
+    #     for i in range(10, 0, -1):
+    #         s3_utilities.copy_local_to_dev(
+    #             str(pathlib.Path(test_output_dir, "hazard/hazard.zarr")),
+    #             f"maps/inundation/river_tudelft/v2/{file}_map/{i}",
+    #         )
 
 
 @pytest.mark.skip(reason="on-boarding script")
@@ -201,4 +225,13 @@ def test_wet_bulb_globe_temp(test_output_dir):
     target = OscZarr(store=store)
     model = WetBulbGlobeTemperatureAboveIndicator()
     model.run_all(source, target)
+    model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_litpop(test_output_dir):
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    model = ETHZurichLitPop(source_dir=test_output_dir)
+    model.run_all(None, target)
     model.create_maps(target, target)
