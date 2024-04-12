@@ -1,7 +1,9 @@
 import logging  # noqa: E402
+from typing import List
 
 import fire
 from dask.distributed import Client, LocalCluster  # noqa: E402
+from fsspec.implementations.local import LocalFileSystem
 
 from hazard.docs_store import DocStore  # type: ignore # noqa: E402
 from hazard.models.days_tas_above import DaysTasAboveIndicator  # noqa: E402
@@ -13,13 +15,34 @@ logging.basicConfig(
     format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
 )
 
-def days_tas_above_indicator(bucket: str, prefix: str, gcm: str, scenario: str, year: int, threshold: int):
+
+def days_tas_above_indicator(
+    gcm_list: List[str] = ["NorESM2-MM"],
+    scenario_list: List[str] = ["ssp585"],
+    threshold_list: List[int] = [20],
+    central_year_list: List[int] = [2090],
+    window_years: int = 1,
+    bucket: str = None,
+    prefix: str = None,
+    store: str = None,
+):
     """
-    Run the days_tas_above indicator generation for a given gcm, scenario, year and temperature threshold.
-    Store the result in a zarr store located in a given bucket and prefix.
+    Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,
+    central years and a given size of years window over which to compute the average.
+    Store the result in a zarr store, locally if `store` is provided, else in an S3
+    bucket if `bucket` and `prefix` are provided.
+    An inventory filed is stored at the root of the zarr directory.
     """
 
-    docs_store = DocStore(prefix="hazard_test")
+    if store is not None:
+        docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
+        target = OscZarr(store=store)
+    else:
+        if bucket is None or prefix is None:
+            raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
+        else:
+            docs_store = DocStore(prefix=prefix)
+            target = OscZarr(bucket=bucket, prefix=prefix)
 
     cluster = LocalCluster(processes=False)
 
@@ -27,23 +50,23 @@ def days_tas_above_indicator(bucket: str, prefix: str, gcm: str, scenario: str, 
 
     source = NexGddpCmip6()
 
-    target = OscZarr(bucket=bucket, prefix=prefix)
-
     model = DaysTasAboveIndicator(
-        threshold_temps_c=[threshold],
-        window_years=1,
-        gcms=[gcm],
-        scenarios=[scenario],
-        central_years=[year],
+        threshold_temps_c=threshold_list,
+        window_years=window_years,
+        gcms=gcm_list,
+        scenarios=scenario_list,
+        central_years=central_year_list,
     )
 
     docs_store.update_inventory(model.inventory())
 
     model.run_all(source, target, client=client)
 
+
 class Cli(object):
     def __init__(self) -> None:
         self.days_tas_above_indicator = days_tas_above_indicator
-        
+
+
 def cli():
     fire.Fire(Cli)
