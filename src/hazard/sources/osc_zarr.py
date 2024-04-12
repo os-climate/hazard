@@ -244,6 +244,8 @@ class OscZarr(WriteDataArray):
             chunks=chunks,
             dtype="f4",
             overwrite=overwrite,
+            write_empty_chunks=False,
+            fill_value=float("nan"),
         )  # array_path interpreted as path within group
         if isinstance(indexes, np.ndarray) and indexes.dtype in [
             "int16",
