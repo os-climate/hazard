@@ -1,5 +1,5 @@
 import logging  # noqa: E402
-from typing import List
+from typing import List, Optional
 
 import fire
 from dask.distributed import Client, LocalCluster  # noqa: E402
@@ -19,12 +19,12 @@ logging.basicConfig(
 def days_tas_above_indicator(
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
-    threshold_list: List[int] = [20],
+    threshold_list: List[float] = [20],
     central_year_list: List[int] = [2090],
     window_years: int = 1,
-    bucket: str = None,
-    prefix: str = None,
-    store: str = None,
+    bucket: Optional[str] = None,
+    prefix: Optional[str] = None,
+    store: Optional[str] = None,
 ):
     """
     Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,

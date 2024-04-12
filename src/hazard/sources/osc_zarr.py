@@ -21,7 +21,7 @@ class OscZarr(WriteDataArray):
         bucket: str = default_dev_bucket,
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
-        store: Optional[MutableMapping] = None,
+        store: Optional[Any] = None,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
