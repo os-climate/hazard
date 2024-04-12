@@ -2765,6 +2765,56 @@
                 }
             ],
             "units": "months/year"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "",
+            "path": "inundation/river_tudelft/v2/flood_depth_{scenario}_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_id": "tudelft",
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
+            "params": {},
+            "display_name": "Flood depth (TUDelft)",
+            "display_groups": [],
+            "description": "Flood depth for riverine floods occurring in Europe in the present and future climate, including protection levels\nfrom the FLOPROS database.\nBased on the CLMcom-CCLM4-8-17-EC-EARTH regional climate simulation (EURO-CORDEX), sets are available for RCP 4.5 and RCP 8.5\nfor projected (central) years 2035 and 2085. The set has a spatial resolution of 100m and comprises return periods of\n10, 30, 100, 300 and 1000 years.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the \n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nTo derive this indicator, 'River_flood_extent_X_Y_Z_with_protection' and 'River_flood_depth_X_Y_Z_R' data sets are combined to\nyield protected flood depths.",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "metres"
+                },
+                "path": "maps/inundation/river_tudelft/v2/flood_depth_{scenario}_{year}_map",
+                "bounds": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "metres"
         }
     ]
 }
