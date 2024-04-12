@@ -1,8 +1,8 @@
 import logging
+import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Optional
-import posixpath
 
 import fsspec
 import s3fs  # type: ignore
@@ -103,7 +103,7 @@ class NexGddpCmip6(OpenDataset):
         if use_stac:
             path = self.path_stac(gcm, scenario, quantity, year)
         else:
-            path = self.path(gcm, scenario, quantity, year)
+            path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
         ds: Optional[xr.Dataset] = None
         f = None
