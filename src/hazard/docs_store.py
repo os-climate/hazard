@@ -66,6 +66,8 @@ class DocStore:
             bucket = get_env(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
         elif type(self._fs) == LocalFileSystem:
+            if local_path is None:
+                raise ValueError("if using a local filesystem, please provide a value for `local_path`")
             self._root = str(PurePosixPath(local_path))
         else:
             self._root = str(PurePosixPath(bucket, prefix))

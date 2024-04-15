@@ -10,12 +10,12 @@ import zarr.core
 from affine import Affine  # type: ignore
 
 import hazard.utilities.xarray_utilities as xarray_utilities
-from hazard.protocols import WriteDataArray
+from hazard.protocols import ReadWriteDataArray
 
 default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 
-class OscZarr(WriteDataArray):
+class OscZarr(ReadWriteDataArray):
     def __init__(
         self,
         bucket: str = default_dev_bucket,
