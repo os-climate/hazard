@@ -1,6 +1,6 @@
 import os
 from pathlib import PurePosixPath
-from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import s3fs  # type: ignore
@@ -10,18 +10,18 @@ import zarr.core
 from affine import Affine  # type: ignore
 
 import hazard.utilities.xarray_utilities as xarray_utilities
-from hazard.protocols import WriteDataArray
+from hazard.protocols import ReadWriteDataArray
 
 default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 
-class OscZarr(WriteDataArray):
+class OscZarr(ReadWriteDataArray):
     def __init__(
         self,
         bucket: str = default_dev_bucket,
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
-        store: Optional[MutableMapping] = None,
+        store: Optional[Any] = None,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.

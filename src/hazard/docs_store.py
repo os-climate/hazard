@@ -5,6 +5,7 @@ from typing import Callable, Dict, Iterable, List, Optional
 
 import s3fs  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
+from fsspec.implementations.local import LocalFileSystem
 from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import default_dev_bucket
@@ -38,6 +39,7 @@ class DocStore:
         prefix: str = "hazard",
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
+        local_path: Optional[str] = None,
     ):
         """Class to read hazard inventory and documentation from supplied AbstractFileSystem (e.g. S3).
         In general *array* paths are of form:
@@ -52,6 +54,7 @@ class DocStore:
         Args:
             get_env (Callable[[str, Optional[str]], str], optional): Get environment variable. Defaults to get_env.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem. Defaults to None in which case S3FileSystem will be created. # noqa: E501
+            local_path (Optional[str], optional): local path where to save the inventory. only used if `fs` is a LocalFileSystem.
         """
         if fs is None:
             access_key = get_env(self.__access_key, None)
@@ -62,6 +65,10 @@ class DocStore:
         if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
             bucket = get_env(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
+        elif type(self._fs) == LocalFileSystem:
+            if local_path is None:
+                raise ValueError("if using a local filesystem, please provide a value for `local_path`")
+            self._root = str(PurePosixPath(local_path))
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
