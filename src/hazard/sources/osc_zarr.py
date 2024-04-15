@@ -1,6 +1,6 @@
 import os
 from pathlib import PurePosixPath
-from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import s3fs  # type: ignore
