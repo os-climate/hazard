@@ -31,7 +31,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
 
     # path = os.path.join(test_output_dir)
 
-    docs_store = DocStore(bucket=path, fs=local_fs, prefix="hazard")
+    docs_store = DocStore(local_path=f"{path}/hazard", fs=local_fs)
     # docs_store = DocStore(prefix="hazard") # for writing direct to S3
 
     models = [
