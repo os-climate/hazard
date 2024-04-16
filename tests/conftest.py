@@ -18,7 +18,7 @@ def working_directory():
 
 @pytest.fixture
 def s3_credentials():
-    zarr_utilities.set_credential_env_variables()
+    zarr_utilities.set_env_variables()
     yield "s3_credentials"
 
 

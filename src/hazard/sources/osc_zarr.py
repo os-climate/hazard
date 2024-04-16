@@ -12,14 +12,12 @@ from affine import Affine  # type: ignore
 import hazard.utilities.xarray_utilities as xarray_utilities
 from hazard.protocols import ReadWriteDataArray
 
-default_dev_bucket = "physrisk-hazard-indicators-dev01"
-
 
 class OscZarr(ReadWriteDataArray):
     def __init__(
         self,
-        bucket: str = default_dev_bucket,
-        prefix: str = "hazard",
+        bucket: str,
+        prefix: str,
         s3: Optional[s3fs.S3File] = None,
         store: Optional[Any] = None,
     ):
@@ -36,11 +34,7 @@ class OscZarr(ReadWriteDataArray):
         if store is None:
             if s3 is None:
                 # zarr_utilities.load_dotenv() # to load environment variables
-                s3 = s3fs.S3FileSystem(
-                    anon=False,
-                    key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-                    secret=os.environ["OSC_S3_SECRET_KEY_DEV"],
-                )
+                s3 = s3fs.S3FileSystem()
             group_path = str(PurePosixPath(bucket, prefix, "hazard.zarr"))
             store = s3fs.S3Map(root=group_path, s3=s3, check=False)
 

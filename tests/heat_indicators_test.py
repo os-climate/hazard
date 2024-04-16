@@ -158,7 +158,7 @@ def test_work_loss(test_output_dir):  # noqa: F811
 
 @pytest.mark.skip(reason="just example")
 def test_example_run_degree_days():
-    zarr_utilities.set_credential_env_variables()
+    zarr_utilities.set_env_variables()
 
     docs_store = DocStore(prefix="hazard_test")
     # json = docs_store.read_inventory_json()

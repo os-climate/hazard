@@ -33,7 +33,7 @@ from hazard.utilities.tiles import create_tile_set
 
 @pytest.fixture
 def s3_credentials():
-    zarr_utilities.set_credential_env_variables()
+    zarr_utilities.set_env_variables()
     yield "s3_credentials"
 
 
@@ -62,11 +62,7 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     # source = WRIAqueductSource()
     target = OscZarr()
     # target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
-    s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY"],
-        secret=os.environ["OSC_S3_SECRET_KEY"],
-    )
+    s3 = s3fs.S3FileSystem()
     target = OscZarr(bucket=os.environ["OSC_S3_BUCKET"], s3=s3)
     for item in items:
         map_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
@@ -82,8 +78,7 @@ def test_iris(test_output_dir, s3_credentials):
     # copy_iris_files(s3_credentials)
     # promote_iris(s3_credentials)
     model = IRISIndicator(test_output_dir)
-    # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-    # secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
+    # s3 = s3fs.S3FileSystem()
     target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))  # save locally
     # target = OscZarr() # default dev bucket
     for item in model.batch_items():
@@ -100,12 +95,8 @@ def promote_iris(s3_credentials):
 
 
 def copy_iris_files(s3_credentials):
-    bucket = os.environ["OSC_S3_BUCKET_DEV"]  # physrisk-hazard-indicators-dev01
-    s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-        secret=os.environ["OSC_S3_SECRET_KEY_DEV"],
-    )
+    bucket = os.environ["S3_BUCKET_DEV"]  # physrisk-hazard-indicators-dev01
+    s3 = s3fs.S3FileSystem()
     files = [
         "/wind/IRIS/return_value_maps/IRIS_return_value_map_README.txt",
         "/wind/IRIS/return_value_maps/IRIS_vmax_maps_2050-SSP1_tenthdeg.nc",
@@ -139,14 +130,10 @@ def test_jupiter(test_output_dir, s3_credentials):
 @pytest.mark.skip(reason="example")
 def test_check_result(test_output_dir):
     """Example for viewing S3 directory structure."""
-    zarr_utilities.set_credential_env_variables()
+    zarr_utilities.set_env_variables()
     import s3fs  # type: ignore
 
-    s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY"],
-        secret=os.environ["OSC_S3_SECRET_KEY"],
-    )
+    s3 = s3fs.S3FileSystem()
     path = os.path.join(
         "redhat-osc-physical-landing-647521352890",
         "hazard_test",
@@ -174,7 +161,9 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     # create_tile_set(target, path, target, map_path, max_zoom=10)
 
     # "flood_depth_historical_1971",
-    files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085", "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
+
+    # files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085",
+    # "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
 
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/river_tudelft/v2", False)
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/river_tudelft/v2", False)

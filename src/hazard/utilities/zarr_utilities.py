@@ -42,9 +42,9 @@ def get_geotiff_meta_data(path, s3):
             return shape, transform
 
 
-def set_credential_env_variables():
-    dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
-    dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
+def set_env_variables():
+    dotenv_dir = os.environ.get("DOTENV_DIR", os.getcwd())
+    dotenv_path = pathlib.Path(dotenv_dir) / ".env"
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path, override=True)
 
