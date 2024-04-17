@@ -4,6 +4,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Optional
 
+from pystac.item_collection import ItemCollection
+from pystac_client import Client
+
 import fsspec
 import s3fs  # type: ignore
 import xarray as xr
@@ -70,13 +73,21 @@ class NexGddpCmip6(OpenDataset):
             filename,
         )
 
-    def path_stac(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
+    def path_stac(
+        self,
+        catalog_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
+        collection_id: str = "nasa-nex-gddp-cmip6",
+        gcm="NorESM2-MM",
+        scenario="ssp585",
+        quantity="tas",
+        year=2030,
+    ):
         """Retrieves the path to the input dataset from STAC metadata"""
 
-        items = stac_utilities.search_stac_items(
-            catalog_url=self.catalog_url,
+        items = self.search_stac_items(
+            catalog_url=catalog_url,
             search_params={
-                "collections": [self.collection_id],
+                "collections": [collection_id],
                 "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}, "cmip6:year": {"eq": year}},
             },
         )
@@ -97,11 +108,19 @@ class NexGddpCmip6(OpenDataset):
 
     @contextmanager
     def open_dataset_year(
-        self, gcm: str, scenario: str, quantity: str, year: int, chunks=None, use_stac: bool = False  # type: ignore
+        self,
+        gcm: str,
+        scenario: str,
+        quantity: str,
+        year: int,
+        chunks=None,
+        catalog_url: Optional[str] = None,
+        collection_id: Optional[str] = None,  # type: ignore
     ) -> Generator[xr.Dataset, None, None]:
         # use "s3://bucket/root" ?
-        if use_stac:
-            path = self.path_stac(gcm, scenario, quantity, year)
+        if catalog_url is not None or collection_id is not None:
+            assert catalog_url is not None and collection_id is not None
+            path = self.path_stac(catalog_url, collection_id, gcm, scenario, quantity, year)
         else:
             path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
@@ -116,3 +135,9 @@ class NexGddpCmip6(OpenDataset):
                 ds.close()
             if f is not None:
                 f.close()
+
+    def search_stac_items(self, catalog_url: str, search_params: Dict) -> ItemCollection:
+        client = Client.open(catalog_url)
+        search = client.search(**search_params)
+        items = search.item_collection()
+        return items
