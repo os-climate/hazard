@@ -32,6 +32,7 @@ classifiers = [
 dependencies = [
   "cftime",
   "dask[distributed]",
+  "fire",
   "fsspec",
   "geopandas",
   "h5netcdf",
@@ -167,3 +168,6 @@ extend-ignore = [
   "E501",
   "E203", # Allow spacing before colon (to favor Black).
 ]
+
+[project.scripts]
+os_climate_hazard = "hazard.cli:cli"
