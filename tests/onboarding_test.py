@@ -63,9 +63,8 @@ def test_wri_aqueduct(test_output_dir, s3_credentials, log_to_stdout):
     target = OscZarr()
     # target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, 'hazard', 'hazard.zarr')))
     s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY"],
-        secret=os.environ["OSC_S3_SECRET_KEY"],
+        key=os.environ.get("OSC_S3_ACCESS_KEY", None),
+        secret=os.environ.get("OSC_S3_SECRET_KEY", None),
     )
     target = OscZarr(bucket=os.environ["OSC_S3_BUCKET"], s3=s3)
     for item in items:
@@ -102,9 +101,8 @@ def promote_iris(s3_credentials):
 def copy_iris_files(s3_credentials):
     bucket = os.environ["OSC_S3_BUCKET_DEV"]  # physrisk-hazard-indicators-dev01
     s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-        secret=os.environ["OSC_S3_SECRET_KEY_DEV"],
+        key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+        secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
     )
     files = [
         "/wind/IRIS/return_value_maps/IRIS_return_value_map_README.txt",
@@ -143,9 +141,8 @@ def test_check_result(test_output_dir):
     import s3fs  # type: ignore
 
     s3 = s3fs.S3FileSystem(
-        anon=False,
-        key=os.environ["OSC_S3_ACCESS_KEY"],
-        secret=os.environ["OSC_S3_SECRET_KEY"],
+        key=os.environ.get("OSC_S3_ACCESS_KEY", None),
+        secret=os.environ.get("OSC_S3_SECRET_KEY", None),
     )
     path = os.path.join(
         "redhat-osc-physical-landing-647521352890",
@@ -174,7 +171,8 @@ def test_onboard_tudelft(s3_credentials, test_output_dir):
     # create_tile_set(target, path, target, map_path, max_zoom=10)
 
     # "flood_depth_historical_1971",
-    files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085", "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
+    # files = ["flood_depth_rcp8p5_2035", "flood_depth_rcp8p5_2085",
+    # "flood_depth_rcp4p5_2035", "flood_depth_rcp4p5_2085"]
 
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/river_tudelft/v2", False)
     # s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/river_tudelft/v2", False)
