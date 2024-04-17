@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     """Copy zarr array from a local directory to the development bucket.
     Requires environment variables:
-    S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_ACCESS_KEY_DEV=...
+    OSC_S3_SECRET_KEY_DEV=...
 
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
         array_path (str): The path of the array within the group.
-        dry_run (bool, optional): If True, log the action that would
-        be taken without actually executing. Defaults to False.
+        dry_run (bool, optional): If True, log the action that would be taken without actually executing. Defaults to False.
     """
 
     logging.basicConfig(
@@ -35,9 +36,11 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
 
     s3_target_client = boto3.client(
         "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
         config=botocore.client.Config(max_pool_connections=32),
     )
-    target_bucket_name = os.environ["S3_BUCKET_DEV"]
+    target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
     logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
 
     files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
@@ -68,20 +71,28 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
 def copy_dev_to_prod(prefix: str, dry_run=False):
     """Use this script to copy files with the prefix specified from
     dev S3 to prod S3.
-    S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
+    OSC_S3_ACCESS_KEY_DEV=...
+    OSC_S3_SECRET_KEY_DEV=...
     OSC_S3_BUCKET=physrisk-hazard-indicators
+    OSC_S3_ACCESS_KEY=...
+    OSC_S3_SECRET_KEY=...
     """
     s3_source_client = boto3.client(
         "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
         config=botocore.client.Config(max_pool_connections=32),
     )
     s3_target_client = boto3.client(
         "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
         config=botocore.client.Config(max_pool_connections=32),
     )
 
-    source_bucket_name = os.environ["S3_BUCKET_DEV"]
-    target_bucket_name = os.environ["S3_BUCKET"]
+    source_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
+    target_bucket_name = os.environ["OSC_S3_BUCKET"]
     if source_bucket_name != "physrisk-hazard-indicators-dev01" or target_bucket_name != "physrisk-hazard-indicators":
         # double check on environment variables
         raise ValueError("unexpected bucket")
@@ -102,7 +113,11 @@ def copy_prod_to_public(prefix: str, dry_run=False):
     """Use this script to copy files with the prefix specified from
     prod S3 to public S3.
     OSC_S3_BUCKET=physrisk-hazard-indicators
+    OSC_S3_ACCESS_KEY=...
+    OSC_S3_SECRET_KEY=...
     OSC_S3_BUCKET_PUBLIC=os-climate-public-data
+    OSC_S3_ACCESS_KEY_PUBLIC=...
+    OSC_S3_SECRET_KEY_PUBLIC=...
     """
     s3_source_client = boto3.client(
         "s3",
@@ -211,6 +226,8 @@ def remove_objects(keys: Sequence[str], s3_client, bucket_name: str):
 def remove_from_prod(prefix: str, dry_run=True):
     s3_client = boto3.client(
         "s3",
+        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
     )
     bucket_name = os.environ["OSC_S3_BUCKET"]
     keys, size = list_objects(s3_client, bucket_name, prefix)

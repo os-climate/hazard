@@ -22,10 +22,10 @@ from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import zarr_utilities
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
 
-from .conftest import test_output_dir  # noqa: F811
+from .conftest import test_output_dir  # noqa: F401
 
 
-def test_convert_tiles_mocked(test_output_dir):  # noqa: F811
+def test_convert_tiles_mocked(test_output_dir):
     """We are combining useful logic from a few sources.
     rio_tiler and titiler are very useful and also:
     https://github.com/mapbox/rio-mbtiles
@@ -104,7 +104,7 @@ def test_map_tiles_from_model(test_output_dir):  # noqa: F811
 
 @pytest.mark.skip(reason="Requires mocking")
 def test_convert_tiles(test_output_dir):  # noqa: F811
-    zarr_utilities.set_env_variables()
+    zarr_utilities.set_credential_env_variables()
     id = "00000NorESM1-M"
     scenario = "rcp8p5"
     year = 2050

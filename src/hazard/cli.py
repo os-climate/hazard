@@ -41,7 +41,7 @@ def days_tas_above_indicator(
         if bucket is None or prefix is None:
             raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
         else:
-            docs_store = DocStore(prefix=prefix, bucket=bucket)
+            docs_store = DocStore(prefix=prefix)
             target = OscZarr(bucket=bucket, prefix=prefix)
 
     cluster = LocalCluster(processes=False)

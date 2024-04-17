@@ -8,6 +8,8 @@ from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem
 from pydantic import BaseModel, parse_obj_as
 
+from hazard.sources.osc_zarr import default_dev_bucket
+
 from .inventory import HazardResource
 
 
@@ -27,12 +29,14 @@ class HazardResources(BaseModel):
 
 class DocStore:
     # environment variable names:
-    __S3_bucket = "S3_BUCKET_DEV"  # e.g. redhat-osc-physical-landing-647521352890
+    __access_key = "OSC_S3_ACCESS_KEY_DEV"
+    __secret_key = "OSC_S3_SECRET_KEY_DEV"
+    __S3_bucket = "OSC_S3_BUCKET_DEV"  # e.g. redhat-osc-physical-landing-647521352890
 
     def __init__(
         self,
-        bucket: str,
-        prefix: str,
+        bucket=default_dev_bucket,
+        prefix: str = "hazard",
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
         local_path: Optional[str] = None,
@@ -53,7 +57,9 @@ class DocStore:
             local_path (Optional[str], optional): local path where to save the inventory. only used if `fs` is a LocalFileSystem.
         """
         if fs is None:
-            fs = s3fs.S3FileSystem()
+            access_key = get_env(self.__access_key, None)
+            secret_key = get_env(self.__secret_key, None)
+            fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
         self._fs = fs
         if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
@@ -69,7 +75,6 @@ class DocStore:
     def read_inventory(self) -> List[HazardResource]:
         """Read inventory at path provided and return HazardResources."""
         path = self._full_path_inventory()
-        print(path)
         if not self._fs.exists(path):
             return []
         json_str = self.read_inventory_json()

@@ -22,7 +22,7 @@ from .conftest import test_output_dir
 
 def test_create_inventory(test_output_dir):  # noqa: F811
     """Create inventory for all indicators and write into this repo."""
-    zarr_utilities.set_env_variables()
+    zarr_utilities.set_credential_env_variables()
     local_fs = local.LocalFileSystem()
 
     from pathlib import Path
@@ -57,7 +57,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
 
 @pytest.mark.skip(reason="just example")
 def test_check_inventory(test_output_dir):  # noqa: F811
-    zarr_utilities.set_env_variables()
+    zarr_utilities.set_credential_env_variables()
     prefix = "hazard"
     docs_store = DocStore(prefix=prefix)
     json_str = docs_store.read_inventory_json()
