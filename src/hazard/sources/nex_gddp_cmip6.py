@@ -12,7 +12,6 @@ import s3fs  # type: ignore
 import xarray as xr
 
 from hazard.protocols import OpenDataset
-from hazard.utilities import stac_utilities
 
 logger = logging.getLogger(__name__)
 
