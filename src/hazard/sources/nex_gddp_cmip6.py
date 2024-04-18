@@ -29,8 +29,6 @@ class NexGddpCmip6(OpenDataset):
     https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6
     """
 
-    catalog_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"
-    collection_id: str = "nasa-nex-gddp-cmip6"
     bucket: str = "nex-gddp-cmip6"
 
     def __init__(
