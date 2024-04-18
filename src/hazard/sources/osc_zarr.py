@@ -22,6 +22,7 @@ class OscZarr(ReadWriteDataArray):
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
         store: Optional[Any] = None,
+        extra_xarray_store: Optional[bool] = False
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
@@ -45,6 +46,8 @@ class OscZarr(ReadWriteDataArray):
 
         self.root = zarr.group(store=store)
 
+        self.extra_xarray_store = extra_xarray_store
+        
     def create_empty(
         self,
         path: str,
@@ -130,6 +133,14 @@ class OscZarr(ReadWriteDataArray):
             self.root.pop(path)
 
     def write(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
+
+        if self.extra_xarray_store:
+            self.write_data_array(f'{path}-xarray', da)
+                    
+        self.write_zarr(path, da, chunks)
+        
+
+    def write_zarr(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
         """Write DataArray according to the standard OS-Climate conventions.
 
         Args:
@@ -147,7 +158,7 @@ class OscZarr(ReadWriteDataArray):
             chunks=chunks,
         )
         z[:, :, :] = data[:, :, :]
-
+        
     def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
@@ -194,8 +205,6 @@ class OscZarr(ReadWriteDataArray):
         except Exception:
             renamed = da
         renamed.name = "data"
-        if len(renamed.dims) == 2:
-            renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
         renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
