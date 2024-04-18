@@ -96,12 +96,12 @@ test = [
 lint = [
   "isort",
   "black",
+  "black[jupyter]",
   "flake8",
   "Flake8-pyproject",
   "mypy",
   "pre-commit",
 ]
-"black[jupyter]" = []
 
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
