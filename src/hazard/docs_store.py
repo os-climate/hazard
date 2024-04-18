@@ -13,16 +13,6 @@ from hazard.sources.osc_zarr import default_dev_bucket
 from .inventory import HazardResource
 
 
-def get_env(key: str, default: Optional[str] = None) -> str:
-    value = os.environ.get(key)
-    if value is None:
-        if default is not None:
-            return default
-        raise ValueError(f"environment variable {key} not present")
-    else:
-        return value
-
-
 class HazardResources(BaseModel):
     resources: List[HazardResource]
 
@@ -37,7 +27,6 @@ class DocStore:
         self,
         bucket=default_dev_bucket,
         prefix: str = "hazard",
-        get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
         local_path: Optional[str] = None,
     ):
@@ -52,18 +41,17 @@ class DocStore:
         {bucket}/hazard/inventory.json
 
         Args:
-            get_env (Callable[[str, Optional[str]], str], optional): Get environment variable. Defaults to get_env.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem. Defaults to None in which case S3FileSystem will be created. # noqa: E501
             local_path (Optional[str], optional): local path where to save the inventory. only used if `fs` is a LocalFileSystem.
         """
         if fs is None:
-            access_key = get_env(self.__access_key, None)
-            secret_key = get_env(self.__secret_key, None)
-            fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+            access_key = os.environ.get(self.__access_key, None)
+            secret_key = os.environ.get(self.__secret_key, None)
+            fs = s3fs.S3FileSystem(key=access_key, secret=secret_key)
 
         self._fs = fs
         if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
-            bucket = get_env(self.__S3_bucket, bucket)
+            bucket = os.environ.get(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
         elif type(self._fs) == LocalFileSystem:
             if local_path is None:

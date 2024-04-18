@@ -22,8 +22,8 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
         array_path (str): The path of the array within the group.
-        dry_run (bool, optional): If True, log the action that would be taken without
-        actually executing. Defaults to False.
+        dry_run (bool, optional): If True, log the action that would
+        be taken without actually executing. Defaults to False.
     """
 
     logging.basicConfig(
@@ -37,8 +37,8 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
 
     s3_target_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
         config=botocore.client.Config(max_pool_connections=32),
     )
     target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
@@ -81,14 +81,14 @@ def copy_dev_to_prod(prefix: str, dry_run=False):
     """
     s3_source_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_DEV"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
         config=botocore.client.Config(max_pool_connections=32),
     )
     s3_target_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY", None),
         config=botocore.client.Config(max_pool_connections=32),
     )
 
@@ -122,13 +122,13 @@ def copy_prod_to_public(prefix: str, dry_run=False):
     """
     s3_source_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY", None),
     )
     s3_target_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY_PUBLIC"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY_PUBLIC"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY_PUBLIC", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY_PUBLIC", None),
     )
 
     source_bucket_name = os.environ["OSC_S3_BUCKET"]
@@ -227,8 +227,8 @@ def remove_objects(keys: Sequence[str], s3_client, bucket_name: str):
 def remove_from_prod(prefix: str, dry_run=True):
     s3_client = boto3.client(
         "s3",
-        aws_access_key_id=os.environ["OSC_S3_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["OSC_S3_SECRET_KEY"],
+        aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY", None),
+        aws_secret_access_key=os.environ.get("OSC_S3_SECRET_KEY", None),
     )
     bucket_name = os.environ["OSC_S3_BUCKET"]
     keys, size = list_objects(s3_client, bucket_name, prefix)
