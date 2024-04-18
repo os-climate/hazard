@@ -37,9 +37,8 @@ class OscZarr(ReadWriteDataArray):
             if s3 is None:
                 # zarr_utilities.load_dotenv() # to load environment variables
                 s3 = s3fs.S3FileSystem(
-                    anon=False,
-                    key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-                    secret=os.environ["OSC_S3_SECRET_KEY_DEV"],
+                    key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+                    secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
                 )
             group_path = str(PurePosixPath(bucket, prefix, "hazard.zarr"))
             store = s3fs.S3Map(root=group_path, s3=s3, check=False)

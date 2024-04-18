@@ -42,7 +42,7 @@ class ZarrWorkingStore(Protocol):
 class S3ZarrWorkingStore(ZarrWorkingStore):
     def __init__(self):
         s3 = s3fs.S3FileSystem(
-            anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"], secret=os.environ["OSC_S3_SECRET_KEY_DEV"]
+            key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None), secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None)
         )
         base_path = os.environ["OSC_S3_BUCKET_DEV"] + "/drought/osc/v01"
         self._base_path = base_path
