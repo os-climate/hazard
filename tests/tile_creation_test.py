@@ -22,7 +22,8 @@ from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import zarr_utilities
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
 
-from .conftest import test_output_dir # noqa: F401
+from .conftest import test_output_dir  # noqa: F401
+
 
 def test_convert_tiles_mocked(test_output_dir):
     """We are combining useful logic from a few sources.

@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   ci:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.9, '3.10', '3.11']
+        python-version: [3.9, "3.10", "3.11"]
         os: [ubuntu-latest]
         # add, if needed: [macOS-latest, windows-latest]
 
