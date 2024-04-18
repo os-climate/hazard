@@ -47,10 +47,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: "Install dependencies"
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox tox-gh-actions
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: "Tag for test release"
         # Delete all local tags, then create a synthetic tag for testing
@@ -62,6 +62,18 @@ jobs:
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
           grep version pyproject.toml
 
-      - name: "Build with TOX"
+      - name: "Performing build"
         run: |
-          tox -e build
+          PDM_CMD=$(which pdm)
+          if [ -f tox.ini ]; then
+            python -m pip install --upgrade pip
+            pip install tox tox-gh-actions
+            echo "Building with command: tox -e build"
+            tox -e build
+          elif [ -x "$PDM_CMD" ]; then
+            echo "Building with command: pdm build"
+            pdm build
+          else
+            echo "Building with command: python -m build"
+            python -m build
+          fi
