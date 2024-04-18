@@ -1,0 +1,61 @@
+---
+name: "🧪 Unit tests (Matrix)"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - "*"
+      - "!update-devops-tooling"
+
+jobs:
+
+  parse-project-metadata:
+    name: "Determine Python versions"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+
+  testing:
+    name: "Run unit tests"
+    needs: [parse-project-metadata]
+    runs-on: ubuntu-latest
+    # Don't run when pull request is merged
+    if: github.event.pull_request.merged == false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pdm export -o requirements.txt
+          pip install -r requirements.txt
+          pip install --upgrade pytest
+          pip install .
+
+      - name: "Run unit tests: pytest"
+        run: |
+          if [ -d test ]; then
+            python -m pytest test
+          elif [ -d tests ]; then
+            python -m pytest tests
+          else
+            echo "No test/tests directory could be found"
+            echo "Aborting testing without error"; exit 0
+          fi
