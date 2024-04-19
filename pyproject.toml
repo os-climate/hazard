@@ -23,7 +23,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.8",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
@@ -96,12 +95,12 @@ test = [
 lint = [
   "isort",
   "black",
+  "black[jupyter]",
   "flake8",
   "Flake8-pyproject",
   "mypy",
   "pre-commit",
 ]
-"black[jupyter]" = []
 
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"

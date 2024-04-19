@@ -1,0 +1,10 @@
+---
+# Markdownlint configuration file
+
+# Default state for all rules
+default: true
+
+# Path to configuration file to extend
+extends: null
+
+MD013: false
