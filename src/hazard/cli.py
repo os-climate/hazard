@@ -16,7 +16,6 @@ def days_tas_above_indicator(
     store: Optional[str] = None,
     extra_xarray_store: Optional[bool] = False
 ):
-    print(extra_xarray_store is True)
 
     hazard_services.days_tas_above_indicator(
         gcm_list, scenario_list, threshold_list, central_year_list, window_years, bucket, prefix, store, extra_xarray_store

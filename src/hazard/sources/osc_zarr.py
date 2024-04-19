@@ -132,9 +132,9 @@ class OscZarr(ReadWriteDataArray):
         if path in self.root:
             self.root.pop(path)
 
-    def write(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
+    def write(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None, spatial_coords: Optional[bool] = True):
 
-        if self.extra_xarray_store:
+        if self.extra_xarray_store and spatial_coords:
             self.write_data_array(f'{path}-xarray', da)
                     
         self.write_zarr(path, da, chunks)
