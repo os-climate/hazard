@@ -4,12 +4,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Dict, Generator, List, Optional
 
-from pystac.item_collection import ItemCollection
-from pystac_client import Client
-
 import fsspec
 import s3fs  # type: ignore
 import xarray as xr
+from pystac.item_collection import ItemCollection
+from pystac_client import Client
 
 from hazard.protocols import OpenDataset
 

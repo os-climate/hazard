@@ -1,3 +1,4 @@
+---
 site_name: Hazard
 theme: readthedocs
 
@@ -9,10 +10,9 @@ extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-
 # Thanks to python-markdown-math
 # pip install pymdown-extensions
-#markdown_extensions:
+# markdown_extensions:
 #    - mdx_math:
 #        enable_dollar_delimiter: True #for use of inline $..$
 #    - fenced_code
@@ -20,4 +20,5 @@ extra_javascript:
 #    - footnotes
 
 # Required to load the MathJax javascript for the mdx_math.py
-#extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML']
+# extra_javascript:
+# ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML']

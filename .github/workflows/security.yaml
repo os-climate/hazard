@@ -1,0 +1,60 @@
+---
+# This workflow will install Python dependencies
+# run tests and lint with a variety of Python versions
+# For more information see:
+# https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: "⛔️ Security auditing (Matrix)"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - "*"
+      - "!update-devops-tooling"
+
+jobs:
+
+  parse-project-metadata:
+    name: "Determine Python versions"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+
+  build:
+    name: "Audit Python dependencies"
+    needs: [parse-project-metadata]
+    runs-on: ubuntu-latest
+    # Don't run when pull request is merged
+    if: github.event.pull_request.merged == false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install dependencies"
+        run: |
+          pip install --upgrade pip
+          pdm lock
+          pdm export -o requirements.txt
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          pip install --upgrade setuptools
+          pdm list --graph
+
+      - name: "Run: pip-audit"
+        uses: pypa/gh-action-pip-audit@v1.0.8

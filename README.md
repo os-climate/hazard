@@ -38,11 +38,12 @@ os_climate_hazard days_tas_above_indicator --store $HOME/hazard_example
 # Contributing
 
 Patches may be contributed via pull requests from forks to
-https://github.com/os-climate/hazard.
+<https://github.com/os-climate/hazard>.
 
 All changes must pass the automated test suite, along with various static checks.
 
 The easiest way to run these is via:
+
 ```
 pdm run all
 ```
