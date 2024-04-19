@@ -207,7 +207,7 @@ class OscZarr(ReadWriteDataArray):
         renamed.name = "data"
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
+        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=True)
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
