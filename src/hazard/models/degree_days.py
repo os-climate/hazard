@@ -1,40 +1,27 @@
-from contextlib import ExitStack
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import os
+from contextlib import ExitStack
+from enum import Enum
 from pathlib import PosixPath, PurePosixPath
 from typing import Dict, Iterable, List, Optional, Tuple
+
+import xarray as xr
+from dask.distributed import Client
+from rasterio.crs import CRS  # type: ignore
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import (
+    BatchItem,
     Indicator,
     MultiYearAverageIndicatorBase,
     ThresholdBasedAverageIndicator,
 )
-from hazard.utilities.map_utilities import (
-    check_map_bounds,
-    transform_epsg4326_to_epsg3857,
-)
-
-from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
-
-from dask.distributed import Client
-import numpy as np
-from rasterio.crs import CRS  # type: ignore
-import xarray as xr
+from hazard.utilities.map_utilities import check_map_bounds, transform_epsg4326_to_epsg3857
+from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class BatchItem:
-    resource: HazardResource
-    gcm: str
-    scenario: str
-    central_year: int
 
 
 class DegreeDays(IndicatorModel[BatchItem]):
@@ -61,9 +48,12 @@ class DegreeDays(IndicatorModel[BatchItem]):
         Args:
             threshold (float, optional): Degree days above threshold are calculated. Defaults to 32.
             window_years (int, optional): Number of years for average. Defaults to 20.
-            gcms (Iterable[str], optional): Global Circulation Models to include in calculation. Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
-            scenarios (Iterable[str], optional): Scenarios to include in calculation. Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
-            central_years (Iterable[int], optional): Central years to include in calculation. Defaults to [2010, 2030, 2040, 2050].
+            gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
+            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
+            scenarios (Iterable[str], optional): Scenarios to include in calculation.
+            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+            central_years (Iterable[int], optional): Central years to include in calculation.
+            Defaults to [2010, 2030, 2040, 2050].
         """
 
         self.threshold: float = 273.15 + threshold  # in Kelvin; degree days above 32C
@@ -80,11 +70,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         resource = self._resource()
         for gcm in self.gcms:
             for scenario in self.scenarios:
-                central_years = (
-                    [self.central_year_historical]
-                    if scenario == "historical"
-                    else self.central_years
-                )
+                central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
                 for central_year in central_years:
                     yield BatchItem(
                         resource=resource,
@@ -99,7 +85,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
 
     def _resource(self):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
-            description = f.read()
+            description = f.read().replace("\u00c2\u00b0", "\u00b0")
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="mean_degree_days/above/32c",
@@ -165,7 +151,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
     ):
         logger.info(f"Generating map projection for file {path}; reading file")
         da = target.read(path)
-        logger.info(f"Reprojecting to EPSG:3857")
+        logger.info("Reprojecting to EPSG:3857")
         # reprojected = transform_epsg4326_to_epsg3857(average_deg_days.sel(latitude=slice(85, -85)))
         reprojected = transform_epsg4326_to_epsg3857(da)
         # sanity check bounds:
@@ -188,22 +174,16 @@ class DegreeDays(IndicatorModel[BatchItem]):
             item.central_year - self.window_years // 2,
             item.central_year + self.window_years // 2 + (self.window_years % 2),
         )
-        logger.info(
-            f"Calculating average degree days, gcm={item.gcm}, scenario={item.scenario}, years={list(years)}"
-        )
+        logger.info(f"Calculating average degree days, gcm={item.gcm}, scenario={item.scenario}, years={list(years)}")
         futures = []
         for year in years:
-            future = client.submit(
-                self._degree_days, source, item.gcm, item.scenario, year
-            )
+            future = client.submit(self._degree_days, source, item.gcm, item.scenario, year)
             futures.append(future)
         deg_days = client.gather(futures)
         average = sum(deg_days) / float(len(years))
         return enforce_conventions_lat_lon(average)
 
-    def _degree_days(
-        self, source: OpenDataset, gcm: str, scenario: str, year: int
-    ) -> xr.DataArray:
+    def _degree_days(self, source: OpenDataset, gcm: str, scenario: str, year: int) -> xr.DataArray:
         """Calculate degree days for Dataset provided."""
         # check DataArray
         logger.info(f"Starting calculation for year {year}")
@@ -220,16 +200,10 @@ class DegreeDays(IndicatorModel[BatchItem]):
         # normalize to 365 days
         scale = 365.0 / len(ds.time)
         # will raise error if taxmax not present
-        return scale * xr.where(
-            ds.tasmax > self.threshold, ds.tasmax - self.threshold, 0
-        ).sum(dim=["time"])
+        return scale * xr.where(ds.tasmax > self.threshold, ds.tasmax - self.threshold, 0).sum(dim=["time"])
 
     def _item_path(self, item: BatchItem) -> PosixPath:
-        return PosixPath(
-            item.resource.path.format(
-                gcm=item.gcm, scenario=item.scenario, year=item.central_year
-            )
-        )
+        return PosixPath(item.resource.path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year))
 
 
 class AboveBelow(Enum):
@@ -245,19 +219,22 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         gcms: Iterable[str] = MultiYearAverageIndicatorBase._default_gcms,
         scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
         central_year_historical: int = MultiYearAverageIndicatorBase._default_central_year_historical,
-        central_years: Iterable[
-            int
-        ] = MultiYearAverageIndicatorBase._default_central_years,
+        central_years: Iterable[int] = MultiYearAverageIndicatorBase._default_central_years,
     ):
         """Create indicators based on average number of days above different temperature thresholds.
 
         Args:
-            threshold_temps_c (List[float], optional): Temperature thresholds in degrees C. Defaults to [14, 16, 20, 24, 28].
+            threshold_temps_c (List[float], optional): Temperature thresholds in degrees C.
+            Defaults to [14, 16, 20, 24, 28].
             window_years (int, optional): Number of years for average. Defaults to 20.
-            gcms (Iterable[str], optional): Global Circulation Models to include in calculation. Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
-            scenarios (Iterable[str], optional): Scenarios to include in calculation. Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
-            central_year_historical (int): Central year to include in calculation for historical scenario. Defaults to 2005.
-            central_years (Iterable[int], optional): Central years to include in calculation. Defaults to [2010, 2030, 2040, 2050].
+            gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
+            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
+            scenarios (Iterable[str], optional): Scenarios to include in calculation.
+            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+            central_year_historical (int): Central year to include in calculation for historical scenario.
+            Defaults to 2005.
+            central_years (Iterable[int], optional): Central years to include in calculation.
+            Defaults to [2010, 2030, 2040, 2050].
         """
         super().__init__(
             window_years=window_years,
@@ -273,15 +250,11 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         """Get the inventory item(s)."""
         return list(self._resource().values())
 
-    def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    def _calculate_single_year_indicators(self, source: OpenDataset, item: BatchItem, year: int) -> List[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
-            tas = stack.enter_context(
-                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
-            ).tas
+            tas = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "tas", year)).tas
             above = self._degree_days_indicator(tas, year, AboveBelow.ABOVE)
             below = self._degree_days_indicator(tas, year, AboveBelow.BELOW)
         logger.info(f"Calculation complete for year {year}")
@@ -289,26 +262,20 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
             Indicator(
                 above,
                 PurePosixPath(
-                    self.resources["above"].path.format(
-                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
-                    )
+                    self.resources["above"].path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                 ),
                 self.resources["above"].map.bounds,
             ),
             Indicator(
                 below,
                 PurePosixPath(
-                    self.resources["below"].path.format(
-                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
-                    )
+                    self.resources["below"].path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year)
                 ),
                 self.resources["below"].map.bounds,
             ),
         ]
 
-    def _degree_days_indicator(
-        self, tas: xr.DataArray, year: int, above_below: AboveBelow
-    ) -> xr.DataArray:
+    def _degree_days_indicator(self, tas: xr.DataArray, year: int, above_below: AboveBelow) -> xr.DataArray:
         if any(coord not in tas.coords.keys() for coord in ["lat", "lon", "time"]):
             raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
         if (tas["time"].dt.year != year).any():
@@ -327,31 +294,23 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         for i, threshold in enumerate(self.threshold_temps_c):
             threshold_k = 273.15 + threshold
             da[i, :, :] = (
-                scale
-                * xr.where(tas > threshold_k, tas - threshold_k, 0).sum(dim=["time"])
+                scale * xr.where(tas > threshold_k, tas - threshold_k, 0).sum(dim=["time"])
                 if above_below == AboveBelow.ABOVE
-                else scale
-                * xr.where(tas < threshold_k, threshold_k - tas, 0).sum(dim=["time"])
+                else scale * xr.where(tas < threshold_k, threshold_k - tas, 0).sum(dim=["time"])
             )
         return da
 
     def _resource(self):
         resources: Dict[str, HazardResource] = {}
         for above_below in ["above", "below"]:
-            with open(
-                os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"
-            ) as f:
+            with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
                 description = f.read()
             resource = HazardResource(
                 hazard_type="ChronicHeat",
                 indicator_id=f"mean_degree_days/{above_below}/index",
                 indicator_model_gcm="{gcm}",
-                path="chronic_heat/osc/v2/mean_degree_days_"
-                + f"{above_below}"
-                + "_index_{gcm}_{scenario}_{year}",
-                display_name="Mean degree days "
-                + f"{above_below}"
-                + " index value/{gcm}",
+                path="chronic_heat/osc/v2/mean_degree_days_" + f"{above_below}" + "_index_{gcm}_{scenario}_{year}",
+                display_name="Mean degree days " + f"{above_below}" + " index value/{gcm}",
                 description=description,
                 params={"gcm": list(self.gcms)},
                 group_id="",
@@ -373,9 +332,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                         (-180.0, -60.0),
                     ],
                     index_values=self.threshold_temps_c,
-                    path="mean_degree_days_"
-                    + f"{above_below}"
-                    + "_index_{gcm}_{scenario}_{year}_map",
+                    path="mean_degree_days_" + f"{above_below}" + "_index_{gcm}_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="degree days",

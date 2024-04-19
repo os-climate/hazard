@@ -1,0 +1,79 @@
+---
+name: "🧱 Builds (Matrix)"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - "*"
+      - "!update-devops-tooling"
+
+jobs:
+  parse-project-metadata:
+    name: "Determine Python versions"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+
+  test-builds:
+    name: "Build: Python"
+    needs: [parse-project-metadata]
+    runs-on: "ubuntu-latest"
+    continue-on-error: true
+    # Don't run when pull request is merged
+    if: github.event.pull_request.merged == false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+
+    steps:
+      - name: "Populate environment variables"
+        id: setenv
+        run: |
+          echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
+          set -x
+          datetime=$(date +'%Y%m%d%H%M')
+          export datetime
+          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+          vernum="${{ matrix.python-version }}.${datetime}"
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Tag for test release"
+        # Delete all local tags, then create a synthetic tag for testing
+        # Use the date/time to avoid conflicts uploading to Test PyPI
+        run: |
+          scripts/dev-versioning.sh "${{ steps.setenv.outputs.vernum }}"
+          git tag | xargs -L 1 | xargs git tag --delete
+          git tag "v${{ steps.setenv.outputs.vernum }}"
+          git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
+          grep version pyproject.toml
+
+      - name: "Performing build"
+        run: |
+          PDM_CMD=$(which pdm)
+          if [ -f tox.ini ]; then
+            python -m pip install --upgrade pip
+            pip install tox tox-gh-actions
+            echo "Building with command: tox -e build"
+            tox -e build
+          elif [ -x "$PDM_CMD" ]; then
+            echo "Building with command: pdm build"
+            pdm build
+          else
+            echo "Building with command: python -m build"
+            python -m build
+          fi

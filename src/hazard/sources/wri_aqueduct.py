@@ -1,11 +1,11 @@
-from contextlib import contextmanager
 import logging
+from contextlib import contextmanager
 from pathlib import PurePosixPath
 from typing import Generator, Iterable, Optional
-from hazard.protocols import OpenDataset
-from botocore import UNSIGNED  # type: ignore
+
 import s3fs  # type: ignore
 import xarray as xr
+from botocore import UNSIGNED  # type: ignore
 
 logger = logging.getLogger(__name__)
 

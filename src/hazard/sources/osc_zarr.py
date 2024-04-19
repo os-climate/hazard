@@ -1,6 +1,6 @@
 import os
 from pathlib import PurePosixPath
-from typing import Any, Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import s3fs  # type: ignore
@@ -10,18 +10,18 @@ import zarr.core
 from affine import Affine  # type: ignore
 
 import hazard.utilities.xarray_utilities as xarray_utilities
-from hazard.protocols import WriteDataArray
+from hazard.protocols import ReadWriteDataArray
 
 default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 
-class OscZarr(WriteDataArray):
+class OscZarr(ReadWriteDataArray):
     def __init__(
         self,
         bucket: str = default_dev_bucket,
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
-        store: Optional[MutableMapping] = None,
+        store: Optional[Any] = None,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
@@ -37,9 +37,8 @@ class OscZarr(WriteDataArray):
             if s3 is None:
                 # zarr_utilities.load_dotenv() # to load environment variables
                 s3 = s3fs.S3FileSystem(
-                    anon=False,
-                    key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
-                    secret=os.environ["OSC_S3_SECRET_KEY_DEV"],
+                    key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+                    secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
                 )
             group_path = str(PurePosixPath(bucket, prefix, "hazard.zarr"))
             store = s3fs.S3Map(root=group_path, s3=s3, check=False)
@@ -138,9 +137,7 @@ class OscZarr(WriteDataArray):
             da (xr.DataArray): The DataArray.
         """
         da_norm = xarray_utilities.normalize_array(da)
-        data, transform, crs = xarray_utilities.get_array_components(
-            da_norm, assume_normalized=True
-        )
+        data, transform, crs = xarray_utilities.get_array_components(da_norm, assume_normalized=True)
         z = self._zarr_create(
             path,
             da_norm.shape,
@@ -151,9 +148,7 @@ class OscZarr(WriteDataArray):
         )
         z[:, :, :] = data[:, :, :]
 
-    def write_slice(
-        self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray
-    ):
+    def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
 
@@ -203,9 +198,7 @@ class OscZarr(WriteDataArray):
             renamed = renamed.expand_dims(dim={"unused": 1}, axis=0)
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(
-            self.root.store, compute=True, group=path, mode="w", consolidated=False
-        )
+        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=False)
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
@@ -250,6 +243,8 @@ class OscZarr(WriteDataArray):
             chunks=chunks,
             dtype="f4",
             overwrite=overwrite,
+            write_empty_chunks=False,
+            fill_value=float("nan"),
         )  # array_path interpreted as path within group
         if isinstance(indexes, np.ndarray) and indexes.dtype in [
             "int16",
@@ -260,9 +255,7 @@ class OscZarr(WriteDataArray):
         self._add_attributes(z.attrs, transform, crs, indexes)
         return z
 
-    def _add_attributes(
-        self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None
-    ):
+    def _add_attributes(self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None):
         trans_members = [
             transform.a,
             transform.b,
@@ -275,9 +268,7 @@ class OscZarr(WriteDataArray):
         attrs["crs"] = crs
         use_xy = crs.upper() == "EPSG:3857"
         attrs["transform_mat3x3"] = mat3x3
-        attrs["dimensions"] = (
-            ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
-        )
+        attrs["dimensions"] = ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
         if indexes is not None:
             attrs["index_values"] = list(indexes)
             attrs["index_name"] = "return period (years)"

@@ -1,0 +1,172 @@
+[project]
+name = "hazard"
+version = "0.1.0"
+description = "OS-Climate Physical Risk Hazard Indicator Generation"
+authors = [
+    {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
+]
+requires-python = ">=3.9,<3.11"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["Physical", "Climate", "Risk", "Finance"]
+
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.9",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development",
+]
+
+dependencies = [
+  "cftime>=1.6.3,<2.0.0",
+  "dask[distributed]>=2023.5.0,<2023.6.0",
+  "fire>=0.6.0,<1.0.0",
+  "fsspec>=2024.3.1,<2024.4.0",
+  "geopandas>=0.13.2,<1.0.0",
+  "h5netcdf>=1.1.0,<2.0.0",
+  "mapbox>=0.18.1,<1.0.0",
+  "matplotlib>=3.7.5,<4.0.0",
+  "mercantile>=1.2.1,<2.0.0",
+  "mkdocs>=1.5.3,<2.0.0",
+  "numpy>=1.24.4,<2.0.0",
+  "python-dotenv>=1.0.1,<2.0.0",
+  "pyproj>=3.5.0,<4.0.0",
+  "pydantic>=2.6.4,<3.0.0",
+  "pystac>=1.10.0,<2.0.0",
+  "pystac-client>=0.7.6,<1.0.0",
+  "pymdown-extensions>=10.7.1,<11.0.0",
+  "rasterio>=1.3.9,<2.0.0",
+  "rioxarray>=0.13.4,<1.0.0",
+  "seaborn>=0.13.2,<1.0.0",
+  "shapely>=2.0.3,<3.0.0",
+  "s3fs>=2024.3.1,<2024.4.0",
+  "xarray>=2023.1.0,<2023.2.0",
+  "xclim>=0.47.0,<1.0.0",
+  "zarr>=2.16.1,<3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/os-climate/hazard"
+Repository = "https://github.com/os-climate/hazard"
+Downloads = "https://github.com/os-climate/hazard/releases"
+"Bug Tracker" = "https://github.com/os-climate/hazard/issues"
+Documentation = "https://github.com/os-climate/hazard/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/hazard"
+
+[metadata]
+license-files = ["LICENSE"]
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "pdm"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["hazard*"]
+
+[tool.setuptools.package-data]
+hazard = [
+  "models/*.md",
+  "onboard/*.md"
+]
+
+[tool.pdm.dev-dependencies]
+test = [
+  "pdm[pytest]",
+  "pytest",
+  "pytest-cov",
+  "sphinx-pyproject"
+]
+lint = [
+  "isort",
+  "black",
+  "black[jupyter]",
+  "flake8",
+  "Flake8-pyproject",
+  "mypy",
+  "pre-commit",
+]
+
+[tool.pdm.scripts]
+pre_release = "scripts/dev-versioning.sh"
+release = "scripts/release-versioning.sh"
+test = "pytest"
+docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
+lint = "pre-commit run --all-files"
+isort = { cmd = "isort --check ." }
+black = { cmd = "black --check ." }
+flake8 = { cmd = "flake8 src" }
+mypy = { cmd = "mypy --install-types --non-interactive src" }
+all = {composite = ["pytest", "mypy", "isort", "black", "flake8"]}
+
+complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "-v"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+#addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
+
+[tool.mypy]
+warn_unreachable = true
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 120
+
+[tool.coverage.run]
+source = "src"
+omit = "tests/*"
+relative_files = true
+
+[tool.yapf]
+blank_line_before_nested_class_or_def = true
+column_limit = 88
+
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \venv
+  | \.venv
+  | \*.env
+  | \build
+  | \dist
+)/
+'''
+
+[tool.flake8]
+max-line-length = "120"
+extend-ignore = [
+  "E501",
+  "E203", # Allow spacing before colon (to favor Black).
+]
+
+[project.scripts]
+os_climate_hazard = "hazard.cli:cli"

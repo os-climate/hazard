@@ -1,25 +1,16 @@
 import json
 import os
 from pathlib import PurePosixPath
-from typing import Callable, Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import s3fs  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
+from fsspec.implementations.local import LocalFileSystem
 from pydantic import BaseModel, parse_obj_as
 
-from hazard.sources.osc_zarr import OscZarr, default_dev_bucket
+from hazard.sources.osc_zarr import default_dev_bucket
 
 from .inventory import HazardResource
-
-
-def get_env(key: str, default: Optional[str] = None) -> str:
-    value = os.environ.get(key)
-    if value is None:
-        if default is not None:
-            return default
-        raise ValueError(f"environment variable {key} not present")
-    else:
-        return value
 
 
 class HazardResources(BaseModel):
@@ -36,8 +27,8 @@ class DocStore:
         self,
         bucket=default_dev_bucket,
         prefix: str = "hazard",
-        get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
+        local_path: Optional[str] = None,
     ):
         """Class to read hazard inventory and documentation from supplied AbstractFileSystem (e.g. S3).
         In general *array* paths are of form:
@@ -50,18 +41,22 @@ class DocStore:
         {bucket}/hazard/inventory.json
 
         Args:
-            get_env (Callable[[str, Optional[str]], str], optional): Get environment variable. Defaults to get_env.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem. Defaults to None in which case S3FileSystem will be created. # noqa: E501
+            local_path (Optional[str], optional): local path where to save the inventory. only used if `fs` is a LocalFileSystem.
         """
         if fs is None:
-            access_key = get_env(self.__access_key, None)
-            secret_key = get_env(self.__secret_key, None)
-            fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+            access_key = os.environ.get(self.__access_key, None)
+            secret_key = os.environ.get(self.__secret_key, None)
+            fs = s3fs.S3FileSystem(key=access_key, secret=secret_key)
 
         self._fs = fs
-        if type(self._fs) == s3fs.S3FileSystem:
-            bucket = get_env(self.__S3_bucket, bucket)
+        if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
+            bucket = os.environ.get(self.__S3_bucket, bucket)
             self._root = str(PurePosixPath(bucket, prefix))
+        elif type(self._fs) == LocalFileSystem:  # noqa: E721 # use isinstance?
+            if local_path is None:
+                raise ValueError("if using a local filesystem, please provide a value for `local_path`")
+            self._root = str(PurePosixPath(local_path))
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
@@ -95,15 +90,11 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(
-        self, resources: Iterable[HazardResource], remove_existing: bool = False
-    ):
+    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
         path = self._full_path_inventory()
-        combined = (
-            {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
-        )
+        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))

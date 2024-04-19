@@ -1,11 +1,14 @@
+import logging
+import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-import logging, os
-import posixpath
 from typing import Dict, Generator, List, Optional
 
-import s3fs, fsspec  # type: ignore
+import fsspec
+import s3fs  # type: ignore
 import xarray as xr
+from pystac.item_collection import ItemCollection
+from pystac_client import Client
 
 from hazard.protocols import OpenDataset
 
@@ -47,16 +50,16 @@ class NexGddpCmip6(OpenDataset):
         }
         # <variable_id>_<table_id>_<source_id>_<experiment_id>_<variant_label>_<grid_label>_<time_range>.nc
         self.fs = s3fs.S3FileSystem(anon=True) if fs is None else fs
-        self.root = NexGddpCmip6.bucket if root is None else root
         self.quantities = {"tas": {"name": "Daily average temperature"}}
+        self.root = NexGddpCmip6.bucket if root is None else root
 
     def path(self, gcm="NorESM2-MM", scenario="ssp585", quantity="tas", year=2030):
+        """directly construct the S3 path to input dataset"""
+
         component = self.subset[gcm]
         variant_label = component["variant_label"]
         grid_label = component["grid_label"]
-        filename = (
-            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
-        )
+        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
         return (
             posixpath.join(
                 self.root,
@@ -66,20 +69,56 @@ class NexGddpCmip6(OpenDataset):
             filename,
         )
 
+    def path_stac(
+        self,
+        catalog_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1",
+        collection_id: str = "nasa-nex-gddp-cmip6",
+        gcm="NorESM2-MM",
+        scenario="ssp585",
+        quantity="tas",
+        year=2030,
+    ):
+        """Retrieves the path to the input dataset from STAC metadata"""
+
+        items = self.search_stac_items(
+            catalog_url=catalog_url,
+            search_params={
+                "collections": [collection_id],
+                "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}, "cmip6:year": {"eq": year}},
+            },
+        )
+        if len(items) == 0:
+            raise ValueError(f"No items found for gcm={gcm}, scenario={scenario}, year={year}")
+        elif len(items) > 1:
+            raise ValueError(f"Multiple items found for gcm={gcm}, scenario={scenario}, year={year}")
+        else:
+            item = items[0]
+        href = item.assets[quantity].href
+        href_replaced = href.replace(
+            "https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6", "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6"
+        )
+        return href_replaced
+
     def gcms(self) -> List[str]:
         return list(self.subset.keys())
 
     @contextmanager
     def open_dataset_year(
-        self,  # type: ignore
+        self,
         gcm: str,
         scenario: str,
         quantity: str,
         year: int,
         chunks=None,
+        catalog_url: Optional[str] = None,
+        collection_id: Optional[str] = None,  # type: ignore
     ) -> Generator[xr.Dataset, None, None]:
         # use "s3://bucket/root" ?
-        path, _ = self.path(gcm, scenario, quantity, year)
+        if catalog_url is not None or collection_id is not None:
+            assert catalog_url is not None and collection_id is not None
+            path = self.path_stac(catalog_url, collection_id, gcm, scenario, quantity, year)
+        else:
+            path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
         ds: Optional[xr.Dataset] = None
         f = None
@@ -92,3 +131,9 @@ class NexGddpCmip6(OpenDataset):
                 ds.close()
             if f is not None:
                 f.close()
+
+    def search_stac_items(self, catalog_url: str, search_params: Dict) -> ItemCollection:
+        client = Client.open(catalog_url)
+        search = client.search(**search_params)
+        items = search.item_collection()
+        return items
