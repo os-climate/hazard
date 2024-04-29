@@ -295,6 +295,7 @@ jobs:
             echo "branchname=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
             echo "headbranch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
             # Move to the next workflow step to raise the PR
+            git push --set-upstream origin "$AUTOMATION_BRANCH"
             exit 0
           fi
 
@@ -322,8 +323,8 @@ jobs:
       - name: Create Pull Request
         if: steps.update-repository.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v6
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+        # env:
+        #   GITHUB_TOKEN: ${{ github.token }}
         with:
           # Note: Requires a specific/defined Personal Access Token
           token: ${{ secrets.ACTIONS_WORKFLOW }}
