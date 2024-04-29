@@ -124,7 +124,12 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [--strict]
+        args: [
+          "-d",
+          "{rules: {line-length: {max: 120}},
+          ignore-from-file: [.gitignore],
+          }",
+        ]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
     rev: v1.6.27.13
@@ -142,7 +147,6 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
-        args: ["--ignore=E203"]
 
   # Check for misspells in documentation files:
   # - repo: https://github.com/codespell-project/codespell

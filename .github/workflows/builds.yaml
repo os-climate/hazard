@@ -64,16 +64,25 @@ jobs:
 
       - name: "Performing build"
         run: |
-          PDM_CMD=$(which pdm)
+          python -m pip install --upgrade pip
           if [ -f tox.ini ]; then
-            python -m pip install --upgrade pip
             pip install tox tox-gh-actions
+            echo "Found file: tox.ini"
             echo "Building with command: tox -e build"
             tox -e build
-          elif [ -x "$PDM_CMD" ]; then
+          elif [ -f pyproject.toml ]; then
+            echo "Found file: pyproject.toml"
             echo "Building with command: pdm build"
             pdm build
           else
-            echo "Building with command: python -m build"
+            echo "Neither file found: tox.ini/pyproject.toml"
+            pip install --upgrade build
+            echo "Attempting build with: python -m build"
             python -m build
           fi
+
+      - name: "Validating Artefacts with Twine"
+        run: |
+          echo "Validating artefacts with: twine check dist/*"
+          pip install --upgrade twine
+          twine check dist/*

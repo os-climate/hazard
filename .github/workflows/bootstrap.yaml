@@ -33,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         # yamllint disable rule:line-length
         run: |
-          ### SHELL CODE START ###
+          #SHELLCODESTART
 
           set -euo pipefail
           # set -x
@@ -318,7 +318,7 @@ jobs:
           fi
           # echo "Unstashing unstaged changes, if any exist"
           # git stash pop -q || :
-          ### SHELL CODE END ###
+          #SHELLCODEEND
 
       - name: Create Pull Request
         if: steps.update-repository.outputs.changed == 'true'

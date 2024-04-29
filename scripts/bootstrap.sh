@@ -103,7 +103,7 @@ echo "  $WGET_URL"
 echo "Extracting shell code from: $SOURCE_FILE"
 EXTRACT="false"
 while read -r LINE; do
-    if [ "$LINE" = "### SHELL CODE START ###" ]; then
+    if [ "$LINE" = "#SHELLCODESTART" ]; then
         EXTRACT="true"
         SHELL_SCRIPT=$(mktemp -t script-XXXXXXXX.sh)
         touch "$SHELL_SCRIPT"
@@ -113,7 +113,7 @@ while read -r LINE; do
     fi
     if [ "$EXTRACT" = "true" ]; then
         echo "$LINE" >> "$SHELL_SCRIPT"
-        if [ "$LINE" = "### SHELL CODE END ###" ]; then
+        if [ "$LINE" = "#SHELLCODEEND" ]; then
             break
         fi
     fi
