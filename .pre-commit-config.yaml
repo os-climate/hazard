@@ -142,6 +142,7 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
+        args: ["--ignore=E203"]
 
   # Check for misspells in documentation files:
   # - repo: https://github.com/codespell-project/codespell

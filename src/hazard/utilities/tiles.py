@@ -328,8 +328,8 @@ def _write_zoom_level(
 
 
 def get_tile_bounds(left: float, bottom: float, right: float, top: float, zoom: int):
-    ul = mercantile.tile(left, top, zoom)
-    lr = mercantile.tile(right, bottom, zoom)
+    ul = mercantile.tile(left, min(top, 89.9999), zoom)
+    lr = mercantile.tile(right, max(bottom, -89.9999), zoom)
     return ul.x, lr.x, ul.y, lr.y
 
 
@@ -390,15 +390,16 @@ def _coarsen(
 
 
 def trim_array(da_index: xr.DataArray, crs, left, bottom, right, top):
+    y_dim, x_dim = da_index.dims
     da_left, da_bottom, da_right, da_top = rasterio.warp.transform_bounds(
         crs, da_index.rio.crs, left, bottom, right, top
     )
     # find pixels required in order to add a pixel buffer
-    x = np.where((da_index.x >= da_left) & (da_index.x <= da_right))[0]
-    y = np.where((da_index.y >= da_bottom) & (da_index.y <= da_top))[0]
+    x = np.where((da_index[x_dim] >= da_left) & (da_index[x_dim] <= da_right))[0]
+    y = np.where((da_index[y_dim] >= da_bottom) & (da_index[y_dim] <= da_top))[0]
     if len(x) == 0 or len(y) == 0:
         return None
     # add a 2 pixel buffer
-    xmin, xmax = max(0, x[0] - 2), min(len(da_index.x), x[-1] + 2)
-    ymin, ymax = max(0, y[0] - 2), min(len(da_index.y), y[-1] + 2)
+    xmin, xmax = max(0, x[0] - 2), min(len(da_index[x_dim]), x[-1] + 2)
+    ymin, ymax = max(0, y[0] - 2), min(len(da_index[y_dim]), y[-1] + 2)
     return da_index[ymin:ymax, xmin:xmax]
