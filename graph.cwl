@@ -50,7 +50,7 @@ $graph:
       DockerRequirement:
         dockerPull: local-hazard-image-test
 
-    baseCommand: ["os_climate_hazard", "days_tas_above_indicator", "--store", ".", "--"]
+    baseCommand: ["os_climate_hazard", "days_tas_above_indicator", "--store", "./indicator", "--"]
    
     arguments: []
     
@@ -65,4 +65,4 @@ $graph:
       indicator-results:
         type: Directory
         outputBinding:
-          glob: "."
+          glob: "./indicator"
