@@ -48,7 +48,7 @@ $graph:
 
     hints:
       DockerRequirement:
-        dockerPull: local-hazard-image-test
+        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator
 
     baseCommand: ["os_climate_hazard", "days_tas_above_indicator", "--store", "./indicator", "--"]
    
