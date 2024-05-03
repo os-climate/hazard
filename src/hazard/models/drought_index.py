@@ -369,7 +369,7 @@ class DroughtIndicator:
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
         return []
-    
+
     def create_maps(self, source: OscZarr, target: OscZarr):
         """
         Create map images.
@@ -380,7 +380,7 @@ class DroughtIndicator:
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
         return [self._resource()]
-    
+
     def _resource(self) -> HazardResource:
         # with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
         #    description = f.read()
