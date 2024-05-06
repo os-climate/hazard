@@ -148,12 +148,14 @@ class HazardResource(BaseModel):
         return stac_item
 
 
-def from_stac_item(stac_item: pystac.Item) -> HazardResource:
+def resource_from_stac_item(stac_item: pystac.Item) -> HazardResource:
     """
     converts STAC item to HazardResource
     """
 
-    raise NotImplementedError
+    return HazardResource(
+        **{k.replace("osc-hazard:", ""): stac_item.properties[k] for k in stac_item.properties if "osc-hazard:" in k}
+    )
 
 
 def expand(item: str, key: str, param: str):
