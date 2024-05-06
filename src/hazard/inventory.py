@@ -4,6 +4,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from pydantic import BaseModel, Field
 
 import pystac
+import datetime
 
 # region HazardModel
 
@@ -42,7 +43,7 @@ class MapInfo(BaseModel):
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
     bbox: List[float] = Field(
-        [-180.0, 85.0, 180, 85.0]
+        [-180.0, -85.0, 180.0, 85.0]
     )
     index_values: Optional[List[Any]] = Field(
         None,
@@ -113,37 +114,57 @@ class HazardResource(BaseModel):
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
 
-    def to_stac_item(self) -> Iterable[pystac.Item]:
+    def to_stac_item(self) -> pystac.Item:
         
         """
-        converts hazard resource to STAC items
+        converts hazard resource to a STAC item.
         """
+
+        osc_properties = self.model_dump()
+        osc_properties = {f'osc-hazard:{k}':osc_properties[k] for k in osc_properties.keys()}
         
-        # iteration : create as many items as iterations
+        asset = pystac.Asset(
+            href=self.path,
+            title='zarr directory',
+            description='directory containing indicators data as zarr arrays',
+            media_type=pystac.MediaType.ZARR,
+            roles=['data']
+        )
         
-        # over parameters: if GCM put it to CMIP extension field. otherwise properties:{param key} -> param value
-        # over scenarios. year goes to datetime. scenario goes to CMIP field. 
+        link = pystac.Link(
+            rel='collection',
+            media_type='application/json',
+            target='./collection.json'
+        )
         
-        # pystac.Item(
-        #     id=self.indicator_id,
-        #     geometry={
-        #         "type": "Polygon",
-        #         "coordinates": self.map.bounds
-        #     },
-        #     bbox=self.map.bbox,
-        #     collection="osc-hazard-indicators",
-        # )
-        raise NotImplementedError
+        stac_item = pystac.Item(
+            id=self.indicator_id,
+            geometry={
+                "type": "Polygon",
+                "coordinates": [self.map.bounds]
+            },
+            bbox=self.map.bbox,
+            datetime=None,
+            start_datetime=datetime.datetime(2015, 1, 1, tzinfo=datetime.timezone.utc),
+            end_datetime=datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc),
+            properties=osc_properties,
+            collection="osc-hazard-indicators",
+            assets={'indicators':asset}
+        )   
+        
+        stac_item.add_link(link) 
+        
+        stac_item.validate()
+        
+        return stac_item               
+                
+        
     
-def from_stac_items(stac_items: Iterable[pystac.Item]) -> HazardResource:
+def from_stac_item(stac_item: pystac.Item) -> HazardResource:
     
     """
     converts STAC item to HazardResource
     """
-    
-    # find indicator specific param in properties:params, gcm in CMIP. 
-    # find year in datetime
-    # find scenario in CMIP.
     
     raise NotImplementedError
     
