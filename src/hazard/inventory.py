@@ -3,6 +3,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, Field
 
+import pystac
+
 # region HazardModel
 
 
@@ -38,6 +40,9 @@ class MapInfo(BaseModel):
     bounds: List[Tuple[float, float]] = Field(
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
+    )
+    bbox: List[float] = Field(
+        [-180.0, 85.0, 180, 85.0]
     )
     index_values: Optional[List[Any]] = Field(
         None,
@@ -108,7 +113,41 @@ class HazardResource(BaseModel):
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
 
-
+    def to_stac_item(self) -> Iterable[pystac.Item]:
+        
+        """
+        converts hazard resource to STAC items
+        """
+        
+        # iteration : create as many items as iterations
+        
+        # over parameters: if GCM put it to CMIP extension field. otherwise properties:{param key} -> param value
+        # over scenarios. year goes to datetime. scenario goes to CMIP field. 
+        
+        # pystac.Item(
+        #     id=self.indicator_id,
+        #     geometry={
+        #         "type": "Polygon",
+        #         "coordinates": self.map.bounds
+        #     },
+        #     bbox=self.map.bbox,
+        #     collection="osc-hazard-indicators",
+        # )
+        raise NotImplementedError
+    
+def from_stac_items(stac_items: Iterable[pystac.Item]) -> HazardResource:
+    
+    """
+    converts STAC item to HazardResource
+    """
+    
+    # find indicator specific param in properties:params, gcm in CMIP. 
+    # find year in datetime
+    # find scenario in CMIP.
+    
+    raise NotImplementedError
+    
+    
 def expand(item: str, key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
