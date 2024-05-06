@@ -148,13 +148,27 @@ class HazardResource(BaseModel):
         return stac_item
 
 
-def resource_from_stac_item(stac_item: pystac.Item) -> HazardResource:
+class HazardResources(BaseModel):
+    resources: List[HazardResource]
+
+    def to_stac_items(self) -> List[pystac.Item]:
+        """
+        converts hazard resources to a list of STAC items.
+        """
+        return {"type": "FeatureCollection", "features": [resource.to_stac_item() for resource in self.resources]}
+
+
+def resource_from_stac_item_dict(stac_item: Dict) -> HazardResource:
     """
     converts STAC item to HazardResource
     """
 
     return HazardResource(
-        **{k.replace("osc-hazard:", ""): stac_item.properties[k] for k in stac_item.properties if "osc-hazard:" in k}
+        **{
+            k.replace("osc-hazard:", ""): stac_item["properties"][k]
+            for k in stac_item["properties"]
+            if "osc-hazard:" in k
+        }
     )
 
 
