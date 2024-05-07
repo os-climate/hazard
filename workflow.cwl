@@ -41,8 +41,8 @@ $graph:
 
     requirements:
       ResourceRequirement:
-        coresMax: 4
-        ramMax: 8192
+        coresMax: 2
+        ramMax: 4096
       NetworkAccess:
         networkAccess: true
 
