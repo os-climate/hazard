@@ -67,7 +67,7 @@ class DocStore:
         elif format == "osc":
             return parse_obj_as(HazardResources, json.loads(json_str)).resources
         else:
-            raise ValueError('JSON inventory file format must be one of "osc" or "stac"')
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
 
     def read_inventory_json(self) -> str:
         """Read inventory at path provided and return JSON."""
@@ -93,7 +93,7 @@ class DocStore:
             models = HazardResources(resources=[])
             json_str = json.dumps(models.dict(), indent=4)  # pretty print
         else:
-            raise ValueError('JSON inventory file format must be one of "osc" or "stac"')
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
 
         with self._fs.open(path, "w") as f:
             f.write(json_str)
@@ -110,13 +110,13 @@ class DocStore:
         models = HazardResources(resources=list(combined.values()))
 
         if format == "stac":
-            models = HazardResources(resources=list(combined.values())).to_stac_items()
+            models = HazardResources(resources=list(combined.values())).to_stac_items(items_as_dicts=True)
             json_str = json.dumps(models, indent=4)
         elif format == "osc":
             models = HazardResources(resources=list(combined.values()))
             json_str = json.dumps(models.dict(), indent=4)
         else:
-            raise ValueError('JSON inventory file format must be one of "osc" or "stac')
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
 
         with self._fs.open(path, "w") as f:
             f.write(json_str)

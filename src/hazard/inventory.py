@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pystac
 from pydantic import BaseModel, Field
@@ -111,7 +111,7 @@ class HazardResource(BaseModel):
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
 
-    def to_stac_item(self) -> pystac.Item:
+    def to_stac_item(self, item_as_dict: bool = False) -> Union[pystac.Item, Dict]:
         """
         converts hazard resource to a STAC item.
         """
@@ -145,17 +145,23 @@ class HazardResource(BaseModel):
 
         stac_item.validate()
 
-        return stac_item
+        if item_as_dict:
+            return stac_item.to_dict()
+        else:
+            return stac_item
 
 
 class HazardResources(BaseModel):
     resources: List[HazardResource]
 
-    def to_stac_items(self) -> List[pystac.Item]:
+    def to_stac_items(self, items_as_dicts: bool = False) -> Dict[str, Union[str, pystac.Item, Dict]]:
         """
         converts hazard resources to a list of STAC items.
         """
-        return {"type": "FeatureCollection", "features": [resource.to_stac_item() for resource in self.resources]}
+        return {
+            "type": "FeatureCollection",
+            "features": [resource.to_stac_item(item_as_dict=items_as_dicts) for resource in self.resources],
+        }
 
 
 def resource_from_stac_item_dict(stac_item: Dict) -> HazardResource:

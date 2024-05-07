@@ -58,6 +58,6 @@ def days_tas_above_indicator(
         central_years=central_year_list,
     )
 
-    docs_store.update_inventory(model.inventory(), format=format)
+    docs_store.update_inventory(model.inventory(), format=inventory_format)
 
     model.run_all(source, target, client=client)
