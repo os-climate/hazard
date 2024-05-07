@@ -14,11 +14,19 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    inventory_format: Optional[str] = "osc"
+    inventory_format: Optional[str] = "osc",
 ):
 
     hazard_services.days_tas_above_indicator(
-        gcm_list, scenario_list, threshold_list, central_year_list, window_years, bucket, prefix, store, inventory_format
+        gcm_list,
+        scenario_list,
+        threshold_list,
+        central_year_list,
+        window_years,
+        bucket,
+        prefix,
+        store,
+        inventory_format,
     )
 
 

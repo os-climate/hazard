@@ -24,7 +24,7 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    inventory_format: Optional[str] = "osc"
+    inventory_format: Optional[str] = "osc",
 ):
     """
     Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,
