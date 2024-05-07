@@ -50,7 +50,7 @@ $graph:
       DockerRequirement:
         dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator
 
-    baseCommand: ["os_climate_hazard", "days_tas_above_indicator", "--store", "./indicator", "--"]
+    baseCommand: ["os_climate_hazard", "days_tas_above_indicator", "--inventory_format", "stac", "--store", "./indicator", "--"]
    
     arguments: []
     
