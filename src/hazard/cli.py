@@ -15,6 +15,7 @@ def days_tas_above_indicator(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     inventory_format: Optional[str] = "osc",
+    extra_xarray_store: Optional[bool] = False
 ):
 
     hazard_services.days_tas_above_indicator(
@@ -26,6 +27,7 @@ def days_tas_above_indicator(
         bucket,
         prefix,
         store,
+        extra_xarray_store,
         inventory_format,
     )
 

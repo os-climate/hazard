@@ -24,7 +24,8 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    inventory_format: Optional[str] = "osc",
+    extra_xarray_store: Optional[bool] = False,
+    inventory_format: Optional[str] = "osc"
 ):
     """
     Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,
@@ -36,13 +37,13 @@ def days_tas_above_indicator(
 
     if store is not None:
         docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
-        target = OscZarr(store=store)
+        target = OscZarr(store=store, extra_xarray_store=extra_xarray_store)
     else:
         if bucket is None or prefix is None:
             raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
         else:
             docs_store = DocStore(bucket=bucket, prefix=prefix)
-            target = OscZarr(bucket=bucket, prefix=prefix)
+            target = OscZarr(bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store)
 
     cluster = LocalCluster(processes=False)
 
