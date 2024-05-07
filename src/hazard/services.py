@@ -24,7 +24,8 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    extra_xarray_store: Optional[bool] = False
+    extra_xarray_store: Optional[bool] = False,
+    inventory_format: Optional[str] = "osc"
 ):
     """
     Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,
@@ -58,6 +59,6 @@ def days_tas_above_indicator(
         central_years=central_year_list,
     )
 
-    docs_store.update_inventory(model.inventory())
+    docs_store.update_inventory(model.inventory(), format=inventory_format)
 
     model.run_all(source, target, client=client)

@@ -10,11 +10,7 @@ from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import default_dev_bucket
 
-from .inventory import HazardResource
-
-
-class HazardResources(BaseModel):
-    resources: List[HazardResource]
+from .inventory import HazardResource, HazardResources, resource_from_stac_item_dict
 
 
 class DocStore:
@@ -60,14 +56,18 @@ class DocStore:
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
-    def read_inventory(self) -> List[HazardResource]:
+    def read_inventory(self, format="osc") -> List[HazardResource]:
         """Read inventory at path provided and return HazardResources."""
         path = self._full_path_inventory()
         if not self._fs.exists(path):
             return []
         json_str = self.read_inventory_json()
-        models = parse_obj_as(HazardResources, json.loads(json_str)).resources
-        return models
+        if format == "stac":
+            return [resource_from_stac_item_dict(item) for item in json.loads(json_str)["features"]]
+        elif format == "osc":
+            return parse_obj_as(HazardResources, json.loads(json_str)).resources
+        else:
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
 
     def read_inventory_json(self) -> str:
         """Read inventory at path provided and return JSON."""
@@ -81,24 +81,43 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def write_new_empty_inventory(self):
+    def write_new_empty_inventory(self, format="osc"):
         """Write inventory."""
         path = self._full_path_inventory()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         models = HazardResources(resources=[])
-        json_str = json.dumps(models.dict(), indent=4)  # pretty print
+        if format == "stac":
+            models = HazardResources(resources=[]).to_stac_items()
+            json_str = json.dumps(models, indent=4)  # pretty print
+        elif format == "osc":
+            models = HazardResources(resources=[])
+            json_str = json.dumps(models.dict(), indent=4)  # pretty print
+        else:
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
+
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
+    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False, format="osc"):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
+
+        # if format == stac, we do a round trip, stac -> osc -> stac.
         path = self._full_path_inventory()
-        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
+        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory(format=format))
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))
-        json_str = json.dumps(models.dict(), indent=4)  # pretty print
+
+        if format == "stac":
+            models = HazardResources(resources=list(combined.values())).to_stac_items(items_as_dicts=True)
+            json_str = json.dumps(models, indent=4)
+        elif format == "osc":
+            models = HazardResources(resources=list(combined.values()))
+            json_str = json.dumps(models.dict(), indent=4)
+        else:
+            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
+
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 

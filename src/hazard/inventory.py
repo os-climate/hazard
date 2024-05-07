@@ -1,6 +1,8 @@
+import datetime
 import json
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
+import pystac
 from pydantic import BaseModel, Field
 
 # region HazardModel
@@ -39,6 +41,7 @@ class MapInfo(BaseModel):
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
+    bbox: List[float] = Field([-180.0, -85.0, 180.0, 85.0])
     index_values: Optional[List[Any]] = Field(
         None,
         description="Index values to include in maps. If None, the last index value only is included.",
@@ -107,6 +110,72 @@ class HazardResource(BaseModel):
         Vulnerability models request a hazard indicator by indicator_id from the Hazard Model. The Hazard Model
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
+
+    def to_stac_item(self, item_as_dict: bool = False) -> Union[pystac.Item, Dict]:
+        """
+        converts hazard resource to a STAC item.
+        """
+
+        osc_properties = self.model_dump()
+        osc_properties = {f"osc-hazard:{k}": osc_properties[k] for k in osc_properties.keys()}
+
+        asset = pystac.Asset(
+            href=self.path,
+            title="zarr directory",
+            description="directory containing indicators data as zarr arrays",
+            media_type=pystac.MediaType.ZARR,
+            roles=["data"],
+        )
+
+        link = pystac.Link(rel="collection", media_type="application/json", target="./collection.json")
+
+        stac_item = pystac.Item(
+            id=self.indicator_id,
+            geometry={"type": "Polygon", "coordinates": [self.map.bounds]},
+            bbox=self.map.bbox,
+            datetime=None,
+            start_datetime=datetime.datetime(2015, 1, 1, tzinfo=datetime.timezone.utc),
+            end_datetime=datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc),
+            properties=osc_properties,
+            collection="osc-hazard-indicators",
+            assets={"indicators": asset},
+        )
+
+        stac_item.add_link(link)
+
+        stac_item.validate()
+
+        if item_as_dict:
+            return stac_item.to_dict()
+        else:
+            return stac_item
+
+
+class HazardResources(BaseModel):
+    resources: List[HazardResource]
+
+    def to_stac_items(self, items_as_dicts: bool = False) -> Dict[str, Union[str, pystac.Item, Dict]]:
+        """
+        converts hazard resources to a list of STAC items.
+        """
+        return {
+            "type": "FeatureCollection",
+            "features": [resource.to_stac_item(item_as_dict=items_as_dicts) for resource in self.resources],
+        }
+
+
+def resource_from_stac_item_dict(stac_item: Dict) -> HazardResource:
+    """
+    converts STAC item to HazardResource
+    """
+
+    return HazardResource(
+        **{
+            k.replace("osc-hazard:", ""): stac_item["properties"][k]
+            for k in stac_item["properties"]
+            if "osc-hazard:" in k
+        }
+    )
 
 
 def expand(item: str, key: str, param: str):
