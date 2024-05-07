@@ -52,7 +52,7 @@ def generate_map(
     if top > 85.05 or bottom < -85.05:
         raise ValueError("invalid range")
     logger.info(f"Writing map file {map_path}")
-    target.write(map_path, reprojected)
+    target.write(map_path, reprojected, spatial_coords=False)
     return
 
 
