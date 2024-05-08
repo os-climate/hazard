@@ -19,21 +19,21 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.type_adapter import TypeAdapter
 from zarr.errors import GroupNotFoundError  # type: ignore
-
+from hazard.indicator_model import IndicatorModel  # type: ignore
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import MultiYearAverageIndicatorBase  # type: ignore
+from hazard.protocols import ReadWriteDataArray
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class BatchItem:
     gcm: str
     scenario: str
-    central_years: list
+    central_years: list[int]
 
 
 class ZarrWorkingStore(Protocol):
@@ -107,7 +107,7 @@ class ProgressStore:
             f.write(json.dumps(indices.model_dump()))
 
 
-class DroughtIndicator:
+class DroughtIndicator(IndicatorModel[BatchItem]):
     def __init__(
         self,
         working_zarr_store: ZarrWorkingStore,
@@ -352,16 +352,12 @@ class DroughtIndicator:
         target.write(path, spei_annual_all)
         return spei_annual_all
 
-    def run_single(
-        self,
-        item: BatchItem,
-        target: OscZarr,
-        calculate_spei=True,
-        calculate_average_spei=True,
-        progress_store: Optional[ProgressStore] = None,
-    ):
+    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, client:Optional[ProgressStore] = None):
+        assert isinstance(target, OscZarr)
+        calculate_spei = True
+        calculate_average_spei = True
         if calculate_spei:
-            self.calculate_spei(item.gcm, item.scenario, progress_store)
+            self.calculate_spei(item.gcm, item.scenario, client)
         if calculate_average_spei:
             for central_year in item.central_years:
                 self.calculate_annual_average_spei(item.gcm, item.scenario, central_year, target)
