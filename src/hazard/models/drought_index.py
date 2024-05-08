@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from pydantic.type_adapter import TypeAdapter
 from zarr.errors import GroupNotFoundError  # type: ignore
+
 from hazard.indicator_model import IndicatorModel  # type: ignore
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import MultiYearAverageIndicatorBase  # type: ignore
@@ -28,6 +29,7 @@ from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class BatchItem:
@@ -352,7 +354,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         target.write(path, spei_annual_all)
         return spei_annual_all
 
-    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, client:Optional[ProgressStore] = None):
+    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, client: Optional[ProgressStore] = None):
         assert isinstance(target, OscZarr)
         calculate_spei = True
         calculate_average_spei = True
