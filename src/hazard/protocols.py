@@ -30,7 +30,7 @@ class ReadDataArray(Protocol):
 class WriteDataArray(Protocol):
     """Write DataArray."""
 
-    def write(self, path: str, data_array: xr.DataArray, chunks: Optional[List[int]] = None): ...
+    def write(self, path: str, data_array: xr.DataArray, chunks: Optional[List[int]] = None, spatial_coords: Optional[bool]= True): ...
 
 
 class ReadWriteDataArray(ReadDataArray, WriteDataArray): ...  # noqa: E701

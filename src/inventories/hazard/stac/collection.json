@@ -1,0 +1,36 @@
+{
+  "stac_version": "1.0.0",
+  "type": "Collection",
+  "stac_extensions": [],
+  "id": "osc-hazard-indicators",
+  "title": "OSC hazard indicators",
+  "description": "A STAC collection of OS-C hazard indicators.",
+  "license": "CC-BY-4.0",
+  "extent": {
+    "spatial": {
+      "bbox": [[-180, -90, 180, 90]]
+    },
+    "temporal": {
+      "interval": [["1950-01-01T00:00:00Z", "2100-12-31T23:59:59Z"]]
+    }
+  },
+  "providers": [
+    {
+      "name": "UKRI",
+      "roles": ["producer"],
+      "url": "https://www.ukri.org/"
+    }
+  ],
+  "links": [
+    {
+      "rel": "self",
+      "type": "application/json",
+      "href": "./collection.json"
+    },
+    {
+      "rel": "items",
+      "type": "application/geo+json",
+      "href": "./items.json"
+    }
+  ]
+}

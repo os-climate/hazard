@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd  # type: ignore
@@ -47,7 +47,7 @@ class TestTarget(WriteDataset):
     def __init__(self):
         self.datasets = {}
 
-    def write(self, path: str, dataset: xr.Dataset):
+    def write(self, path: str, dataset: xr.Dataset, spatial_coords: Optional[bool] = False):
         self.datasets[path] = dataset
 
     def read(self, path: str):
