@@ -79,6 +79,17 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _resource(self) -> HazardResource:
         """Create resource."""
+        
+        scenarios = []
+        
+        if 'historical' in self.scenarios:
+            scenarios.append(Scenario(id="historical", years=[self.central_year_historical]))
+        
+        for s in self.scenarios:
+            if s == 'historical':
+                continue
+            scenarios.append(Scenario(id=s, years=list(self.central_years)))
+        
         with open(os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r") as f:
             description = f.read().replace("\u00c2\u00b0", "\u00b0")
         resource = HazardResource(
@@ -112,11 +123,6 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 source="map_array",
             ),
             units="days/year",
-            scenarios=[
-                Scenario(id="historical", years=[self.central_year_historical]),
-                Scenario(id="ssp126", years=list(self.central_years)),
-                Scenario(id="ssp245", years=list(self.central_years)),
-                Scenario(id="ssp585", years=list(self.central_years)),
-            ],
+            scenarios=scenarios,
         )
         return resource
