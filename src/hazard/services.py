@@ -20,6 +20,7 @@ def days_tas_above_indicator(
     scenario_list: List[str] = ["ssp585"],
     threshold_list: List[float] = [20],
     central_year_list: List[int] = [2090],
+    central_year_historical: int = 2005,
     window_years: int = 1,
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
@@ -57,6 +58,7 @@ def days_tas_above_indicator(
         gcms=gcm_list,
         scenarios=scenario_list,
         central_years=central_year_list,
+        central_year_historical=central_year_historical
     )
 
     docs_store.update_inventory(model.inventory(), format=inventory_format)

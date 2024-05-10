@@ -1,5 +1,6 @@
 import datetime
 import json
+import itertools
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pystac
@@ -111,7 +112,25 @@ class HazardResource(BaseModel):
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
 
+    def to_stac_items(self, items_as_dicts: bool = False) -> List[Union[pystac.Item, Dict]]:
+        
+        keys, values = zip(*self.params.items())
+        params_permutations = list(itertools.product(*values))
+        params_permutations = [dict(zip(keys, p)) for p in params_permutations]
+    
+        scenarios_permutations = []
+        for s in self.scenarios:
+            for y in s.years:
+                scenarios_permutations.append({'id': s.id, 'year': y})
+        
+        permutations  = [dict(**param, **scenario) for param, scenario in itertools.product(params_permutations, scenarios_permutations)]
+        
+        for p in permutations:
+            
+        raise NotImplementedError
+        
     def to_stac_item(self, item_as_dict: bool = False) -> Union[pystac.Item, Dict]:
+        
         """
         converts hazard resource to a STAC item.
         """
