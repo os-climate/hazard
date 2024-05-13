@@ -22,7 +22,7 @@ class OscZarr(ReadWriteDataArray):
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
         store: Optional[Any] = None,
-        extra_xarray_store: Optional[bool] = False
+        extra_xarray_store: Optional[bool] = False,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
@@ -47,7 +47,7 @@ class OscZarr(ReadWriteDataArray):
         self.root = zarr.group(store=store)
 
         self.extra_xarray_store = extra_xarray_store
-        
+
     def create_empty(
         self,
         path: str,
@@ -132,13 +132,14 @@ class OscZarr(ReadWriteDataArray):
         if path in self.root:
             self.root.pop(path)
 
-    def write(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None, spatial_coords: Optional[bool] = True):
+    def write(
+        self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None, spatial_coords: Optional[bool] = True
+    ):
 
         if self.extra_xarray_store and spatial_coords:
-            self.write_data_array(f'{path}-xarray', da)
-                    
+            self.write_data_array(f"{path}-xarray", da)
+
         self.write_zarr(path, da, chunks)
-        
 
     def write_zarr(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
         """Write DataArray according to the standard OS-Climate conventions.
@@ -158,7 +159,7 @@ class OscZarr(ReadWriteDataArray):
             chunks=chunks,
         )
         z[:, :, :] = data[:, :, :]
-        
+
     def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
