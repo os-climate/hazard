@@ -37,19 +37,7 @@ def days_tas_above_indicator(
     An inventory filed is stored at the root of the zarr directory.
     """
 
-    if store is not None:
-        docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
-        target = OscZarr(store=store, extra_xarray_store=extra_xarray_store)
-    else:
-        if bucket is None or prefix is None:
-            raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
-        else:
-            docs_store = DocStore(bucket=bucket, prefix=prefix)
-            target = OscZarr(bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store)
-
-    cluster = LocalCluster(processes=False)
-
-    client = Client(cluster)
+    docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
 
     source = NexGddpCmip6()
 
@@ -59,10 +47,13 @@ def days_tas_above_indicator(
         gcms=gcm_list,
         scenarios=scenario_list,
         central_years=central_year_list,
-        central_year_historical=central_year_historical
+        central_year_historical=central_year_historical,
     )
 
-    docs_store.update_inventory(model.inventory(), format=inventory_format)
+    if inventory_format == "stac":
+        docs_store.write_inventory_stac(model.inventory())
+    else:
+        docs_store.update_inventory(model.inventory())
 
     model.run_all(source, target, client=client)
 
@@ -101,7 +92,10 @@ def degree_days_indicator(
         central_year_historical=central_year_historical,
     )
 
-    docs_store.update_inventory(model.inventory(), format=inventory_format)
+    if inventory_format == "stac":
+        docs_store.write_inventory_stac(model.inventory())
+    else:
+        docs_store.update_inventory(model.inventory())
 
     model.run_all(source, target, client=client)
 

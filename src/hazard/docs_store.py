@@ -48,7 +48,7 @@ class DocStore:
         self._fs = fs
         if type(self._fs) == s3fs.S3FileSystem:  # noqa: E721 # use isinstance?
             bucket = os.environ.get(self.__S3_bucket, bucket)
-            self._root = str(PurePosixPath(bucket, prefix))
+            self._root = f"s3://{str(PurePosixPath(bucket, prefix))}"
         elif type(self._fs) == LocalFileSystem:  # noqa: E721 # use isinstance?
             if local_path is None:
                 raise ValueError("if using a local filesystem, please provide a value for `local_path`")
@@ -56,18 +56,13 @@ class DocStore:
         else:
             self._root = str(PurePosixPath(bucket, prefix))
 
-    def read_inventory(self, format="osc") -> List[HazardResource]:
+    def read_inventory(self) -> List[HazardResource]:
         """Read inventory at path provided and return HazardResources."""
         path = self._full_path_inventory()
         if not self._fs.exists(path):
             return []
         json_str = self.read_inventory_json()
-        if format == "stac":
-            return [resource_from_stac_item_dict(item) for item in json.loads(json_str)["features"]]
-        elif format == "osc":
-            return parse_obj_as(HazardResources, json.loads(json_str)).resources
-        else:
-            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
+        return parse_obj_as(HazardResources, json.loads(json_str)).resources
 
     def read_inventory_json(self) -> str:
         """Read inventory at path provided and return JSON."""
@@ -81,24 +76,26 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def write_new_empty_inventory(self, format="osc"):
+    def write_new_empty_inventory(self):
         """Write inventory."""
         path = self._full_path_inventory()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         models = HazardResources(resources=[])
-        if format == "stac":
-            models = HazardResources(resources=[]).to_stac_items()
-            json_str = json.dumps(models, indent=4)  # pretty print
-        elif format == "osc":
-            models = HazardResources(resources=[])
-            json_str = json.dumps(models.dict(), indent=4)  # pretty print
-        else:
-            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
+        json_str = json.dumps(models.dict(), indent=4)  # pretty print
 
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False, format="osc"):
+    def update_inventory_stac(self, resources: Iterable[HazardResource]):
+        """Write a hazard models inventory as STAC."""
+
+        path = self._full_path_inventory()
+        models = HazardResources(resources=resources).to_stac_items(path_root=self._root, items_as_dicts=True)
+        json_str = json.dumps(models, indent=4)
+        with self._fs.open(path, "w") as f:
+            f.write(json_str)
+
+    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
 
@@ -108,15 +105,7 @@ class DocStore:
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))
-
-        if format == "stac":
-            models = HazardResources(resources=list(combined.values())).to_stac_items(items_as_dicts=True)
-            json_str = json.dumps(models, indent=4)
-        elif format == "osc":
-            models = HazardResources(resources=list(combined.values()))
-            json_str = json.dumps(models.dict(), indent=4)
-        else:
-            raise ValueError(f'JSON inventory file format must be one of "osc" or "stac", but got {format}')
+        json_str = json.dumps(models.dict(), indent=4)
 
         with self._fs.open(path, "w") as f:
             f.write(json_str)
