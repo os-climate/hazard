@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import PurePosixPath
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import s3fs  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
@@ -10,7 +10,7 @@ from pydantic import BaseModel, parse_obj_as
 
 from hazard.sources.osc_zarr import default_dev_bucket
 
-from .inventory import HazardResource, HazardResources, resource_from_stac_item_dict
+from .inventory import HazardResource, HazardResources
 
 
 class DocStore:
@@ -86,14 +86,60 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def update_inventory_stac(self, resources: Iterable[HazardResource]):
+    def write_inventory_stac(self, resources: Iterable[HazardResource]):
         """Write a hazard models inventory as STAC."""
 
-        path = self._full_path_inventory()
-        models = HazardResources(resources=resources).to_stac_items(path_root=self._root, items_as_dicts=True)
-        json_str = json.dumps(models, indent=4)
-        with self._fs.open(path, "w") as f:
+        items = HazardResources(resources=resources).to_stac_items(path_root=self._root, items_as_dicts=True)
+        for it in items:
+            with self._fs.open(self._full_path_stac_item(id=it["id"]), "w") as f:
+                f.write(json.dumps(it, indent=4))
+        catalog_path = self._full_path_stac_catalog()
+        catalog = self.stac_catalog(items=items)
+        with self._fs.open(catalog_path, "w") as f:
+            json_str = json.dumps(catalog, indent=4)
             f.write(json_str)
+        collection_path = self._full_path_stac_collection()
+        collection = self.stac_collection(items=items)
+        with self._fs.open(collection_path, "w") as f:
+            json_str = json.dumps(collection, indent=4)
+            f.write(json_str)
+
+    def stac_catalog(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+        return {
+            "stac_version": "1.0.0",
+            "id": "osc-hazard-indicators-catalog",
+            "type": "catalog",
+            "description": "OS-C hazard indicators catalog",
+            "links": [
+                {"rel": "self", "href": "./catalog.json"},
+                {"rel": "root", "href": "./catalog.json"},
+                {"rel": "child", "href": "./collection.json"},
+            ]
+            + [{"rel": "item", "href": f"./{x['id']}.json"} for x in items],
+        }
+
+    def stac_collection(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+        return {
+            "stac_version": "1.0.0",
+            "type": "Collection",
+            "stac_extensions": [],
+            "id": "osc-hazard-indicators-collection",
+            "title": "OS-C hazard indicators collection",
+            "description": "OS-C hazard indicators collection",
+            "license": "CC-BY-4.0",
+            "extent": {
+                "spatial": {"bbox": [[-180, -90, 180, 90]]},
+                "temporal": {"interval": [["1950-01-01T00:00:00Z", "2100-12-31T23:59:59Z"]]},
+            },
+            "providers": [{"name": "UKRI", "roles": ["producer"], "url": "https://www.ukri.org/"}],
+            "links": [
+                {"rel": "self", "type": "application/json", "href": "./collection.json"},
+                {"rel": "root", "type": "application/json", "href": "./catalog.json"},
+            ]
+            + [{"rel": "item", "href": f"./{x['id']}.json"} for x in items],
+        }
 
     def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
         """Add the hazard models provided to the inventory. If a model with the same key
@@ -126,3 +172,12 @@ class DocStore:
 
     def _full_path_inventory(self):
         return str(PurePosixPath(self._root, "inventory.json"))
+
+    def _full_path_stac_item(self, id: str):
+        return str(PurePosixPath(self._root, f"{id}.json"))
+
+    def _full_path_stac_catalog(self):
+        return str(PurePosixPath(self._root, "catalog.json"))
+
+    def _full_path_stac_collection(self):
+        return str(PurePosixPath(self._root, "collection.json"))

@@ -186,7 +186,7 @@ class HazardResource(BaseModel):
 class HazardResources(BaseModel):
     resources: List[HazardResource]
 
-    def to_stac_items(self, path_root: str, items_as_dicts: bool = False) -> Dict[str, Union[str, pystac.Item, Dict]]:
+    def to_stac_items(self, path_root: str, items_as_dicts: bool = False) -> List[Dict[str, Any]]:
         """
         converts hazard resources to a list of STAC items.
         """
@@ -194,24 +194,7 @@ class HazardResources(BaseModel):
             resource.to_stac_items(path_root=path_root, items_as_dicts=items_as_dicts) for resource in self.resources
         ]
         stac_items_flat = list(itertools.chain(*stac_items_lists))
-        return {
-            "type": "FeatureCollection",
-            "features": stac_items_flat,
-        }
-
-
-def resource_from_stac_item_dict(stac_item: Dict) -> HazardResource:
-    """
-    converts STAC item to HazardResource
-    """
-
-    return HazardResource(
-        **{
-            k.replace("osc-hazard:", ""): stac_item["properties"][k]
-            for k in stac_item["properties"]
-            if "osc-hazard:" in k
-        }
-    )
+        return stac_items_flat
 
 
 def expand(item: str, key: str, param: str):
