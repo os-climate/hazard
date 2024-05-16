@@ -109,7 +109,7 @@ class DocStore:
         return {
             "stac_version": "1.0.0",
             "id": "osc-hazard-indicators-catalog",
-            "type": "catalog",
+            "type": "Catalog",
             "description": "OS-C hazard indicators catalog",
             "links": [
                 {"rel": "self", "href": "./catalog.json"},
