@@ -87,6 +87,17 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def _resource(self):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
             description = f.read().replace("\u00c2\u00b0", "\u00b0")
+
+        scenarios = []
+
+        if "historical" in self.scenarios:
+            scenarios.append(Scenario(id="historical", years=[self.central_year_historical]))
+
+        for s in self.scenarios:
+            if s == "historical":
+                continue
+            scenarios.append(Scenario(id=s, years=list(self.central_years)))
+
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id=f"mean_degree_days/above/{self.threshold_c}c",
@@ -112,12 +123,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 source="map_array",
             ),
             units="degree days",
-            scenarios=[
-                Scenario(id="historical", years=[self.central_year_historical]),
-                Scenario(id="ssp126", years=list(self.central_years)),
-                Scenario(id="ssp245", years=list(self.central_years)),
-                Scenario(id="ssp585", years=list(self.central_years)),
-            ],
+            scenarios=scenarios,
         )
         return resource
 

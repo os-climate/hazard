@@ -152,7 +152,7 @@ class DocStore:
 
         # if format == stac, we do a round trip, stac -> osc -> stac.
         path = self._full_path_inventory()
-        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory(format=format))
+        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))
