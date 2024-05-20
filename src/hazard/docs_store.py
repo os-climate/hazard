@@ -92,8 +92,8 @@ class DocStore:
         if self._fs == s3fs.S3FileSystem:
             path_Root = self._root
         else:
-            path_root = '.'
-            
+            path_root = "."
+
         items = HazardResources(resources=resources).to_stac_items(path_root=path_root, items_as_dicts=True)
         for it in items:
             with self._fs.open(self._full_path_stac_item(id=it["id"]), "w") as f:
