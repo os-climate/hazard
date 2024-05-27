@@ -68,7 +68,7 @@ repos:
 
   # Lint: Markdown
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
+    rev: v0.41.0
     hooks:
       - id: markdownlint
         args: ["--fix"]
@@ -80,7 +80,7 @@ repos:
   #       args: ['--py37-plus']
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.0
+    rev: 24.4.2
     hooks:
       - id: black
       - id: black-jupyter
@@ -127,7 +127,7 @@ repos:
         args: [--strict]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.6.27.13
+    rev: v1.7.0.14
     hooks:
       - id: actionlint
 
@@ -151,7 +151,7 @@ repos:
   #   - id: codespell
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.9.0"
+    rev: "v1.10.0"
     hooks:
       - id: mypy
         verbose: true
