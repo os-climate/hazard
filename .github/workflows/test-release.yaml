@@ -62,7 +62,8 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v2.1.0
+        uses: sigstore/gh-action-sigstore-python@v2.1.1
+
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -103,16 +104,16 @@ jobs:
           echo "tarball=$(ls dist/*.tgz)" >> "$GITHUB_OUTPUT"
           echo "wheel=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
 
-      - name: "📦 Publish packages to GitHub"
-        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+      - name: "📦 Publish artefacts to GitHub"
+        # https://github.com/softprops/action-gh-release
+        uses: softprops/action-gh-release@v2
         with:
-          # Valid inputs are:
-          # repo_token, automatic_release_tag, draft, prerelease, title, files
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
-          automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
-          title: "Development Build \
+          tag_name: ${{ steps.setenv.outputs.vernum }}
+          name: "Test/Development Build \
             ${{ steps.setenv.outputs.vernum }}"
+          # body_path: ${{ github.workspace }}/CHANGELOG.rst
           files: |
             dist/*.tar.gz
             dist/*.whl
