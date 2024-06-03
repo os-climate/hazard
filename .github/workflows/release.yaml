@@ -9,8 +9,11 @@ on:
   # workflow_dispatch:
   push:
     # Only invoked on release tag pushes
+    branches:
+      - 'main'
+      - 'master'
     tags:
-      - v*.*.*
+      - 'v*.*.*'
 
 env:
   python-version: "3.10"
@@ -18,8 +21,11 @@ env:
 ### BUILD ###
 
 jobs:
+
   build:
     name: "🐍 Build packages"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory for Sigstore
@@ -50,7 +56,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v2.1.0
+        uses: sigstore/gh-action-sigstore-python@v2
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -81,15 +87,16 @@ jobs:
           name: ${{ github.ref_name }}
           path: dist/
 
-      - name: "📦 Publish release to GitHub"
-        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+      - name: "📦 Publish artefacts to GitHub"
+        # https://github.com/softprops/action-gh-release
+        uses: softprops/action-gh-release@v2
         with:
-          # Valid inputs are:
-          # repo_token, automatic_release_tag, draft, prerelease, title, files
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          automatic_release_tag: ${{ github.ref_name }}
-          title: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          name: "Test/Development Build \
+            ${{ github.ref_name }}"
+          # body_path: ${{ github.workspace }}/CHANGELOG.rst
           files: |
             dist/*.tar.gz
             dist/*.whl

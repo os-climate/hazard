@@ -12,6 +12,14 @@ updates:
     directory: "/"  # Location of package manifests
     commit-message:
       prefix: "[dependabot] Chore:"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 3
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    commit-message:
+      prefix: "[dependabot] Chore:"
+    open-pull-requests-limit: 3
     schedule:
       interval: "weekly"
