@@ -29,6 +29,7 @@ from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndica
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
+from hazard.onboard.ipcc_drought import IPCCDrought
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jrc_landslides import JRCLandslides
 from hazard.onboard.jrc_subsidence import JRCSubsidence
@@ -220,6 +221,7 @@ class DocStore:
             TUDelftConvectiveWindstorm(default_root),
             JRCLandslides(default_root),
             JRCSubsidence(default_root),
+            IPCCDrought(default_root),
         ]
 
         self.write_new_empty_inventory()
