@@ -92,7 +92,7 @@ repos:
         args: ["--profile", "black"]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.7.0.14
+    rev: v1.7.1.15
     hooks:
       - id: actionlint
 
