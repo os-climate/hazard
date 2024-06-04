@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd  # type: ignore
 import pytest
 import xarray as xr
-from pytest import approx
 
 from hazard.protocols import OpenDataset, WriteDataset
 from hazard.utilities import zarr_utilities
@@ -37,8 +36,12 @@ class TestSource(OpenDataset):
     def __init__(self, datasets: Dict[Tuple[str, int], xr.Dataset]):
         self.datasets = datasets
 
-    def open_dataset_year(self, gcm: str, scenario: str, quantity: str, year: int, chunks=None) -> xr.Dataset:
-        return self.datasets[(quantity, year)]  # ignore scenario and gcm: we test just a single one
+    def open_dataset_year(
+        self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
+    ) -> xr.Dataset:
+        return self.datasets[
+            (quantity, year)
+        ]  # ignore scenario and gcm: we test just a single one
 
 
 class TestTarget(WriteDataset):
@@ -47,7 +50,9 @@ class TestTarget(WriteDataset):
     def __init__(self):
         self.datasets = {}
 
-    def write(self, path: str, dataset: xr.Dataset, spatial_coords: Optional[bool] = False):
+    def write(
+        self, path: str, dataset: xr.Dataset, spatial_coords: Optional[bool] = False
+    ):
         self.datasets[path] = dataset
 
     def read(self, path: str):
@@ -74,7 +79,9 @@ def _create_test_datasets_tas(
 
 def _create_test_dataset_averaged() -> xr.Dataset:
     """An example 3x3 array that might result from some operation averaging over time."""
-    temperature = np.array([[293.0, 298.0, 310.0], [304.0, 302.0, 300.0], [308.0, 290.0, 294.0]])
+    temperature = np.array(
+        [[293.0, 298.0, 310.0], [304.0, 302.0, 300.0], [308.0, 290.0, 294.0]]
+    )
     lat = np.arange(3.0, 0.0, -1.0)
     lon = np.arange(0.0, 3.0, 1.0)
     ds = xr.Dataset(
@@ -87,7 +94,9 @@ def _create_test_dataset_averaged() -> xr.Dataset:
     return ds
 
 
-def _create_test_dataset_tas(year: int, offset: float = 0, quantity: str = "tasmax") -> xr.Dataset:
+def _create_test_dataset_tas(
+    year: int, offset: float = 0, quantity: str = "tasmax"
+) -> xr.Dataset:
     """Create test xarray Dataset.
     Convention is that data is arranged in image-like way:
     - dimensions are ('latitude', 'longitude')
@@ -97,7 +106,10 @@ def _create_test_dataset_tas(year: int, offset: float = 0, quantity: str = "tasm
     Returns:
        xr.Dataset : test Dataset
     """
-    temperature_t1 = np.array([[293.0, 298.0, 310.0], [304.0, 302.0, 300.0], [308.0, 290.0, 294.0]]) + offset
+    temperature_t1 = (
+        np.array([[293.0, 298.0, 310.0], [304.0, 302.0, 300.0], [308.0, 290.0, 294.0]])
+        + offset
+    )
     temperature_t2 = temperature_t1 + 1.0  # temp at t1 + 1 degree
     temperature_t3 = temperature_t2 + 2.0
     # stack to give 3 time points
@@ -116,7 +128,9 @@ def _create_test_dataset_tas(year: int, offset: float = 0, quantity: str = "tasm
     return ds
 
 
-def _create_test_dataset_hurs(year: int, offset: float = 0, quantity="hurs") -> xr.Dataset:
+def _create_test_dataset_hurs(
+    year: int, offset: float = 0, quantity="hurs"
+) -> xr.Dataset:
     """Create test xarray Dataset.
     Convention is that data is arranged in image-like way:
     - dimensions are ('latitude', 'longitude')
@@ -126,7 +140,9 @@ def _create_test_dataset_hurs(year: int, offset: float = 0, quantity="hurs") -> 
     Returns:
        xr.Dataset : test Dataset
     """
-    hurs_t1 = np.array([[70.0, 72.0, 69.0], [72.0, 71.0, 70.0], [80.0, 74.0, 68.0]]) + offset
+    hurs_t1 = (
+        np.array([[70.0, 72.0, 69.0], [72.0, 71.0, 70.0], [80.0, 74.0, 68.0]]) + offset
+    )
     hurs_t2 = hurs_t1 + 5.0  # hurs at t1 + 5%
     hurs_t3 = hurs_t2 + 10.0
     # stack to give 3 time points

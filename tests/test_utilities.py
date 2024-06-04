@@ -2,13 +2,13 @@ import os
 
 import numpy as np  # type: ignore
 import zarr  # type: ignore
-from affine import Affine
 
-from hazard.onboard.storm_wind import BatchItem, STORMIndicator  # type: ignore
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.xarray_utilities import data_array, empty_data_array, global_crs_transform
-
-from .conftest import test_output_dir
+from hazard.utilities.xarray_utilities import (
+    data_array,
+    empty_data_array,
+    global_crs_transform,
+)
 
 
 def test_xarray_write_small(test_output_dir):  # noqa: F811

@@ -13,7 +13,12 @@ from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndica
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr  # type: ignore
 
-from .conftest import TestSource, TestTarget, _create_test_datasets_hurs, _create_test_datasets_tas, test_output_dir
+from .conftest import (
+    TestSource,
+    TestTarget,
+    _create_test_datasets_hurs,
+    _create_test_datasets_tas,
+)
 
 
 def test_days_tas_above_mocked():
@@ -39,7 +44,9 @@ def test_days_tas_above_mocked():
             ind1 = scale * xr.where(y1.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             expected = (ind0 + ind1) / 2
     assert expected.values == pytest.approx(
-        target.datasets["chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"].values
+        target.datasets[
+            "chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"
+        ].values
     )
 
 
@@ -63,7 +70,9 @@ def test_days_wbgt_above_mocked():
     )
     model.run_all(source, target, debug_mode=True)
     result = target.datasets[
-        "chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}".format(gcm=gcm, scenario=scenario, year=year)
+        "chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}".format(
+            gcm=gcm, scenario=scenario, year=year
+        )
     ]
     expected: List[xr.DataArray] = []
     with source.open_dataset_year(gcm, scenario, "tas", 2029).tas as t0:

@@ -33,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         # yamllint disable rule:line-length
         run: |
-          ### SHELL CODE START ###
+          #SHELLCODESTART
 
           set -euo pipefail
           # set -x
@@ -91,9 +91,10 @@ jobs:
           # Only updates file if it has changed
           selective_file_copy() {
             # Receives a single file path as argument
-            SHA_SRC=$(sha1sum "$DEVOPS_DIR"/"$1" | awk '{print $1}')
-            SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' || :)
-            if [ "$SHA_SRC" != "$SHA_DST" ]; then
+            # SHA_SRC=$(sha1sum "$DEVOPS_DIR/$1" | awk '{print $1}')
+            # SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' || :)
+            # if [ "$SHA_SRC" != "$SHA_DST" ]; then
+            if ! (cmp "$DEVOPS_DIR/$1" "$1"); then
               echo "Copying: $1"
               cp "$DEVOPS_DIR/$1" "$1"
               git add "$1"
@@ -318,7 +319,7 @@ jobs:
           fi
           # echo "Unstashing unstaged changes, if any exist"
           # git stash pop -q || :
-          ### SHELL CODE END ###
+          #SHELLCODEEND
 
       - name: Create Pull Request
         if: steps.update-repository.outputs.changed == 'true'

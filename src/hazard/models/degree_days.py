@@ -56,7 +56,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
             Defaults to [2010, 2030, 2040, 2050].
         """
 
-        self.threshold: float = 273.15 + threshold  # in Kelvin; degree days above 32C
+        self.threshold: float = 273.15 + threshold  # in Kelvin; degree days above {threshold}C
+        self.threshold_c: float = threshold
         # 1995 to 2014 (2010), 2021 tp 2040 (2030), 2031 to 2050 (2040), 2041 to 2060 (2050)
         self.window_years = window_years
         self.gcms = gcms
@@ -86,12 +87,23 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def _resource(self):
         with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
             description = f.read().replace("\u00c2\u00b0", "\u00b0")
+
+        scenarios = []
+
+        if "historical" in self.scenarios:
+            scenarios.append(Scenario(id="historical", years=[self.central_year_historical]))
+
+        for s in self.scenarios:
+            if s == "historical":
+                continue
+            scenarios.append(Scenario(id=s, years=list(self.central_years)))
+
         resource = HazardResource(
             hazard_type="ChronicHeat",
-            indicator_id="mean_degree_days/above/32c",
+            indicator_id=f"mean_degree_days/above/{self.threshold_c}c",
             indicator_model_gcm="{gcm}",
-            path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
-            display_name="Mean degree days above 32°C/{gcm}",
+            path=f"chronic_heat/osc/v2/mean_degree_days_v2_above_{self.threshold_c}c" + "_{gcm}_{scenario}_{year}",
+            display_name=f"Mean degree days above {self.threshold_c}°C/" + "{gcm}",
             description=description,
             params={"gcm": list(self.gcms)},
             group_id="",
@@ -107,16 +119,11 @@ class DegreeDays(IndicatorModel[BatchItem]):
                     units="degree days",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
-                path="mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                path=f"mean_degree_days_v2_above_{self.threshold_c}c_" + "{gcm}_{scenario}_{year}_map",
                 source="map_array",
             ),
             units="degree days",
-            scenarios=[
-                Scenario(id="historical", years=[self.central_year_historical]),
-                Scenario(id="ssp126", years=list(self.central_years)),
-                Scenario(id="ssp245", years=list(self.central_years)),
-                Scenario(id="ssp585", years=list(self.central_years)),
-            ],
+            scenarios=scenarios,
         )
         return resource
 
@@ -159,7 +166,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         if top > 85.05 or bottom < -85.05:
             raise ValueError("invalid range")
         logger.info(f"Writing map file {map_path}")
-        target.write(map_path, reprojected)
+        target.write(map_path, reprojected, spatial_coords=False)
         return
 
     def _average_degree_days(
