@@ -1,0 +1,84 @@
+---
+# Run all notebooks on every push
+name: "🗒️ Notebook Testing"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+
+  validate-notebook-tests:
+    name: "Check for notebook tests"
+    if: github.event.pull_request.merged == false
+    permissions:
+      actions: 'write'
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.proceed.outputs.proceed }}
+    steps:
+      - name: "Checking for test files"
+        id: proceed
+        run: |
+          RESULT=(**/test_*.ipynb)
+          if [ -z "${RESULT[0]}" ]; then
+            echo "Found Jupyter Notebook tests"
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  parse-project-metadata:
+    name: "Determine Python versions"
+    needs: [validate-notebook-tests]
+    if: needs.validate-notebook-tests.outputs.proceed == 'true'
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+
+  notebook-tests:
+    name: "Test Jupyter Notebooks"
+    needs: [validate-notebook-tests, parse-project-metadata]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    # Don't run when pull request is merged
+    if: github.event.pull_request.merged == 'false'
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install dependencies"
+        run: |
+          which python; which python3
+          python --version; python3 --version
+          python -m pip install --upgrade pip
+          pdm export -o requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install .
+          pip install pytest nbmake
+
+      - name: "Testing Jupyter Notebooks"
+        run: |
+          echo "Testing notebooks using: pytest --nbmake -- **/test_*.ipynb"
+          pytest --nbmake -- **/test_*.ipynb
+
+      - name: Upload logs as artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: /tmp/*.log
+          retention-days: 14

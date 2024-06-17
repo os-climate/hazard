@@ -1,10 +1,13 @@
 # Temporary devops repo
-.devops
+/.devops
+
+# Twine temporary files
+package-lock.json
+package.json
 
 # Output files from co2budget.ipynb (ITR-Examples)
 OECM-images
 TPI-images
-
 
 # Local node cache
 node_modules
@@ -100,8 +103,8 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
-target/
+/.pybuilder/
+/target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
