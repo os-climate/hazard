@@ -62,7 +62,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v2.1.1
+        uses: sigstore/gh-action-sigstore-python@v2
 
         with:
           inputs: >-
