@@ -86,12 +86,12 @@ repos:
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.7.0.14
+    rev: v1.7.1.15
     hooks:
       - id: actionlint
 
   - repo: https://github.com/pycqa/flake8
-    rev: "7.0.0"
+    rev: "7.1.0"
     hooks:
       - id: flake8
         additional_dependencies:
@@ -104,7 +104,7 @@ repos:
         args: [ "-d", "{rules: {line-length: {max: 120}}, ignore-from-file: [.gitignore],}", ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.5
+    rev: v0.5.0
     hooks:
       - id: ruff
         files: ^(scripts|tests|custom_components)/.+\.py$
@@ -113,7 +113,7 @@ repos:
         files: ^(scripts|tests|custom_components)/.+\.py$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.0"
+    rev: "v1.10.1"
     hooks:
       - id: mypy
         verbose: true
