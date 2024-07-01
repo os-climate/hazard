@@ -11,6 +11,7 @@ SOURCE_FILE="bootstrap.yaml"
 WGET_URL="https://raw.githubusercontent.com/os-climate/devops-toolkit/main/.github/workflows/$SOURCE_FILE"
 AUTOMATION_BRANCH="update-devops-tooling"
 DEVOPS_DIR=".devops"
+FETCH_MODE="wget"
 
 ### Checks ###
 
@@ -21,13 +22,16 @@ fi
 
 WGET_CMD=$(which wget)
 if [ ! -x "$WGET_CMD" ]; then
-    echo "WGET command was NOT found in PATH"; exit 1
+    echo "WGET command was NOT found in PATH; using CURL"
+    FETCH_MODE="curl"
 fi
 
 MKTEMP_CMD=$(which mktemp)
 if [ ! -x "$MKTEMP_CMD" ]; then
     echo "MKTEMP command was NOT found in PATH"; exit 1
 fi
+
+
 
 SHELL_SCRIPT=$(mktemp -t script-XXXXXXXX.sh)
 
@@ -95,15 +99,21 @@ if [ -f "$SOURCE_FILE" ]; then
     echo "Removing existing copy of: $SOURCE_FILE"
     rm "$SOURCE_FILE"
 fi
-echo "Pulling latest DevOps bootstrap workflow from:"
+echo "Pulling latest DevOps bootstrap YAML from:"
 echo "  $WGET_URL"
-"$WGET_CMD" -q "$WGET_URL"
+if [ "$FETCH_MODE" = "wget" ]; then
+    "$WGET_CMD" -q "$WGET_URL" > /dev/null 2>&1
+fi
+if [ ! -f "$SOURCE_FILE" ]; then
+    echo "Attempting to retrieve YAML file with CURL"
+    curl "$WGET_URL" > "$SOURCE_FILE"
+fi
 
 # The section below extracts shell code from the YAML file
 echo "Extracting shell code from: $SOURCE_FILE"
 EXTRACT="false"
 while read -r LINE; do
-    if [ "$LINE" = "### SHELL CODE START ###" ]; then
+    if [ "$LINE" = "#SHELLCODESTART" ]; then
         EXTRACT="true"
         SHELL_SCRIPT=$(mktemp -t script-XXXXXXXX.sh)
         touch "$SHELL_SCRIPT"
@@ -113,7 +123,7 @@ while read -r LINE; do
     fi
     if [ "$EXTRACT" = "true" ]; then
         echo "$LINE" >> "$SHELL_SCRIPT"
-        if [ "$LINE" = "### SHELL CODE END ###" ]; then
+        if [ "$LINE" = "#SHELLCODEEND" ]; then
             break
         fi
     fi
