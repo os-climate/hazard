@@ -1,4 +1,4 @@
-Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate. 
+Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate.
 This is derived from a data set of protected flood extent i.e. the minimum return period for which flood depth is non-zero.
 
 The data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the

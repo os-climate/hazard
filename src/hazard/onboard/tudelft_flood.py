@@ -76,18 +76,18 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         The files comprise flood depth and flood extent, protected and unprotected.
         Flood extent is understood to contain the minimum return period for which a flood can occur.
         This implies that *unprotected* flood extent is simply inferred from flood depth, presenting the
-        minimum return period for which flood depth is non-zero. This can be (and was for some examples) checked, e.g. for 
+        minimum return period for which flood depth is non-zero. This can be (and was for some examples) checked, e.g. for
         pixels where the 30 year return flood depth is non-zero and the 10 year return flood depth is zero, which
         should then have a 30 year flood extent. Protected flood extent is defined in the same way, but some caution required.
         The data set takes into account a minimum and maximum standard of protection (SoP) from FLOPROS as shown
         in Fig 3.2 of http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf
-        The protected extent (assuming flood depth curve all non-zero) would then be the maximum SoP. In the UK, 
+        The protected extent (assuming flood depth curve all non-zero) would then be the maximum SoP. In the UK,
         for example, the SoP is between 100 years and 300 years. It it tempting to set protected flood depths which are less
         than the maximum SoP to zero, however this will not give us the behaviour we want in calculations.
         Say we have 30, 100, 300 and 1000 year flood depths of 0.2, 0.4, 0.5 and 0.6m and we know the SoP is between 100 years and 300 years.
         Unprotected we would have a probability of (1/100 - 1/300) of a depth between 0.4 and 0.5m and (1/300 - 1/1000) of a depth between 0.5 and 0.6m.
         Protected, we either want to set our probability of depth between 0.4 and 0.5m to zero or - more likely - some
-        lower value to reflect the uncertainty of the SoP. In neither case do we get the desired result by setting the flood depth to zero. 
+        lower value to reflect the uncertainty of the SoP. In neither case do we get the desired result by setting the flood depth to zero.
         In summary, we think it's best to provide data sets of
         - unprotected depth
         - SoP
