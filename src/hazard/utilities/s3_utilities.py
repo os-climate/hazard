@@ -73,7 +73,7 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
         loop.run_until_complete(copy_all())
 
 
-def copy_dev_to_prod(prefix: str, dry_run=False):
+def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
     """Use this script to copy files with the prefix specified from
     dev S3 to prod S3.
     OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
@@ -104,22 +104,25 @@ def copy_dev_to_prod(prefix: str, dry_run=False):
     ):
         # double check on environment variables
         raise ValueError("unexpected bucket")
-    keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
-    logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-    logger.info(
-        f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
-    )
-    if not dry_run:
-        copy_objects(
-            keys,
-            s3_source_client,
-            source_bucket_name,
-            s3_target_client,
-            target_bucket_name,
+    if sync:
+        sync_buckets(
+            s3_source_client, source_bucket_name, s3_target_client, target_bucket_name, prefix=prefix, dry_run=dry_run
         )
+    else:
+        keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
+        logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
+        logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+        if not dry_run:
+            copy_objects(
+                keys,
+                s3_source_client,
+                source_bucket_name,
+                s3_target_client,
+                target_bucket_name,
+            )
 
 
-def copy_prod_to_public(prefix: str, dry_run=False):
+def copy_prod_to_public(prefix: str, dry_run=False, sync=True):
     """Use this script to copy files with the prefix specified from
     prod S3 to public S3.
     OSC_S3_BUCKET=physrisk-hazard-indicators
@@ -148,19 +151,22 @@ def copy_prod_to_public(prefix: str, dry_run=False):
     ):
         # double check on environment variables
         raise ValueError("unexpected bucket")
-    keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
-    logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-    logger.info(
-        f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
-    )
-    if not dry_run:
-        copy_objects(
-            keys,
-            s3_source_client,
-            source_bucket_name,
-            s3_target_client,
-            target_bucket_name,
+    if sync:
+        sync_buckets(
+            s3_source_client, source_bucket_name, s3_target_client, target_bucket_name, prefix=prefix, dry_run=dry_run
         )
+    else:
+        keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
+        logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
+        logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+        if not dry_run:
+            copy_objects(
+                keys,
+                s3_source_client,
+                source_bucket_name,
+                s3_target_client,
+                target_bucket_name,
+            )
 
 
 def list_objects(client, bucket_name, prefix):
