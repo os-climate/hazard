@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 import sys
-from typing import List, Tuple
 
 import numpy as np
 import s3fs  # type: ignore
@@ -33,9 +32,9 @@ def get_geotiff_meta_data(path, s3):
 
     with s3.open(path) as f:
         with TiffFile(f) as tif:
-            scale: Tuple[float, float, float] = tif.geotiff_metadata["ModelPixelScale"]
-            tie_point: List[float] = tif.geotiff_metadata["ModelTiepoint"]
-            shape: List[int] = tif.series[0].shape
+            scale = tif.geotiff_metadata["ModelPixelScale"]
+            tie_point = tif.geotiff_metadata["ModelTiepoint"]
+            shape = tif.series[0].shape
             i, j, k, x, y, z = tie_point[0:6]
             sx, sy, sz = scale
             transform = Affine(sx, 0.0, x - i * sx, 0.0, -sy, y + j * sy)

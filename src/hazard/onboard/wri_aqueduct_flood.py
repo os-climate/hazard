@@ -61,7 +61,7 @@ class WRIAqueductFlood(IndicatorModel):
         ]
         years = [2030, 2050, 2080]
         scenarios = ["rcp4p5", "rcp8p5"]
-        items: List[BatchItem] = []
+        items = []
         for gcm in gcms:
             for year in years:
                 for scenario in scenarios:
@@ -86,7 +86,7 @@ class WRIAqueductFlood(IndicatorModel):
         subs = ["wtsub", "nosub"]
         years = [2030, 2050, 2080]
         scenarios = ["rcp4p5", "rcp8p5"]
-        items: List[BatchItem] = []
+        items = []
         for model in models:
             for sub in subs:
                 for year in years:
