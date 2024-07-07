@@ -190,6 +190,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 display_groups=[],
                 map=MapInfo(
                     bounds=[],
+                    bbox=[],
                     colormap=Colormap(
                         max_index=255,
                         min_index=1,

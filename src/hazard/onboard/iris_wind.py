@@ -100,6 +100,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
             display_groups=[],
             map=MapInfo(
                 bounds=[(-180.0, 60.0), (180.0, 60.0), (180.0, -60.0), (-180.0, -60.0)],
+                bbox=[-180.0, -60.0, 180.0, 60.0],
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,

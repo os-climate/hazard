@@ -305,6 +305,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         map = MapInfo(
             colormap=self.resource.map.colormap,
             bounds=self.resource.map.bounds,
+            bbox=self.resource.map.bbox,
             path=self.resource.map.path.format(gcm="E2O", scenario="{scenario}", year="{year}"),
             index_values=self.resource.map.index_values,
             source=self.resource.map.source,
