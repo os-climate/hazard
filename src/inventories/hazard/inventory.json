@@ -1819,14 +1819,19 @@
           "min_index": 1,
           "min_value": 0.0,
           "max_index": 255,
-          "max_value": 5.0,
-          "name": "flare",
+          "max_value": 100.0,
+          "name": "heating",
           "nodata_index": 0,
           "units": "millimetres/year"
         },
         "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
-        "bounds": [],
-        "bbox": [-180.0, -85.0, 180.0, 85.0],
+        "bounds": [
+          [-180.0, 85.0],
+          [180.0, 85.0],
+          [180.0, -60.0],
+          [-180.0, -60.0]
+        ],
+        "bbox": [-180.0, -60.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },

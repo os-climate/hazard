@@ -99,14 +99,15 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
                 group_id="",
                 display_groups=[],
                 map=MapInfo(
-                    bounds=[],
+                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                    bbox=[-180.0, -60.0, 180.0, 85.0],
                     colormap=Colormap(
                         max_index=255,
                         min_index=1,
                         nodata_index=0,
-                        name="flare",
+                        name="heating",
                         min_value=0.0,
-                        max_value=5.0,
+                        max_value=100.0,
                         units="millimetres/year",
                     ),
                     index_values=None,

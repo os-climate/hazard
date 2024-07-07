@@ -284,6 +284,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     units="weeks/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
+                bbox=[-180.0, -85.0, 180.0, 85.0],
                 path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
                 source="map_array_pyramid",
