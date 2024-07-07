@@ -10,7 +10,7 @@
       "params": {},
       "display_name": "Flood depth/baseline (WRI)",
       "display_groups": [],
-      "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+      "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n\nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -28,6 +28,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -67,6 +68,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -110,6 +112,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -153,6 +156,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -196,6 +200,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -239,6 +244,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -282,6 +288,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -321,6 +328,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -364,6 +372,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -407,6 +416,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -450,6 +460,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -489,6 +500,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -532,6 +544,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -575,6 +588,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [8],
         "source": "map_array_pyramid"
       },
@@ -627,6 +641,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -678,6 +693,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -721,6 +737,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -764,6 +781,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -807,6 +825,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -850,6 +869,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -893,6 +913,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -936,6 +957,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -989,6 +1011,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -1050,6 +1073,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -60.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array"
       },
@@ -1083,7 +1107,7 @@
       "params": {},
       "display_name": "Max wind speed (IRIS)",
       "display_groups": [],
-      "description": "Assessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.\nhttps://www.imperial.ac.uk/grantham/research/climate-science/modelling-tropical-cyclones/\n",
+      "description": "Assessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.\n<https://www.imperial.ac.uk/grantham/research/climate-science/modelling-tropical-cyclones/>\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1101,6 +1125,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1161,6 +1186,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [16, 20, 24],
         "source": "map_array"
       },
@@ -1221,6 +1247,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [16, 20, 24],
         "source": "map_array"
       },
@@ -1276,6 +1303,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [
           5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40
         ],
@@ -1335,6 +1363,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [
           5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40
         ],
@@ -1369,7 +1398,7 @@
       "display_groups": [
         "Days with wet-bulb globe temperature above threshold in \u00b0C"
       ],
-      "description": "Days per year for which the 'Wet Bulb Globe Temperature' indicator is above a threshold specified in \u00b0C:\n\n$$\nI =  \\frac{365}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{\\; \\, T^\\text{WBGT}_i > T^\\text{ref}} \\nonumber\n$$\n\n$I$ is the indicator, $n_y$ is the number of days in the sample and $T^\\text{ref}$ is the reference temperature.\n\nThe 'Wet-Bulb Globe Temperature' (WBGT) indicator is calculated from both the average daily near-surface surface temperature in \u00b0C denoted $T^\\text{avg}$ and the water vapour partial pressure in kPa denoted $p^\\text{vapour}$:\n\n$$\nT^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times p^\\text{vapour}_i + 3.94\n$$\n\nThe water vapour partial pressure $p^\\text{vapour}$ is calculated from relative humidity $h^\\text{relative}$:\n\n$$\np^\\text{vapour}_i = \\frac{h^\\text{relative}_i}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)\n$$\n\nThe OS-Climate-generated indicators are inferred from downscaled CMIP6 data, averaged over for 6 Global Circulation Models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nIndicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050), 2050 (2041-2060), 2060 (2051-2070), 2070 (2061-2080), 2080 (2071-2090) and  2090 (2081-2100).\n",
+      "description": "Days per year for which the 'Wet Bulb Globe Temperature' indicator is above a threshold specified in \u00b0C:\n\n$$\nI =  \\frac{365}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{\\; \\, T^\\text{WBGT}_i > T^\\text{ref}} \\nonumber\n$$\n\n$I$ is the indicator, $n_y$ is the number of days in the sample and $T^\\text{ref}$ is the reference temperature.\n\nThe 'Wet-Bulb Globe Temperature' (WBGT) indicator is calculated from both the average daily near-surface surface temperature in \u00b0C denoted $T^\\text{avg}$ and the water vapour partial pressure in kPa denoted $p^\\text{vapour}$:\n\n$$\nT^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times p^\\text{vapour}_i + 3.94\n$$\n\nThe water vapour partial pressure $p^\\text{vapour}$ is calculated from relative humidity $h^\\text{relative}$:\n\n$$\np^\\text{vapour}_i = \\frac{h^\\text{relative}_i}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)\n$$\n\nThe OS-Climate-generated indicators are inferred from downscaled CMIP6 data, averaged over for 6 Global Circulation Models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nIndicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050), 2050 (2041-2060), 2060 (2051-2070), 2070 (2061-2080), 2080 (2071-2090) and 2090 (2081-2100).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1387,6 +1416,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
         "source": "map_array_pyramid"
       },
@@ -1424,7 +1454,7 @@
       "params": {},
       "display_name": "Water demand in centimeters/year (Aqueduct 4.0)",
       "display_groups": ["Water demand in centimeters/year (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1442,6 +1472,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1475,7 +1506,7 @@
       "params": {},
       "display_name": "Water supply in centimeters/year (Aqueduct 4.0)",
       "display_groups": ["Water supply in centimeters/year (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1493,6 +1524,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1526,7 +1558,7 @@
       "params": {},
       "display_name": "Water stress (Aqueduct 4.0)",
       "display_groups": ["Water stress (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1544,6 +1576,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1577,7 +1610,7 @@
       "params": {},
       "display_name": "Water depletion (Aqueduct 4.0)",
       "display_groups": ["Water depletion (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1595,6 +1628,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1628,7 +1662,7 @@
       "params": {},
       "display_name": "Water stress category (Aqueduct 4.0)",
       "display_groups": ["Water stress category (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1646,6 +1680,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1679,7 +1714,7 @@
       "params": {},
       "display_name": "Water depletion category (Aqueduct 4.0)",
       "display_groups": ["Water depletion category (Aqueduct 4.0)"],
-      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n* **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+      "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1697,6 +1732,7 @@
           [180.0, -85.0],
           [-180.0, -85.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": null,
         "source": "map_array_pyramid"
       },
@@ -1750,6 +1786,7 @@
           [180.0, -60.0],
           [-180.0, -60.0]
         ],
+        "bbox": [-180.0, -85.0, 180.0, 85.0],
         "index_values": [0, -1, -1.5, -2, -2.5, -3, -3.6],
         "source": "map_array_pyramid"
       },
@@ -1764,14 +1801,14 @@
     {
       "hazard_type": "RiverineInundation",
       "group_id": "",
-      "path": "inundation/river_tudelft/v2/flood_depth_{scenario}_{year}",
+      "path": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
       "indicator_id": "flood_depth",
       "indicator_model_id": "tudelft",
       "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
       "params": {},
       "display_name": "Flood depth (TUDelft)",
       "display_groups": [],
-      "description": "Flood depth for riverine floods occurring in Europe in the present and future climate, including protection levels\nfrom the FLOPROS database.\nBased on the CLMcom-CCLM4-8-17-EC-EARTH regional climate simulation (EURO-CORDEX), sets are available for RCP 4.5 and RCP 8.5\nfor projected (central) years 2035 and 2085. The set has a spatial resolution of 100m and comprises return periods of\n10, 30, 100, 300 and 1000 years.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the \n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nTo derive this indicator, 'River_flood_extent_X_Y_Z_with_protection' and 'River_flood_depth_X_Y_Z_R' data sets are combined to\nyield protected flood depths.",
+      "description": "Unprotected flood depth for riverine floods occurring in Europe in the present and future climate.\nBased on the CLMcom-CCLM4-8-17-EC-EARTH regional climate simulation (EURO-CORDEX), sets are available for RCP 4.5 and RCP 8.5\nfor projected (central) years 2035 and 2085. The set has a spatial resolution of 100 m and comprises return periods of\n10, 30, 100, 300 and 1000 years.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the\n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nUnprotected flood depths are combined from the 'River_flood_depth_X_Y_Z_R' data sets.\nStandard of protection data is separately available using the 'River_flood_extent_X_Y_Z_with_protection' data set\n(which makes use of the FLOPROS database), which provides protected flood extent.\n",
       "map": {
         "colormap": {
           "min_index": 1,
@@ -1782,15 +1819,16 @@
           "nodata_index": 0,
           "units": "metres"
         },
-        "path": "maps/inundation/river_tudelft/v2/flood_depth_{scenario}_{year}_map",
+        "path": "maps/inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}_map",
         "bounds": [],
+        "bbox": [],
         "index_values": null,
         "source": "map_array_pyramid"
       },
       "scenarios": [
         {
           "id": "historical",
-          "years": [1971]
+          "years": [1985]
         },
         {
           "id": "rcp4p5",
@@ -1802,6 +1840,49 @@
         }
       ],
       "units": "metres"
+    },
+    {
+      "hazard_type": "RiverineInundation",
+      "group_id": "",
+      "path": "inundation/river_tudelft/v2/flood_sop_{scenario}_{year}",
+      "indicator_id": "flood_sop",
+      "indicator_model_id": "tudelft",
+      "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
+      "params": {},
+      "display_name": "Standard of protection (TUDelft)",
+      "display_groups": [],
+      "description": "Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate. \nThis is derived from a data set of protected flood extent i.e. the minimum return period for which flood depth is non-zero.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the\n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nThe 'River_flood_extent_X_Y_Z_with_protection' data set is obtained by applying FLOPROS database flood protection standards\non top of a data set of unprotected flood depth. That is, it provides information about flood protection for regions susceptible\nto flood. This data set is not simply based on FLOPROS database therefore.\n\nA minimum and maximum is provided to capture uncertainty in flood protection which vulnerability models may choose to take into\naccount. The protection bands are those of FLOPROS: 2-10 years, 10-30 years, 30-100 years, 100-300 years, 300-1000 years, 1000-10000 years.\n\nAs an example, if a region has a protected extent of 300 years, this is taken to imply that the area is protected against flood within the\nbounds 100-300 years. It is then a modelling choice as to whether protection is taken from the 100 or 300 year flood depth.\n",
+      "map": {
+        "colormap": {
+          "min_index": 1,
+          "min_value": 0.0,
+          "max_index": 255,
+          "max_value": 1500.0,
+          "name": "flare",
+          "nodata_index": 0,
+          "units": "years"
+        },
+        "path": "maps/inundation/river_tudelft/v2/flood_sop_{scenario}_{year}_map",
+        "bounds": [],
+        "bbox": [],
+        "index_values": null,
+        "source": "map_array_pyramid"
+      },
+      "scenarios": [
+        {
+          "id": "historical",
+          "years": [1985]
+        },
+        {
+          "id": "rcp4p5",
+          "years": [2035, 2085]
+        },
+        {
+          "id": "rcp8p5",
+          "years": [2035, 2085]
+        }
+      ],
+      "units": "years"
     }
   ]
 }
