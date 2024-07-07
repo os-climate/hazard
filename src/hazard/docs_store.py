@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional
 import s3fs  # type: ignore
 from fsspec import AbstractFileSystem  # type: ignore
 from fsspec.implementations.local import LocalFileSystem
-from pydantic import BaseModel, parse_obj_as
+from pydantic import parse_obj_as
 
 from hazard.sources.osc_zarr import default_dev_bucket
 
@@ -90,11 +90,11 @@ class DocStore:
         """Write a hazard models inventory as STAC."""
 
         if self._fs == s3fs.S3FileSystem:
-            path_Root = self._root
+            path_root = self._root
         else:
             path_root = "."
 
-        items = HazardResources(resources=resources).to_stac_items(path_root=path_root, items_as_dicts=True)
+        items = HazardResources(resources=list(resources)).to_stac_items(path_root=path_root, items_as_dicts=True)
         for it in items:
             with self._fs.open(self._full_path_stac_item(id=it["id"]), "w") as f:
                 f.write(json.dumps(it, indent=4))

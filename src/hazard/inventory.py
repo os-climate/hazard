@@ -183,7 +183,7 @@ class HazardResource(BaseModel):
 
 
 class HazardResources(BaseModel):
-    resources: Iterable[HazardResource]
+    resources: List[HazardResource]
 
     def to_stac_items(self, path_root: str, items_as_dicts: bool = False) -> List[Union[pystac.Item, Dict[str, Any]]]:
         """

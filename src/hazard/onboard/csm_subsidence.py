@@ -45,13 +45,14 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
             source_dir (str): directory containing source files.
         """
         self.resource = list(self.inventory())[0]
-        self.source = pathlib.PurePosixPath(pathlib.Path(source_dir).as_posix(), "ds03.tif")
-        if not os.path.exists(source_dir):
-            os.makedirs(source_dir)
-        if not os.path.exists(str(self.source)):
-            # Download source data
-            url = "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
-            download_file(url, str(self.source.parent), filename=self.source.parts[-1])
+        if source_dir is not None:
+            self.source = pathlib.PurePosixPath(pathlib.Path(source_dir).as_posix(), "ds03.tif")
+            if not os.path.exists(source_dir):
+                os.makedirs(source_dir)
+            if not os.path.exists(str(self.source)):
+                # Download source data
+                url = "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
+                download_file(url, str(self.source.parent), filename=self.source.parts[-1])
 
     def batch_items(self) -> Iterable[BatchItem]:
         return [
