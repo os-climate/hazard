@@ -387,6 +387,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                     units="months/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=self.spei_threshold,
                 path="drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 source="map_array_pyramid",

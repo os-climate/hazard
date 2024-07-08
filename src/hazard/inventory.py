@@ -118,8 +118,7 @@ class HazardResource(BaseModel):
         in a single STAC item in the list.
         """
         keys, values = zip(*self.params.items())
-        params_permutations = list(itertools.product(*values))
-        params_permutations = [dict(zip(keys, p)) for p in params_permutations]
+        params_permutations = [dict(zip(keys, p)) for p in list(itertools.product(*values))]
 
         scenarios_permutations = []
         for s in self.scenarios:
@@ -163,8 +162,8 @@ class HazardResource(BaseModel):
 
         stac_item = pystac.Item(
             id=item_id,
-            geometry={"type": "Polygon", "coordinates": [self.map.bounds]},
-            bbox=self.map.bbox,
+            geometry=None if self.map is None else {"type": "Polygon", "coordinates": [self.map.bounds]},
+            bbox=None if self.map is None else self.map.bbox,
             datetime=None,
             start_datetime=datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
             end_datetime=datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc),

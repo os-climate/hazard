@@ -89,6 +89,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     units="fractional loss",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
                 path="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
                 source="map_array",

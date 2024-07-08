@@ -10,6 +10,7 @@ from hazard.models.drought_index import DroughtIndicator
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.models.work_loss import WorkLossIndicator
+from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
 from hazard.onboard.tudelft_flood import TUDelftRiverFlood
@@ -45,6 +46,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
         WRIAqueductWaterRisk(),
         DroughtIndicator(None),
         TUDelftRiverFlood(None),
+        DavydzenkaEtAlLandSubsidence(None),
     ]
 
     docs_store.write_new_empty_inventory()

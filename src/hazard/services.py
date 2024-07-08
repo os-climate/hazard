@@ -1,5 +1,5 @@
 import logging  # noqa: E402
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional
 
 from dask.distributed import Client, LocalCluster  # noqa: E402
 from fsspec.implementations.local import LocalFileSystem
@@ -105,7 +105,7 @@ def setup(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     extra_xarray_store: Optional[bool] = False,
-) -> Tuple[Union[DocStore, OscZarr, Client]]:
+) -> tuple[DocStore, OscZarr, Client]:
     """
     initialize output store, docs store and local dask client
     """

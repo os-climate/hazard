@@ -284,6 +284,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     units="weeks/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
+                bbox=[-180.0, -85.0, 180.0, 85.0],
                 path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
                 source="map_array_pyramid",
@@ -304,6 +305,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         map = MapInfo(
             colormap=self.resource.map.colormap,
             bounds=self.resource.map.bounds,
+            bbox=self.resource.map.bbox,
             path=self.resource.map.path.format(gcm="E2O", scenario="{scenario}", year="{year}"),
             index_values=self.resource.map.index_values,
             source=self.resource.map.source,

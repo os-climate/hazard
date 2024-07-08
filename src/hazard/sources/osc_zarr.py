@@ -276,7 +276,7 @@ class OscZarr(ReadWriteDataArray):
         ]
         mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
         attrs["crs"] = crs
-        use_xy = crs.upper() == "EPSG:3857"
+        use_xy = crs.upper() != "EPSG:4326"
         attrs["transform_mat3x3"] = mat3x3
         attrs["dimensions"] = ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
         if indexes is not None:

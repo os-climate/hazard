@@ -137,6 +137,7 @@ and 0% for other months, the hazard indicator value is 20%.
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -185,6 +186,7 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -227,6 +229,7 @@ downscaled Global Climate Models (GCMs).
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -269,6 +272,7 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -311,6 +315,7 @@ across multiple Global Climate Models (GCMs).
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -353,6 +358,7 @@ from multiple Global Climate Models (GCMs).
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
@@ -397,6 +403,7 @@ Open oceans are excluded.
                         (180.0, -85.0),
                         (-180.0, -85.0),
                     ],
+                    bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,

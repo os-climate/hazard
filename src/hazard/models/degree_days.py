@@ -3,7 +3,7 @@ import os
 from contextlib import ExitStack
 from enum import Enum
 from pathlib import PosixPath, PurePosixPath
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 import xarray as xr
 from dask.distributed import Client
@@ -119,6 +119,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
                     units="degree days",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                bbox=[-180.0, -60.0, 180.0, 85.0],
                 path=f"mean_degree_days_v2_above_{self.threshold_c}c_" + "{gcm}_{scenario}_{year}_map",
                 source="map_array",
             ),
@@ -308,7 +309,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         return da
 
     def _resource(self):
-        resources: Dict[str, HazardResource] = {}
+        resources = {}
         for above_below in ["above", "below"]:
             with open(os.path.join(os.path.dirname(__file__), "degree_days.md"), "r") as f:
                 description = f.read()
