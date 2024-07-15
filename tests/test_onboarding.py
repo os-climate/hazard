@@ -15,7 +15,7 @@ from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jrc_landslides import JRCLandslides
-from hazard.onboard.jupiter import JupiterOscFileSource
+from hazard.onboard.jrc_subsidence import JRCSubsidence
 from hazard.onboard.jupiter import (
     Jupiter,  # type: ignore
     JupiterOscFileSource,
@@ -245,6 +245,20 @@ def test_wet_bulb_globe_temp(test_output_dir):
 def test_onboard_landslides_jrc(test_output_dir):
     source_path = os.path.join(test_output_dir, "jrc", "jrc_landslides")
     model = JRCLandslides(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_subsidence_jrc(test_output_dir):
+    source_path = os.path.join(test_output_dir, "jrc", "jrc_subsidence")
+    model = JRCSubsidence(source_path)
 
     batch_items = model.batch_items()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
