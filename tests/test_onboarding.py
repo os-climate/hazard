@@ -21,6 +21,7 @@ from hazard.onboard.jupiter import (
     JupiterOscFileSource,
 )
 from hazard.onboard.tudelft_flood import TUDelftRiverFlood
+from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRisk,
@@ -264,6 +265,21 @@ def test_onboard_subsidence_jrc(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
     for batch_item in batch_items:
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_fire_tudelft(test_output_dir):
+    source_path = os.path.join(test_output_dir, "tudelft", "tudelft_fire")
+    model = TUDelftFire(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.prepare(batch_item)
         model.run_single(batch_item, None, target, None)
 
     # model.create_maps(target, target)
