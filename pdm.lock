@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "black[jupyter]", "lint", "test"]
 strategy = ["cross_platform", "inherit_metadata"]
-lock_version = "4.4.1"
-content_hash = "sha256:cf7422c3d5aa618099383df71b0e1415c4fe2482721b8661033188990e234daf"
+lock_version = "4.4.2"
+content_hash = "sha256:bce91d60d6a1d5633a54d22e1955a7d4ca26c3a8e4c86d6900bc74976bb8371c"
 
 [[package]]
 name = "affine"
@@ -963,6 +963,16 @@ groups = ["default"]
 files = [
     {file = "fsspec-2024.3.1-py3-none-any.whl", hash = "sha256:918d18d41bf73f0e2b261824baeb1b124bcf771767e3a26425cd7dec3332f512"},
     {file = "fsspec-2024.3.1.tar.gz", hash = "sha256:f39780e282d7d117ffb42bb96992f8a90795e4d0fb0f661a70ca39fe9c43ded9"},
+]
+
+[[package]]
+name = "gdal"
+version = "3.9.1"
+requires_python = ">=3.8.0"
+summary = "GDAL: Geospatial Data Abstraction Library"
+groups = ["default"]
+files = [
+    {file = "gdal-3.9.1.tar.gz", hash = "sha256:6d8a8f162ed32c5cb58839fa9198def477c68b670eed4cbce9eeef387ac3c8da"},
 ]
 
 [[package]]
