@@ -143,7 +143,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         assert target is None or isinstance(target, OscZarr)
         shape = [
             39420,
-            38374,
+            38375,
         ]  # y, x not all returns have same size (first one smaller at 38371)
         for i, return_period in enumerate(self.return_periods):
             full_path_depth = str(full_path_depth_format).format(
