@@ -126,7 +126,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         full_path_depth_format = PurePosixPath(self.source_dir, item.flood_depth_filename)
         full_path_extent = PurePosixPath(self.source_dir, item.extent_protected_filename)
         assert target is None or isinstance(target, OscZarr)
-        shape = [39420, 38374]  # y, x not all returns have same size (first one smaller at 38371)
+        shape = [39420, 38375]  # y, x not all returns have same size (first one smaller at 38371)
         for i, return_period in enumerate(self.return_periods):
             full_path_depth = str(full_path_depth_format).format(return_period=self.return_period_str[return_period])
             with self.fs.open(full_path_depth, "rb") as fd:
