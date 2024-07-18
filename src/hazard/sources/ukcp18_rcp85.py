@@ -42,9 +42,6 @@ class Ukcp18Rcp85(OpenDataset):
 
         yield converted_to_kelvin
 
-        if only_data_for_year is not None:
-            only_data_for_year.close()
-
     def _combine_all_files_data(self, files_available_for_quantity: List[str]) -> xr.Dataset:
         datasets = []
         for file in files_available_for_quantity:
