@@ -65,6 +65,8 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         self, tas: xr.DataArray, year: int, threshold_temps_c: List[float]
     ) -> List[xr.DataArray]:
         """Create DataArrays containing indicators the thresholds for a single year."""
+        logger.info("Data used in DaysTasAboveIndicator")
+        logger.info(tas)
         if any(coord not in tas.coords.keys() for coord in ["lat", "lon", "time"]):
             raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
         if (tas.time.dt.year != year).any():
