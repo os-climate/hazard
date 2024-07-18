@@ -37,10 +37,10 @@ class Ukcp18Rcp85(OpenDataset):
         )
         all_data_from_files = self._combine_all_files_data(files_available_for_quantity)
         only_data_for_year = all_data_from_files.sel(time=str(year))
+        reprojected = self._reproject_quantity(only_data_for_year, quantity)
+        converted_to_kelvin = self._convert_to_kelvin(reprojected, quantity)
 
-        only_data_for_year_with_quantity_reprojected = self._reproject_quantity(only_data_for_year, quantity)
-
-        yield only_data_for_year_with_quantity_reprojected
+        yield converted_to_kelvin
 
         if only_data_for_year is not None:
             only_data_for_year.close()
@@ -70,12 +70,21 @@ class Ukcp18Rcp85(OpenDataset):
                     files_that_contain_year.append(f"{ftp_url}{file}")
         return files_that_contain_year
 
-    def _reproject_quantity(self, only_data_for_year: xr.Dataset, quantity: str) -> xr.Dataset:
-        squeezed = only_data_for_year[quantity].squeeze()
+    def _reproject_quantity(self, dataset: xr.Dataset, quantity: str) -> xr.Dataset:
+        squeezed = dataset[quantity].squeeze()
         no_grid_values = squeezed.drop_vars(["grid_latitude", "grid_longitude"])
         del no_grid_values.attrs["grid_mapping"]
         pre_projection = no_grid_values.rio.write_crs("EPSG:27700")
         reprojected = pre_projection.rio.reproject("EPSG:4326")
         reprojected_and_renamed = reprojected.rename({"x": "lon", "y": "lat"})
-        only_data_for_year[quantity] = reprojected_and_renamed
-        return only_data_for_year
+        dataset[quantity] = reprojected_and_renamed
+        return dataset
+
+    def _convert_to_kelvin(self, dataset: xr.Dataset, quantity: str) -> xr.Dataset:
+        quantity_data = dataset[quantity]
+        converted = quantity_data + 273.15
+        converted.attrs["units"] = "K"
+        converted.attrs["label_units"] = "K"
+        converted.attrs["plot_label"] = "Mean air temperature at 1.5m (K)"
+        dataset[quantity] = converted
+        return dataset
