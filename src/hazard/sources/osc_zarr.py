@@ -16,6 +16,10 @@ default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 
 class OscZarr(ReadWriteDataArray):
+    __access_key = "OSC_S3_ACCESS_KEY_DEV"
+    __secret_key = "OSC_S3_SECRET_KEY_DEV"
+    __token = "OSC_S3_TOKEN_DEV"
+
     def __init__(
         self,
         bucket: str = default_dev_bucket,
@@ -37,10 +41,14 @@ class OscZarr(ReadWriteDataArray):
         if store is None:
             if s3 is None:
                 # zarr_utilities.load_dotenv() # to load environment variables
-                s3 = s3fs.S3FileSystem(
-                    key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
-                    secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
-                )
+                access_key = os.environ.get(self.__access_key, None)
+                secret_key = os.environ.get(self.__secret_key, None)
+                token = os.environ.get(self.__token, None)
+                if token:
+                    s3 = s3fs.S3FileSystem(key=access_key, secret=secret_key, token=token)
+                else:
+                    s3 = s3fs.S3FileSystem(key=access_key, secret=secret_key)
+
             group_path = str(PurePosixPath(bucket, prefix, "hazard.zarr"))
             store = s3fs.S3Map(root=group_path, s3=s3, check=False)
 

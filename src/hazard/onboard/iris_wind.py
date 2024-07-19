@@ -98,7 +98,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
             description=description,
             group_id="iris_osc",
             display_groups=[],
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 bounds=[(-180.0, 60.0), (180.0, 60.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 60.0],
                 colormap=Colormap(
