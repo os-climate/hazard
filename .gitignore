@@ -5,6 +5,9 @@
 OECM-images
 TPI-images
 
+# Test output paths
+
+**/test_output/**
 
 # Local node cache
 node_modules

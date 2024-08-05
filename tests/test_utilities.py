@@ -4,11 +4,9 @@ import numpy as np  # type: ignore
 import zarr  # type: ignore
 
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.xarray_utilities import (
-    data_array,
-    empty_data_array,
-    global_crs_transform,
-)
+from hazard.utilities.xarray_utilities import data_array, empty_data_array, global_crs_transform
+
+from .conftest import test_output_dir  # noqa:F401 used, it's a fixture
 
 
 def test_xarray_write_small(test_output_dir):  # noqa: F811

@@ -118,7 +118,8 @@ class HazardResource(BaseModel):
         in a single STAC item in the list.
         """
         keys, values = zip(*self.params.items())
-        params_permutations = [dict(zip(keys, p)) for p in list(itertools.product(*values))]
+        params_permutations = list(itertools.product(*values))
+        params_permutations_dicts = [dict(zip(keys, p)) for p in params_permutations]
 
         scenarios_permutations = []
         for s in self.scenarios:
@@ -127,7 +128,7 @@ class HazardResource(BaseModel):
 
         permutations = [
             dict(**param, **scenario)
-            for param, scenario in itertools.product(params_permutations, scenarios_permutations)
+            for param, scenario in itertools.product(params_permutations_dicts, scenarios_permutations)
         ]
 
         items = []
@@ -160,10 +161,12 @@ class HazardResource(BaseModel):
 
         link = pystac.Link(rel="collection", media_type="application/json", target="./collection.json")
 
+        coordinates = self.map.bounds if self.map else None
+        bbox = self.map.bbox if self.map else None
         stac_item = pystac.Item(
             id=item_id,
-            geometry=None if self.map is None else {"type": "Polygon", "coordinates": [self.map.bounds]},
-            bbox=None if self.map is None else self.map.bbox,
+            geometry={"type": "Polygon", "coordinates": [coordinates]},
+            bbox=bbox,
             datetime=None,
             start_datetime=datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
             end_datetime=datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc),
@@ -185,7 +188,7 @@ class HazardResource(BaseModel):
 class HazardResources(BaseModel):
     resources: List[HazardResource]
 
-    def to_stac_items(self, path_root: str, items_as_dicts: bool = False) -> List[Dict[str, Any]]:
+    def to_stac_items(self, path_root: str, items_as_dicts: bool = False) -> List[Union[pystac.Item, Dict]]:
         """
         converts hazard resources to a list of STAC items.
         """

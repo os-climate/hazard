@@ -36,7 +36,7 @@ class BatchItem:
 
 
 class ZarrWorkingStore(Protocol):
-    def get_store(self, path: str): ...
+    def get_store(self, path: str): ...  # noqa:E704
 
 
 class S3ZarrWorkingStore(ZarrWorkingStore):
@@ -376,7 +376,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             description="",
             display_groups=["Drought SPEI index"],  # display names of groupings
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,

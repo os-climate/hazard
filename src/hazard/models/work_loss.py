@@ -78,7 +78,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             display_groups=["Mean work loss"],  # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,

@@ -158,6 +158,7 @@ exclude = '''
   | \*.env
   | \build
   | \dist
+  | \.ipynb_checkpoints
 )/
 '''
 

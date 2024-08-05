@@ -85,7 +85,7 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     return reprojected
 
 
-def highest_zoom_slippy_maps(src: xr.DataArray): ...
+def highest_zoom_slippy_maps(src: xr.DataArray): ...  # noqa:E704
 
 
 def check_map_bounds(da: xr.DataArray):

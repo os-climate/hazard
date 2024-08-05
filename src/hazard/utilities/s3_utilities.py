@@ -256,7 +256,7 @@ def sync_buckets(
     different = set(key for key in all_diffs if key not in missing)
     logger.info(
         f"Copying {len(missing)} missing files from {source_bucket_name} to {target_bucket_name}: "
-        + _first_5_last_5(list(missing))
+        + _first_5_last_5(list(missing))  # noqa:W503
     )
     if not dry_run:
         copy_objects(
@@ -268,7 +268,7 @@ def sync_buckets(
         )
     logger.info(
         f"Copying {len(different)} different files from {source_bucket_name} to {target_bucket_name}: "
-        + _first_5_last_5(list(different))
+        + _first_5_last_5(list(different))  # noqa:W503
     )
     if not dry_run:
         copy_objects(

@@ -65,7 +65,7 @@ class NexGddpCmip6(OpenDataset):
                 self.root,
                 f"NEX-GDDP-CMIP6/{gcm}/{scenario}/{variant_label}/{quantity}/",
             )
-            + filename,
+            + filename,  # noqa:W503
             filename,
         )
 

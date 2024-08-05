@@ -1,11 +1,14 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import fire
 
 from hazard import services as hazard_services
+from hazard.sources import SourceDataset
 
 
 def days_tas_above_indicator(
+    source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
+    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
     threshold_list: List[float] = [20],
@@ -18,8 +21,9 @@ def days_tas_above_indicator(
     inventory_format: Optional[str] = "osc",
     extra_xarray_store: Optional[bool] = False,
 ):
-
     hazard_services.days_tas_above_indicator(
+        source_dataset,
+        source_dataset_kwargs,
         gcm_list,
         scenario_list,
         threshold_list,
@@ -35,6 +39,8 @@ def days_tas_above_indicator(
 
 
 def degree_days_indicator(
+    source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
+    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
     threshold_temperature: float = 32,
@@ -47,8 +53,9 @@ def degree_days_indicator(
     extra_xarray_store: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
 ):
-
     hazard_services.degree_days_indicator(
+        source_dataset,
+        source_dataset_kwargs,
         gcm_list,
         scenario_list,
         threshold_temperature,
