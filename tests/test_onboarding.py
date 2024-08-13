@@ -81,11 +81,7 @@ def test_iris(test_output_dir, s3_credentials):
     model = IRISIndicator(test_output_dir)
     # s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY_DEV"],
     # secret=os.environ["OSC_S3_SECRET_KEY_DEV"])
-    target = OscZarr(
-        store=zarr.DirectoryStore(
-            os.path.join(test_output_dir, "hazard", "hazard.zarr")
-        )
-    )  # save locally
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))  # save locally
     # target = OscZarr() # default dev bucket
     for item in model.batch_items():
         model.generate_single_map(item, target, target)
@@ -97,9 +93,7 @@ def promote_iris(s3_credentials):
     for name in ["max_speed_ssp585_2050_map"]:
         prefix = "hazard/hazard.zarr/wind/iris/v1/" + name
         s3_utilities.remove_from_prod(prefix, dry_run=False)
-        s3_utilities.copy_dev_to_prod(
-            "hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True
-        )
+        s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True)
 
 
 def copy_iris_files(s3_credentials):
@@ -130,11 +124,7 @@ def test_jupiter(test_output_dir, s3_credentials):
     source = JupiterOscFileSource(test_output_dir, local_fs)
     # target = OscZarr(prefix='hazard') # hazard_test
     # docs_store = DocStore(prefix="hazard")
-    target = OscZarr(
-        store=zarr.DirectoryStore(
-            os.path.join(test_output_dir, "hazard", "hazard.zarr")
-        )
-    )
+    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))
     docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard")
 
     jupiter = Jupiter()
@@ -203,13 +193,9 @@ def test_wri_aqueduct_water_risk(test_output_dir):
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
     model = WRIAqueductWaterRisk()
-    source = WRIAqueductWaterRiskSource(
-        source_dir=source_dir, fs=local.LocalFileSystem()
-    )
+    source = WRIAqueductWaterRiskSource(source_dir=source_dir, fs=local.LocalFileSystem())
     model.run_all(source, target)
-    source = WRIAqueductWaterSupplyDemandBaselineSource(
-        source_dir=source_dir, fs=local.LocalFileSystem()
-    )
+    source = WRIAqueductWaterSupplyDemandBaselineSource(source_dir=source_dir, fs=local.LocalFileSystem())
     model.run_all(source, target)
     model.create_maps(target, target)
 

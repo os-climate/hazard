@@ -204,4 +204,4 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         ]
 
     @abstractmethod
-    def _resource(self) -> HazardResource: ...
+    def _resource(self) -> HazardResource: ...  # noqa:E704

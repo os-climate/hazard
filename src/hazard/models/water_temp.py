@@ -85,8 +85,7 @@ class FutureStreamsSource(OpenDataset):
         filename = self.filename(gcm, scenario, year)
         url = (
             "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/"
-            + f"original/waterTemp/{adjusted_scenario}/{adjusted_gcm}/"
-            + filename
+            f"original/waterTemp/{adjusted_scenario}/{adjusted_gcm}/{filename}"
         )
         return os.path.join(self.working_dir, filename), url
 
@@ -273,7 +272,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             description=description,
             display_groups=["Weeks with average water temperature above threshold in °C"],  # display names of groupings
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,
@@ -302,7 +301,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _other_resource(self) -> HazardResource:
         assert self.resource.map is not None
-        map = MapInfo(
+        map = MapInfo(  # type: ignore[call-arg] # has a default value for bbox
             colormap=self.resource.map.colormap,
             bounds=self.resource.map.bounds,
             bbox=self.resource.map.bbox,
