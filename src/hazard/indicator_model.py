@@ -47,6 +47,8 @@ class IndicatorModel(ABC, Generic[T]):
         ...
 
     @abstractmethod
-    def run_single(self, item: T, source: Any, target: ReadWriteDataArray, client: Client):
+    def run_single(
+        self, item: T, source: Any, target: ReadWriteDataArray, client: Client
+    ):
         """Run a single item of the batch."""
         ...

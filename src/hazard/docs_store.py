@@ -55,7 +55,9 @@ class DocStore:
             self._root = f"s3://{str(os.path.join(bucket, prefix))}"
         elif type(self._fs) == LocalFileSystem:  # noqa: E721 # use isinstance?
             if local_path is None:
-                raise ValueError("if using a local filesystem, please provide a value for `local_path`")
+                raise ValueError(
+                    "if using a local filesystem, please provide a value for `local_path`"
+                )
             self._root = str(os.path.join(local_path))
         else:
             self._root = str(os.path.join(bucket, prefix))
@@ -98,7 +100,9 @@ class DocStore:
         else:
             path_root = "."
 
-        items = HazardResources(resources=list(resources)).to_stac_items(path_root=path_root, items_as_dicts=True)
+        items = HazardResources(resources=list(resources)).to_stac_items(
+            path_root=path_root, items_as_dicts=True
+        )
         items_cast: List[Dict[str, Any]] = cast(List[Dict[str, Any]], items)
         for it in items_cast:
             with self._fs.open(self._full_path_stac_item(id=it["id"]), "w") as f:
@@ -145,19 +149,27 @@ class DocStore:
             "license": "CC-BY-4.0",
             "extent": {
                 "spatial": {"bbox": [[-180, -90, 180, 90]]},
-                "temporal": {"interval": [["1950-01-01T00:00:00Z", "2100-12-31T23:59:59Z"]]},
+                "temporal": {
+                    "interval": [["1950-01-01T00:00:00Z", "2100-12-31T23:59:59Z"]]
+                },
             },
-            "providers": [{"name": "UKRI", "roles": ["producer"], "url": "https://www.ukri.org/"}],
+            "providers": [
+                {"name": "UKRI", "roles": ["producer"], "url": "https://www.ukri.org/"}
+            ],
             "links": links,
         }
 
-    def update_inventory(self, resources: Iterable[HazardResource], remove_existing: bool = False):
+    def update_inventory(
+        self, resources: Iterable[HazardResource], remove_existing: bool = False
+    ):
         """Add the hazard models provided to the inventory. If a model with the same key
         (hazard type and id) exists, replace."""
 
         # if format == stac, we do a round trip, stac -> osc -> stac.
         path = self._full_path_inventory()
-        combined = {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
+        combined = (
+            {} if remove_existing else dict((i.key(), i) for i in self.read_inventory())
+        )
         for resource in resources:
             combined[resource.key()] = resource
         models = HazardResources(resources=list(combined.values()))

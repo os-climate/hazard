@@ -59,7 +59,9 @@ class NexGddpCmip6(OpenDataset):
         component = self.subset[gcm]
         variant_label = component["variant_label"]
         grid_label = component["grid_label"]
-        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
+        filename = (
+            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
+        )
         return (
             posixpath.join(
                 self.root,
@@ -84,18 +86,27 @@ class NexGddpCmip6(OpenDataset):
             catalog_url=catalog_url,
             search_params={
                 "collections": [collection_id],
-                "query": {"cmip6:model": {"eq": gcm}, "cmip6:scenario": {"eq": scenario}, "cmip6:year": {"eq": year}},
+                "query": {
+                    "cmip6:model": {"eq": gcm},
+                    "cmip6:scenario": {"eq": scenario},
+                    "cmip6:year": {"eq": year},
+                },
             },
         )
         if len(items) == 0:
-            raise ValueError(f"No items found for gcm={gcm}, scenario={scenario}, year={year}")
+            raise ValueError(
+                f"No items found for gcm={gcm}, scenario={scenario}, year={year}"
+            )
         elif len(items) > 1:
-            raise ValueError(f"Multiple items found for gcm={gcm}, scenario={scenario}, year={year}")
+            raise ValueError(
+                f"Multiple items found for gcm={gcm}, scenario={scenario}, year={year}"
+            )
         else:
             item = items[0]
         href = item.assets[quantity].href
         href_replaced = href.replace(
-            "https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6", "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6"
+            "https://nasagddp.blob.core.windows.net/nex-gddp-cmip6/NEX/GDDP-CMIP6",
+            "s3://nex-gddp-cmip6/NEX-GDDP-CMIP6",
         )
         return href_replaced
 
@@ -116,7 +127,9 @@ class NexGddpCmip6(OpenDataset):
         # use "s3://bucket/root" ?
         if catalog_url is not None or collection_id is not None:
             assert catalog_url is not None and collection_id is not None
-            path = self.path_stac(catalog_url, collection_id, gcm, scenario, quantity, year)
+            path = self.path_stac(
+                catalog_url, collection_id, gcm, scenario, quantity, year
+            )
         else:
             path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
@@ -132,7 +145,9 @@ class NexGddpCmip6(OpenDataset):
             if f is not None:
                 f.close()
 
-    def search_stac_items(self, catalog_url: str, search_params: Dict) -> ItemCollection:
+    def search_stac_items(
+        self, catalog_url: str, search_params: Dict
+    ) -> ItemCollection:
         client = Client.open(catalog_url)
         search = client.search(**search_params)
         items = search.item_collection()

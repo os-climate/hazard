@@ -41,7 +41,9 @@ def days_tas_above_indicator(
 
     docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
 
-    source_dataset_kwargs = {} if source_dataset_kwargs is None else source_dataset_kwargs
+    source_dataset_kwargs = (
+        {} if source_dataset_kwargs is None else source_dataset_kwargs
+    )
     source = get_source_dataset_instance(source_dataset, source_dataset_kwargs)
 
     model = DaysTasAboveIndicator(
@@ -86,7 +88,9 @@ def degree_days_indicator(
 
     docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
 
-    source_dataset_kwargs = {} if source_dataset_kwargs is None else source_dataset_kwargs
+    source_dataset_kwargs = (
+        {} if source_dataset_kwargs is None else source_dataset_kwargs
+    )
     source = get_source_dataset_instance(source_dataset, source_dataset_kwargs)
 
     model = DegreeDays(
@@ -121,10 +125,14 @@ def setup(
         target = OscZarr(store=store, extra_xarray_store=extra_xarray_store)
     else:
         if bucket is None or prefix is None:
-            raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
+            raise ValueError(
+                "either of `store`, or `bucket` and `prefix` together, must be provided"
+            )
         else:
             docs_store = DocStore(bucket=bucket, prefix=prefix)
-            target = OscZarr(bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store)
+            target = OscZarr(
+                bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store
+            )
 
     cluster = LocalCluster(processes=False)
 

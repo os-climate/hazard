@@ -11,7 +11,11 @@ import requests  # type: ignore
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import BatchItem, Indicator, ThresholdBasedAverageIndicator
+from hazard.models.multi_year_average import (
+    BatchItem,
+    Indicator,
+    ThresholdBasedAverageIndicator,
+)
 from hazard.protocols import Averageable, OpenDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -63,13 +67,17 @@ class FutureStreamsSource(OpenDataset):
 
     def from_year(self, gcm: str, year: int) -> int:
         if year not in self.to_years:
-            raise ValueError(f"The input year {year} is not within the available from_years={list(self.to_years)}")
+            raise ValueError(
+                f"The input year {year} is not within the available from_years={list(self.to_years)}"
+            )
         from_year = self.from_years[self.to_years.index(year)]
         if gcm == "E2O" and from_year == 1976:
             return 1979
         return from_year
 
-    def open_dataset_year(self, gcm: str, scenario: str, _: str, year: int, chunks=None) -> xr.Dataset:
+    def open_dataset_year(
+        self, gcm: str, scenario: str, _: str, year: int, chunks=None
+    ) -> xr.Dataset:
         path, url = self.water_temp_download_path(gcm, scenario, year)
         self.download_file(url, path)
         return xr.open_dataset(path, chunks=chunks)
@@ -79,7 +87,9 @@ class FutureStreamsSource(OpenDataset):
         if os.path.isfile(path) or os.path.islink(path):
             os.unlink(path)
 
-    def water_temp_download_path(self, gcm: str, scenario: str, year: int) -> Tuple[str, str]:
+    def water_temp_download_path(
+        self, gcm: str, scenario: str, year: int
+    ) -> Tuple[str, str]:
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         filename = self.filename(gcm, scenario, year)
@@ -179,14 +189,20 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 return source.to_years[:3]
             return [
                 to_year
-                for (from_year, to_year) in zip(source.from_years[3:], source.to_years[3:])
+                for (from_year, to_year) in zip(
+                    source.from_years[3:], source.to_years[3:]
+                )
                 if from_year == item.central_year or to_year + 1 == item.central_year
             ]
         return super()._years(source, item)
 
-    def _calculate_single_year_indicators(self, source: OpenDataset, item: BatchItem, year: int) -> List[Indicator]:
+    def _calculate_single_year_indicators(
+        self, source: OpenDataset, item: BatchItem, year: int
+    ) -> List[Indicator]:
         from_year: int = (
-            source.from_year(item.gcm, year) if hasattr(source, "from_year") else (year - self.window_years // 2 + 1)
+            source.from_year(item.gcm, year)
+            if hasattr(source, "from_year")
+            else (year - self.window_years // 2 + 1)
         )
         correction: float = 1.0
         if item.gcm == "E2O" and item.scenario == "historical":
@@ -220,7 +236,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         path = (
             item.resource.path.format(scenario=item.scenario, year=item.central_year)
             if item.gcm == "E2O"
-            else item.resource.path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+            else item.resource.path.format(
+                gcm=item.gcm, scenario=item.scenario, year=item.central_year
+            )
         )
         assert item.resource.map is not None
         return [
@@ -231,9 +249,14 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             )
         ]
 
-    def _weeks_water_temp_above_indicators(self, input: xr.DataArray, correction: float) -> xr.DataArray:
+    def _weeks_water_temp_above_indicators(
+        self, input: xr.DataArray, correction: float
+    ) -> xr.DataArray:
         """Create DataArrays containing indicators the thresholds for a single year."""
-        if any(coord not in input.coords.keys() for coord in ["latitude", "longitude", "time"]):
+        if any(
+            coord not in input.coords.keys()
+            for coord in ["latitude", "longitude", "time"]
+        ):
             raise ValueError("expect coordinates: 'latitude', 'longitude' and 'time'")
         # normalize to 52 weeks
         scale = 52.0 * correction / len(input.time)
@@ -245,7 +268,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         output = xr.DataArray(coords=coords, dims=coords.keys())
         for i, threshold_c in enumerate(self.threshold_temps_c):
             threshold_k = 273.15 + threshold_c
-            output[i, :, :] = xr.where(input > threshold_k, scale, 0.0).sum(dim=["time"])
+            output[i, :, :] = xr.where(input > threshold_k, scale, 0.0).sum(
+                dim=["time"]
+            )
         return output
 
     def create_maps(self, source: OscZarr, target: OscZarr):
@@ -270,7 +295,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average water temperature above threshold in °C/{gcm}",
             description=description,
-            display_groups=["Weeks with average water temperature above threshold in °C"],  # display names of groupings
+            display_groups=[
+                "Weeks with average water temperature above threshold in °C"
+            ],  # display names of groupings
             group_id="",
             map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
@@ -305,7 +332,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             colormap=self.resource.map.colormap,
             bounds=self.resource.map.bounds,
             bbox=self.resource.map.bbox,
-            path=self.resource.map.path.format(gcm="E2O", scenario="{scenario}", year="{year}"),
+            path=self.resource.map.path.format(
+                gcm="E2O", scenario="{scenario}", year="{year}"
+            ),
             index_values=self.resource.map.index_values,
             source=self.resource.map.source,
         )
@@ -315,7 +344,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_id=self.resource.indicator_model_id,
             indicator_model_gcm=self.resource.indicator_model_gcm.format(gcm="E2O"),
             params={},
-            path=self.resource.path.format(gcm="E2O", scenario="{scenario}", year="{year}"),
+            path=self.resource.path.format(
+                gcm="E2O", scenario="{scenario}", year="{year}"
+            ),
             display_name=self.resource.display_name.format(gcm="E2O"),
             description=self.resource.description.replace("1976", "1979"),
             display_groups=self.resource.display_groups,

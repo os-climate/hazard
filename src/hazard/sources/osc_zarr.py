@@ -45,7 +45,9 @@ class OscZarr(ReadWriteDataArray):
                 secret_key = os.environ.get(self.__secret_key, None)
                 token = os.environ.get(self.__token, None)
                 if token:
-                    s3 = s3fs.S3FileSystem(key=access_key, secret=secret_key, token=token)
+                    s3 = s3fs.S3FileSystem(
+                        key=access_key, secret=secret_key, token=token
+                    )
                 else:
                     s3 = s3fs.S3FileSystem(key=access_key, secret=secret_key)
 
@@ -141,15 +143,20 @@ class OscZarr(ReadWriteDataArray):
             self.root.pop(path)
 
     def write(
-        self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None, spatial_coords: Optional[bool] = True
+        self,
+        path: str,
+        da: xr.DataArray,
+        chunks: Optional[List[int]] = None,
+        spatial_coords: Optional[bool] = True,
     ):
-
         if self.extra_xarray_store and spatial_coords:
             self.write_data_array(f"{path}-xarray", da)
 
         self.write_zarr(path, da, chunks)
 
-    def write_zarr(self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None):
+    def write_zarr(
+        self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None
+    ):
         """Write DataArray according to the standard OS-Climate conventions.
 
         Args:
@@ -157,7 +164,9 @@ class OscZarr(ReadWriteDataArray):
             da (xr.DataArray): The DataArray.
         """
         da_norm = xarray_utilities.normalize_array(da)
-        data, transform, crs = xarray_utilities.get_array_components(da_norm, assume_normalized=True)
+        data, transform, crs = xarray_utilities.get_array_components(
+            da_norm, assume_normalized=True
+        )
         z = self._zarr_create(
             path,
             da_norm.shape,
@@ -168,7 +177,9 @@ class OscZarr(ReadWriteDataArray):
         )
         z[:, :, :] = data[:, :, :]
 
-    def write_slice(self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray):
+    def write_slice(
+        self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray
+    ):
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
 
@@ -216,7 +227,9 @@ class OscZarr(ReadWriteDataArray):
         renamed.name = "data"
         _, transform, crs = xarray_utilities.get_array_components(renamed)
         self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(self.root.store, compute=True, group=path, mode="w", consolidated=True)
+        renamed.to_dataset().to_zarr(
+            self.root.store, compute=True, group=path, mode="w", consolidated=True
+        )
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
@@ -273,7 +286,9 @@ class OscZarr(ReadWriteDataArray):
         self._add_attributes(z.attrs, transform, crs, indexes)
         return z
 
-    def _add_attributes(self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None):
+    def _add_attributes(
+        self, attrs: Dict[str, Any], transform: Affine, crs: str, indexes=None
+    ):
         trans_members = [
             transform.a,
             transform.b,
@@ -286,7 +301,9 @@ class OscZarr(ReadWriteDataArray):
         attrs["crs"] = crs
         use_xy = crs.upper() != "EPSG:4326"
         attrs["transform_mat3x3"] = mat3x3
-        attrs["dimensions"] = ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
+        attrs["dimensions"] = (
+            ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
+        )
         if indexes is not None:
             attrs["index_values"] = list(indexes)
             attrs["index_name"] = "return period (years)"

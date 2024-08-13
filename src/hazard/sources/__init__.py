@@ -15,7 +15,9 @@ _SOURCE_DATASETS: Mapping[str, Callable[..., OpenDataset]] = {
 }
 
 
-def get_source_dataset_instance(source_dataset: SourceDataset, source_dataset_kwargs: Dict[str, Any]) -> OpenDataset:
+def get_source_dataset_instance(
+    source_dataset: SourceDataset, source_dataset_kwargs: Dict[str, Any]
+) -> OpenDataset:
     if source_dataset not in _SOURCE_DATASETS:
         raise ValueError(f"Invalid source dataset: {source_dataset}")
     return _SOURCE_DATASETS[source_dataset](**source_dataset_kwargs)

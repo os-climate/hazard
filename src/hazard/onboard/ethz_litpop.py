@@ -61,20 +61,27 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         """
         self.fs = fs if fs else LocalFileSystem()
         self.zip_url = "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/331316/LitPop_v1_2.tar"
-        self.source_dir = os.path.join(source_dir, self.zip_url.split("/")[-1].split(".")[0])
+        self.source_dir = os.path.join(
+            source_dir, self.zip_url.split("/")[-1].split(".")[0]
+        )
         if not (os.path.exists(self.source_dir)):
             self.prepare(source_dir)
         self.resources = self._resources()
 
     def batch_items(self) -> Iterable[BatchItem]:
-        return [BatchItem(scenario="historical", year=2014, key=key) for key in self.resources]
+        return [
+            BatchItem(scenario="historical", year=2014, key=key)
+            for key in self.resources
+        ]
 
     def prepare(self, working_dir: Optional[str] = None):
         if not isinstance(self.fs, LocalFileSystem):
             # e.g. we are copying to S3; download to specified working directory,
             # but then copy to self.source_dir
             assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0])
+            download_and_unzip(
+                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
             for file in os.listdir(working_dir):
                 with open(file, "rb") as f:
                     self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
@@ -83,7 +90,9 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
             source = PurePosixPath(self.source_dir)
             download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
 
-    def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
+    def run_single(
+        self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
+    ):
         assert item.key in self.resources
         assert target is None or isinstance(target, OscZarr)
 
@@ -100,13 +109,19 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
                 os.path.join(self.source_dir, file),
                 usecols=[column, "latitude", "longitude"],
             )
-            image_coords = OscZarr._get_coordinates(df["longitude"], df["latitude"], transform)
+            image_coords = OscZarr._get_coordinates(
+                df["longitude"], df["latitude"], transform
+            )
             image_coords = np.floor(image_coords).astype(int)
-            for i_lat, i_lon, value in zip(image_coords[1, :], image_coords[0, :], df[column]):
+            for i_lat, i_lon, value in zip(
+                image_coords[1, :], image_coords[0, :], df[column]
+            ):
                 data[i_lat, i_lon] = value
             logger.info("Loading complete for {file}")
 
-        path = self.resources[item.key].path.format(scenario=item.scenario, year=item.year)
+        path = self.resources[item.key].path.format(
+            scenario=item.scenario, year=item.year
+        )
         logger.info(f"Writing array to {path}")
         target.write(path, data)
         logger.info(f"Writing complete for {path}")
@@ -155,7 +170,10 @@ Report 2017".
             },
         }
         for key in resource_map:
-            path = "spatial_distribution/ethz/v1/{indicator_id}".format(indicator_id=key) + "_{scenario}_{year}"
+            path = (
+                "spatial_distribution/ethz/v1/{indicator_id}".format(indicator_id=key)
+                + "_{scenario}_{year}"
+            )
             resources[key] = HazardResource(
                 hazard_type="SpatialDistribution",
                 indicator_id=key,

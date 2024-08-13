@@ -43,19 +43,31 @@ def add_children_to_parent(
 
     # a couple of ways to find the indices of the parent corresponding to the child
     # 1) Use labels
-    query_res_lon = da_parent.xindexes["x"].sel({"x": da_child.x}, method="nearest", tolerance=1e-6)
+    query_res_lon = da_parent.xindexes["x"].sel(
+        {"x": da_child.x}, method="nearest", tolerance=1e-6
+    )
     indices_x = query_res_lon.dim_indexers["x"].data
-    query_res_lat = da_parent.xindexes["y"].sel({"y": da_child.y}, method="nearest", tolerance=1e-6)
+    query_res_lat = da_parent.xindexes["y"].sel(
+        {"y": da_child.y}, method="nearest", tolerance=1e-6
+    )
     indices_y = query_res_lat.dim_indexers["y"].data
     # 2) Use transform
-    offset_x, offset_y = np.round(np.array(~trans_parent * trans_child * (0.5, 0.5)) - [0.5, 0.5])
+    offset_x, offset_y = np.round(
+        np.array(~trans_parent * trans_child * (0.5, 0.5)) - [0.5, 0.5]
+    )
     indices_x_2 = np.arange(offset_x, offset_x + width_child, dtype=int) % width_parent
-    indices_y_2 = np.arange(offset_y, offset_y + height_child, dtype=int) % height_parent
+    indices_y_2 = (
+        np.arange(offset_y, offset_y + height_child, dtype=int) % height_parent
+    )
     # we do both and check!
-    if not np.array_equal(indices_x, indices_x_2) or not np.array_equal(indices_y, indices_y_2):
+    if not np.array_equal(indices_x, indices_x_2) or not np.array_equal(
+        indices_y, indices_y_2
+    ):
         raise ValueError("failed to find indices.")
 
-    zarr_parent.set_orthogonal_selection((parent_index, indices_y, indices_x), da_child.data[:, :])
+    zarr_parent.set_orthogonal_selection(
+        (parent_index, indices_y, indices_x), da_child.data[:, :]
+    )
 
 
 def affine_has_rotation(affine: Affine) -> bool:
@@ -118,9 +130,13 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
     # index_name = z.attrs.get("index_name", [0])
     if index_values is None:
         index_values = [0]
-    coords = affine_to_coords(transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1")
+    coords = affine_to_coords(
+        transform, z.shape[2], z.shape[1], x_dim="dim_2", y_dim="dim_1"
+    )
     coords["dim_0"] = index_values
-    da = xr.DataArray(data=dask.array.from_zarr(z), dims=["dim_0", "dim_1", "dim_2"], coords=coords)
+    da = xr.DataArray(
+        data=dask.array.from_zarr(z), dims=["dim_0", "dim_1", "dim_2"], coords=coords
+    )
     if "EPSG:4326" in crs.upper():
         da.rio.write_crs(4326, inplace=True)
         da = da.rename({"dim_0": "index", "dim_1": "latitude", "dim_2": "longitude"})
@@ -143,7 +159,9 @@ def enforce_conventions_lat_lon(da: xr.DataArray) -> xr.DataArray:
     return da
 
 
-def get_array_components(da: xr.DataArray, assume_normalized: bool = False) -> Tuple[Any, Affine, Any]:
+def get_array_components(
+    da: xr.DataArray, assume_normalized: bool = False
+) -> Tuple[Any, Affine, Any]:
     renamed = da
     if not assume_normalized:
         renamed = normalize_array(renamed)
@@ -233,7 +251,9 @@ def data_array(
     assert len(index_values) == n_indices
 
     z_dim = "index"
-    y_dim, x_dim = ("latitude", "longitude") if crs.upper() == "EPSG:4326" else ("y", "x")
+    y_dim, x_dim = (
+        ("latitude", "longitude") if crs.upper() == "EPSG:4326" else ("y", "x")
+    )
     coords = affine_to_coords(transform, width, height, x_dim=x_dim, y_dim=y_dim)
     coords[z_dim] = np.array(index_values, dtype=float)
     da = xr.DataArray(data=data, coords=coords, dims=[z_dim, y_dim, x_dim])
@@ -265,5 +285,7 @@ def _assert_transforms_consistent(trans1: Affine, trans2: Affine):
         (trans2.a, trans2.b, trans2.d, trans2.e),
     ):
         raise ValueError("transforms have inconsistent scaling.")
-    if not np.allclose((trans1.c % 1 - trans2.c % 1, trans1.f % 1 - trans2.f % 1), (0.0, 0.0)):
+    if not np.allclose(
+        (trans1.c % 1 - trans2.c % 1, trans1.f % 1 - trans2.f % 1), (0.0, 0.0)
+    ):
         raise ValueError("transforms have non-integer offset.")

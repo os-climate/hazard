@@ -11,6 +11,10 @@ from .conftest import test_output_dir  # noqa:F401 used, its a fixture
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_wind_onboarding(test_output_dir):  # noqa: F811
-    target = OscZarr(store=zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr")))
+    target = OscZarr(
+        store=zarr.DirectoryStore(
+            os.path.join(test_output_dir, "hazard", "hazard.zarr")
+        )
+    )
     model = STORMIndicator(os.path.join(test_output_dir, "wind"))
     model.run_single(BatchItem(gcm="HADGEM3-GC31-HM", model=""), None, target, None)

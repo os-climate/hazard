@@ -30,7 +30,6 @@ class BatchItem:
 
 
 class TUDelftRiverFlood(IndicatorModel[BatchItem]):
-
     def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
         """
         Define every attribute of the onboarding class for the Delft University of Technology
@@ -66,15 +65,18 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
         # Download source data
         self.return_periods = [10, 30, 100, 300, 1000]
-        self.return_period_str = {10: "0010y", 30: "0030y", 100: "0100y", 300: "0300y", 1000: "1000y"}
-        self.zip_url = (
-            "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
-        )
+        self.return_period_str = {
+            10: "0010y",
+            30: "0030y",
+            100: "0100y",
+            300: "0300y",
+            1000: "1000y",
+        }
+        self.zip_url = "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
 
         self._resource = list(self.inventory())[0]
 
     def batch_items(self) -> Iterable[BatchItem]:
-
         return [
             BatchItem(
                 scenario="historical",
@@ -121,14 +123,25 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             source = PurePosixPath(self.source_dir)
             download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
 
-    def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client):
+    def run_single(
+        self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
+    ):
         assert isinstance(target, OscZarr)
-        full_path_depth_format = PurePosixPath(self.source_dir, item.flood_depth_filename)
-        full_path_extent = PurePosixPath(self.source_dir, item.extent_protected_filename)
+        full_path_depth_format = PurePosixPath(
+            self.source_dir, item.flood_depth_filename
+        )
+        full_path_extent = PurePosixPath(
+            self.source_dir, item.extent_protected_filename
+        )
         assert target is None or isinstance(target, OscZarr)
-        shape = [39420, 38374]  # y, x not all returns have same size (first one smaller at 38371)
+        shape = [
+            39420,
+            38374,
+        ]  # y, x not all returns have same size (first one smaller at 38371)
         for i, return_period in enumerate(self.return_periods):
-            full_path_depth = str(full_path_depth_format).format(return_period=self.return_period_str[return_period])
+            full_path_depth = str(full_path_depth_format).format(
+                return_period=self.return_period_str[return_period]
+            )
             with self.fs.open(full_path_depth, "rb") as fd:
                 dad = xr.open_rasterio(fd).isel(band=0)
                 with self.fs.open(full_path_extent, "rb") as fe:
@@ -136,7 +149,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                     # bounds = da.rio.bounds()
                     if return_period == self.return_periods[0]:
                         z = target.create_empty(
-                            self._resource.path.format(scenario=item.scenario, year=item.central_year),
+                            self._resource.path.format(
+                                scenario=item.scenario, year=item.central_year
+                            ),
                             shape[1],
                             shape[0],
                             dad.rio.transform(),
@@ -174,7 +189,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-        with open(os.path.join(os.path.dirname(__file__), "tudelft_flood.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "tudelft_flood.md"), "r"
+        ) as f:
             description = f.read()
         return [
             HazardResource(

@@ -9,7 +9,12 @@ import xarray as xr
 import zarr  # type: ignore
 
 from hazard.docs_store import DocStore
-from hazard.models.drought_index import DroughtIndicator, LocalZarrWorkingStore, ProgressStore, S3ZarrWorkingStore
+from hazard.models.drought_index import (
+    DroughtIndicator,
+    LocalZarrWorkingStore,
+    ProgressStore,
+    S3ZarrWorkingStore,
+)
 
 
 @pytest.mark.skip(reason="incomplete")
@@ -20,7 +25,9 @@ def test_spei_indicator(test_output_dir, s3_credentials):
     working_store = S3ZarrWorkingStore()
     working_store = LocalZarrWorkingStore(test_output_dir)
     model = DroughtIndicator(working_store)
-    model.calculate_spei(gcm, scenario, progress_store=ProgressStore(test_output_dir, "spei_prog_store"))
+    model.calculate_spei(
+        gcm, scenario, progress_store=ProgressStore(test_output_dir, "spei_prog_store")
+    )
     # target = TestTarget()
     data_chunks = model.get_datachunks()
     test_chunk = data_chunks["Chunk_0255"]
@@ -32,9 +39,9 @@ def test_spei_indicator(test_output_dir, s3_credentials):
     # model.calculate_spei("MIROC6", "ssp585")
     # model.calculate_annual_average_spei("MIROC6", "ssp585", 2080, target)
 
-    ds_tas = model.read_quantity_from_s3_store(gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max).chunk(
-        {"time": 100000}
-    )
+    ds_tas = model.read_quantity_from_s3_store(
+        gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max
+    ).chunk({"time": 100000})
     ds_tas_local = ds_tas.compute()
     series_tas = ds_tas_local["tas"][0, 0, :].values
     # ds_pr = model.read_quantity_from_s3_store(gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max).chunk(
@@ -49,7 +56,9 @@ def test_spei_indicator(test_output_dir, s3_credentials):
 
 
 def test_partial_write_zarr(test_output_dir):
-    zarr_store = zarr.DirectoryStore(os.path.join(test_output_dir, "drought", "hazard.zarr"))
+    zarr_store = zarr.DirectoryStore(
+        os.path.join(test_output_dir, "drought", "hazard.zarr")
+    )
 
     lat = np.arange(-60 + 0.25 / 2, 90 + 0.25 / 2, 0.25)
     lon = np.arange(0.25 / 2, 360 + 0.25 / 2, 0.25)
@@ -69,8 +78,12 @@ def test_partial_write_zarr(test_output_dir):
     ds_spei.to_zarr(store=zarr_store, mode="w", compute=False)
     # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores # noqa: E501
     sliced = ds_spei.sel(lat=slice(10, 20), lon=slice(30, 40))
-    lat_indexes = np.where(np.logical_and(ds_spei["lat"].values >= 10, ds_spei["lat"].values <= 20))[0]
-    lon_indexes = np.where(np.logical_and(ds_spei["lon"].values >= 30, ds_spei["lon"].values <= 40))[0]
+    lat_indexes = np.where(
+        np.logical_and(ds_spei["lat"].values >= 10, ds_spei["lat"].values <= 20)
+    )[0]
+    lon_indexes = np.where(
+        np.logical_and(ds_spei["lon"].values >= 30, ds_spei["lon"].values <= 40)
+    )[0]
     ds_spei_slice = (
         xr.DataArray(
             coords={
@@ -108,6 +121,8 @@ def test_progress_store(test_output_dir):
 def test_doc_store(test_output_dir, s3_credentials):
     docs_store = DocStore()
     docs_store.write_new_empty_inventory()
-    zarr_store = zarr.DirectoryStore(os.path.join(test_output_dir, "drought", "hazard.zarr"))
+    zarr_store = zarr.DirectoryStore(
+        os.path.join(test_output_dir, "drought", "hazard.zarr")
+    )
     resource = DroughtIndicator(zarr_store).resource
     docs_store.update_inventory([resource])

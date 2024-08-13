@@ -44,7 +44,9 @@ def test_days_tas_above_mocked():
             ind1 = scale * xr.where(y1.tas > (27 + 273.15), 1, 0).sum(dim=["time"])
             expected = (ind0 + ind1) / 2
     assert expected.values == pytest.approx(
-        target.datasets["chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"].values
+        target.datasets[
+            "chronic_heat/osc/v2/days_tas_above_27c_NorESM2-MM_ssp585_2030"
+        ].values
     )
 
 
@@ -68,7 +70,9 @@ def test_days_wbgt_above_mocked():
     )
     model.run_all(source, target, debug_mode=True)
     result = target.datasets[
-        "chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}".format(gcm=gcm, scenario=scenario, year=year)
+        "chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}".format(
+            gcm=gcm, scenario=scenario, year=year
+        )
     ]
     with source.open_dataset_year(gcm, scenario, "tas", 2029).tas as t0:
         with source.open_dataset_year(gcm, scenario, "hurs", 2029).hurs as h0:
