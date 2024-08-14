@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 
 
 def create_tiles_for_resource(
-    source: OscZarr, target: OscZarr, resource: HazardResource, max_zoom: Optional[int] = None
+    source: OscZarr,
+    target: OscZarr,
+    resource: HazardResource,
+    max_zoom: Optional[int] = None,
 ):
     if resource.map is None or resource.map.source != "map_array_pyramid":
         raise ValueError("resource does not specify 'map_array_pyramid' map source.")
@@ -39,7 +42,9 @@ def create_tiles_for_resource(
                     da = source.read(path)
                     indexes = list(da["index"].values)
                     indices = [indexes.index(v) for v in resource.map.index_values]
-                create_tile_set(source, path, target, map_path, indices=indices, max_zoom=max_zoom)
+                create_tile_set(
+                    source, path, target, map_path, indices=indices, max_zoom=max_zoom
+                )
 
 
 def create_image_set(
@@ -95,7 +100,9 @@ def _create_image_set(
     ((dst_left, dst_right), (dst_bottom, dst_top)) = rasterio.warp.transform(
         src_crs, dst_crs, xs=[src_left, src_right], ys=[src_bottom, src_top]
     )
-    dst_transform = rasterio.transform.from_bounds(dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height)
+    dst_transform = rasterio.transform.from_bounds(
+        dst_left, dst_bottom, dst_right, dst_top, dst_width, dst_height
+    )
 
     _ = target.create_empty(
         target_path,
@@ -115,7 +122,9 @@ def _create_image_set(
             transform=dst_transform,
             nodata=nodata,
         )
-        target.write_slice(target_path, slice(index, index + 1), slice(None), slice(None), da_m.data)
+        target.write_slice(
+            target_path, slice(index, index + 1), slice(None), slice(None), da_m.data
+        )
 
 
 def create_tile_set(
@@ -175,7 +184,11 @@ def create_tile_set(
     ulx_whole, uly_whole = mercantile.xy(*mercantile.ul(mercantile.Tile(0, 0, 0)))
     lrx_whole, lry_whole = mercantile.xy(*mercantile.ul(mercantile.Tile(1, 1, 0)))
     whole_map_pixels_x = src_width * (lrx_whole - ulx_whole) / (lrx - ulx)
-    max_zoom = int(round(math.log2(whole_map_pixels_x / pixels_per_tile))) if max_zoom is None else max_zoom
+    max_zoom = (
+        int(round(math.log2(whole_map_pixels_x / pixels_per_tile)))
+        if max_zoom is None
+        else max_zoom
+    )
 
     if indices is None:
         index_slice = slice(-1, None)
@@ -187,7 +200,9 @@ def create_tile_set(
 
     # _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
     target.remove(target_path)
-    _create_empty_tile_pyramid(target, target_path, max_zoom, chunk_size, return_periods)
+    _create_empty_tile_pyramid(
+        target, target_path, max_zoom, chunk_size, return_periods
+    )
 
     # here we reproject and write the maximum zoom level
     _write_zoom_level(
@@ -208,7 +223,11 @@ def create_tile_set(
 
 
 def _create_empty_tile_pyramid(
-    target: OscZarr, target_path: str, max_zoom: int, chunk_size: int, return_periods: Sequence[float]
+    target: OscZarr,
+    target_path: str,
+    max_zoom: int,
+    chunk_size: int,
+    return_periods: Sequence[float],
 ):
     pixels_per_tile: int = 256
     ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=0, y=0, z=0)))
@@ -218,7 +237,9 @@ def _create_empty_tile_pyramid(
         tiles = 2**zoom
         dst_dim = tiles * pixels_per_tile
         zoom_level_path = posixpath.join(target_path, f"{zoom}")
-        whole_map_transform = rasterio.transform.from_bounds(ulx, lry, lrx, uly, dst_dim, dst_dim)
+        whole_map_transform = rasterio.transform.from_bounds(
+            ulx, lry, lrx, uly, dst_dim, dst_dim
+        )
         # i.e. chunks are <path>/<z>/<index>.<y>.<x>, e.g. flood/4/4.2.3
         # we create an array for the whole world, but if the map covers just a fraction then all other
         # chunks will be empty
@@ -267,14 +288,26 @@ def _write_zoom_level(
         for batch_x in range(0, num_batches):
             for batch_y in range(0, num_batches):
                 x_slice = slice(
-                    xmin + batch_x * tile_batch_size, min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level)
+                    xmin + batch_x * tile_batch_size,
+                    min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level),
                 )
                 y_slice = slice(
-                    ymin + batch_y * tile_batch_size, min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level)
+                    ymin + batch_y * tile_batch_size,
+                    min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level),
                 )
-                ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom)))
-                lrx, lry = mercantile.xy(*mercantile.ul(mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom)))
-                logger.info(f"Processing batch ({batch_x}/{num_batches}, {batch_y}/{num_batches}).")
+                ulx, uly = mercantile.xy(
+                    *mercantile.ul(
+                        mercantile.Tile(x=x_slice.start, y=y_slice.start, z=zoom)
+                    )
+                )
+                lrx, lry = mercantile.xy(
+                    *mercantile.ul(
+                        mercantile.Tile(x=x_slice.stop, y=y_slice.stop, z=zoom)
+                    )
+                )
+                logger.info(
+                    f"Processing batch ({batch_x}/{num_batches}, {batch_y}/{num_batches})."
+                )
                 dst_transform = rasterio.transform.from_bounds(
                     ulx,
                     lry,
@@ -305,7 +338,9 @@ def _write_zoom_level(
                     nodata=nodata,
                 )
 
-                logger.info(f"Reprojection complete. Writing to target {zoom_level_path}.")
+                logger.info(
+                    f"Reprojection complete. Writing to target {zoom_level_path}."
+                )
 
                 if check_fill:
                     da_m.data = xr.where(da_m.data > 3.4e38, np.nan, da_m.data)
@@ -349,7 +384,9 @@ def _coarsen(
             next_zoom_level_path = posixpath.join(target_path, f"{zoom - 1}")
             z = target.read_zarr(current_zoom_level_path)
             # we go down a zoom level to find the bounds
-            xmin, xmax, ymin, ymax = get_tile_bounds(bbox.left, bbox.bottom, bbox.right, bbox.top, zoom - 1)
+            xmin, xmax, ymin, ymax = get_tile_bounds(
+                bbox.left, bbox.bottom, bbox.right, bbox.top, zoom - 1
+            )
             xmin, ymin = xmin * 2, ymin * 2
             xmax, ymax = xmax * 2 + 1, ymax * 2 + 1
             ntiles_in_level = 2**zoom
@@ -360,20 +397,29 @@ def _coarsen(
             for batch_x in range(0, num_batches):
                 for batch_y in range(0, num_batches):
                     x_slice = slice(
-                        xmin + batch_x * tile_batch_size, min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level)
+                        xmin + batch_x * tile_batch_size,
+                        min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level),
                     )
                     y_slice = slice(
-                        ymin + batch_y * tile_batch_size, min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level)
+                        ymin + batch_y * tile_batch_size,
+                        min(ymin + (batch_y + 1) * tile_batch_size, ntiles_in_level),
                     )
                     zslice = z[
                         index,
-                        y_slice.start * pixels_per_tile : y_slice.stop * pixels_per_tile,
-                        x_slice.start * pixels_per_tile : x_slice.stop * pixels_per_tile,
+                        y_slice.start * pixels_per_tile : y_slice.stop
+                        * pixels_per_tile,
+                        x_slice.start * pixels_per_tile : x_slice.stop
+                        * pixels_per_tile,
                     ]
 
                     # use Zarr array directly, as opposed to e.g.:
                     # da_slice = da_slice.coarsen(x=2, y=2).mean()  # type:ignore
-                    zslice = (zslice[::2, ::2] + zslice[1::2, ::2] + zslice[::2, 1::2] + zslice[1::2, 1::2]) / 4
+                    zslice = (
+                        zslice[::2, ::2]
+                        + zslice[1::2, ::2]
+                        + zslice[::2, 1::2]
+                        + zslice[1::2, 1::2]
+                    ) / 4
                     target.write_slice(
                         next_zoom_level_path,
                         slice(index, index + 1),

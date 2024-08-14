@@ -23,7 +23,6 @@ class BatchItem:
 
 
 class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
-
     def __init__(self, source_dir: str):
         """
         Define every attribute of the onboarding class for the land subsidence dataset.
@@ -46,13 +45,17 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         """
         self.resource = list(self.inventory())[0]
         if source_dir is not None:
-            self.source = pathlib.PurePosixPath(pathlib.Path(source_dir).as_posix(), "ds03.tif")
+            self.source = pathlib.PurePosixPath(
+                pathlib.Path(source_dir).as_posix(), "ds03.tif"
+            )
             if not os.path.exists(source_dir):
                 os.makedirs(source_dir)
             if not os.path.exists(str(self.source)):
                 # Download source data
                 url = "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
-                download_file(url, str(self.source.parent), filename=self.source.parts[-1])
+                download_file(
+                    url, str(self.source.parent), filename=self.source.parts[-1]
+                )
 
     def batch_items(self) -> Iterable[BatchItem]:
         return [
@@ -62,7 +65,9 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
             ),
         ]
 
-    def run_single(self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Any):
+    def run_single(
+        self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Any
+    ):
         assert target is None or isinstance(target, OscZarr)
         da = xr.open_rasterio(self.source).isel(band=0)
         z = target.create_empty(
@@ -72,7 +77,9 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
             da.rio.transform(),
             str(da.crs.replace("+init=", "")),
         )
-        values = da.values  # will load into memory; assume source not chunked efficiently
+        values = (
+            da.values
+        )  # will load into memory; assume source not chunked efficiently
         values[values == -9999.0] = float("nan")
         z[0, :, :] = values
 
@@ -85,7 +92,9 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-        with open(os.path.join(os.path.dirname(__file__), "csm_subsidence.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "csm_subsidence.md"), "r"
+        ) as f:
             description = f.read()
         return [
             HazardResource(
@@ -100,7 +109,12 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
                 group_id="",
                 display_groups=[],
                 map=MapInfo(
-                    bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
+                    bounds=[
+                        (-180.0, 85.0),
+                        (180.0, 85.0),
+                        (180.0, -60.0),
+                        (-180.0, -60.0),
+                    ],
                     bbox=[-180.0, -60.0, 180.0, 85.0],
                     colormap=Colormap(
                         max_index=255,

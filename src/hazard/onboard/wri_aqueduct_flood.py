@@ -65,7 +65,9 @@ class WRIAqueductFlood(IndicatorModel):
         for gcm in gcms:
             for year in years:
                 for scenario in scenarios:
-                    path, filename_return_period = self.path_riverine(scenario, gcm, year)
+                    path, filename_return_period = self.path_riverine(
+                        scenario, gcm, year
+                    )
                     items.append(
                         BatchItem(
                             self._resource(path),
@@ -77,8 +79,14 @@ class WRIAqueductFlood(IndicatorModel):
                     )
         # plus one extra historical/baseline item
         scenario, year = "historical", 1980
-        path, filename_return_period = self.path_riverine(scenario, "000000000WATCH", year)
-        items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        path, filename_return_period = self.path_riverine(
+            scenario, "000000000WATCH", year
+        )
+        items.append(
+            BatchItem(
+                self._resource(path), path, scenario, str(year), filename_return_period
+            )
+        )
         return items
 
     def batch_items_coastal(self) -> List[BatchItem]:
@@ -91,7 +99,9 @@ class WRIAqueductFlood(IndicatorModel):
             for sub in subs:
                 for year in years:
                     for scenario in scenarios:
-                        path, filename_return_period = self.path_coastal(scenario, sub, str(year), model)
+                        path, filename_return_period = self.path_coastal(
+                            scenario, sub, str(year), model
+                        )
                         items.append(
                             BatchItem(
                                 self._resource(path),
@@ -105,7 +115,9 @@ class WRIAqueductFlood(IndicatorModel):
         for sub in subs:
             hist_scenario: str = "historical"
             hist_year: str = "hist"
-            path, filename_return_period = self.path_coastal(hist_scenario, sub, hist_year, "0")
+            path, filename_return_period = self.path_coastal(
+                hist_scenario, sub, hist_year, "0"
+            )
             items.append(
                 BatchItem(
                     self._resource(path),
@@ -130,7 +142,9 @@ class WRIAqueductFlood(IndicatorModel):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Here we create the JSON directly, as a demonstration and for the sake of variety."""
-        with open(os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r"
+        ) as f:
             aqueduct_description = f.read()
 
         wri_colormap = {
@@ -536,7 +550,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         logger.info(f"Running batch item with path {item.path}")
         for i, ret in enumerate(self.return_periods):
             logger.info(f"Copying return period {i + 1}/{len(self.return_periods)}")
-            with source.open_dataset(item.filename_return_period.format(return_period=ret)) as da:
+            with source.open_dataset(
+                item.filename_return_period.format(return_period=ret)
+            ) as da:
                 assert da is not None
                 if ret == self.return_periods[0]:
                     z = target.create_empty(
@@ -555,7 +571,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                         indexes=self.return_periods,
                     )
                 # ('band', 'y', 'x')
-                values = da[0, :, :].data  # will load into memory; assume source not chunked efficiently
+                values = da[
+                    0, :, :
+                ].data  # will load into memory; assume source not chunked efficiently
                 values[values == -9999.0] = float("nan")
                 z[i, :, :] = values
         print("done")
@@ -564,7 +582,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         logger.info(f"Generating tile-set for batch item with path {item.path})")
         source_path = item.path
         assert item.resource.map is not None
-        target_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
+        target_path = item.resource.map.path.format(
+            scenario=item.scenario, year=item.year
+        )
         if target_path != source_path + "_map":
             raise ValueError(f"unexpected target path {target_path}")
         create_tile_set(

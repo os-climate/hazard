@@ -10,7 +10,12 @@ from rasterio.crs import CRS  # type: ignore
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
-from hazard.protocols import Averageable, OpenDataset, ReadWriteDataArray, WriteDataArray
+from hazard.protocols import (
+    Averageable,
+    OpenDataset,
+    ReadWriteDataArray,
+    WriteDataArray,
+)
 from hazard.utilities.map_utilities import generate_map
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
@@ -74,14 +79,18 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         self.central_years = central_years
         self.central_year_historical = central_year_historical
 
-    def run_single(self, item: T, source: OpenDataset, target: ReadWriteDataArray, client: Client):
+    def run_single(
+        self, item: T, source: OpenDataset, target: ReadWriteDataArray, client: Client
+    ):
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
             logger.info(f"Writing array to {str(indicator.path)}")
             target.write(str(indicator.path), indicator.array)
             path_map = indicator.path.with_name(indicator.path.name + "_map")
-            self._generate_map(str(indicator.path), str(path_map), indicator.bounds, target)
+            self._generate_map(
+                str(indicator.path), str(path_map), indicator.bounds, target
+            )
         return
 
     def _generate_map(
@@ -109,12 +118,18 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     ) -> List[Indicator]:
         """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = self._years(source, item)
-        logger.info(f"Calculating average indicator for batch item {str(item)}, years={list(years)}")
+        logger.info(
+            f"Calculating average indicator for batch item {str(item)}, years={list(years)}"
+        )
         futures = []
         for year in years:
-            future = client.submit(self._calculate_single_year_indicators, source, item, year)
+            future = client.submit(
+                self._calculate_single_year_indicators, source, item, year
+            )
             futures.append(future)
-        single_year_sets: List[List[Indicator]] = list(client.gather(futures))  # indicators for each year
+        single_year_sets: List[List[Indicator]] = list(
+            client.gather(futures)
+        )  # indicators for each year
         indics_per_year = len(single_year_sets[0])  # number of indicators for each year
         res: List[Indicator] = []
         for i in range(indics_per_year):
@@ -140,7 +155,9 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         ...
 
     @abstractmethod
-    def _calculate_single_year_indicators(self, source: OpenDataset, item: T, year: int) -> List[Indicator]:
+    def _calculate_single_year_indicators(
+        self, source: OpenDataset, item: T, year: int
+    ) -> List[Indicator]:
         """Calculate indicators for a single year for a single batch item.
         If just a single indicator per batch, a list of length one is expected."""
         ...
@@ -163,7 +180,11 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         resource = self._resource()
         for gcm in self.gcms:
             for scenario in self.scenarios:
-                central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
+                central_years = (
+                    [self.central_year_historical]
+                    if scenario == "historical"
+                    else self.central_years
+                )
                 for central_year in central_years:
                     yield BatchItem(
                         resource=resource,
@@ -176,7 +197,9 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         """Get the inventory item(s)."""
         return [self._resource()]  # .expand()
 
-    def _get_indicators(self, item: BatchItem, data_arrays: List[xr.DataArray], param: str) -> List[Indicator]:
+    def _get_indicators(
+        self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
+    ) -> List[Indicator]:
         """Find the
 
         Args:
@@ -199,7 +222,9 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         ]
         assert isinstance(resource.map, MapInfo)
         return [
-            Indicator(array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds)
+            Indicator(
+                array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds
+            )
             for i, array in enumerate(data_arrays)
         ]
 

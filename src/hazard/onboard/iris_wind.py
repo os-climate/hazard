@@ -30,13 +30,17 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         """
         self.input_dir = input_dir
 
-    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, client: Client):
+    def run_single(
+        self, item: BatchItem, source, target: ReadWriteDataArray, client: Client
+    ):
         file_name = self._file_name(item.scenario, item.year)
         ds = xr.open_dataset(file_name.format(year=item.year, scenario=item.scenario))
         # dimensions: (rp: 19, latitude: 1200, longitude: 3600)
         da = OscZarr.normalize_dims(ds.vmax)
         # if the coordinates give the left, bottom of each pixel:
-        da = da.assign_coords(latitude=da.latitude.data + 0.05, longitude=da.longitude.data + 0.05)
+        da = da.assign_coords(
+            latitude=da.latitude.data + 0.05, longitude=da.longitude.data + 0.05
+        )
         target.write(
             item.resource.path.format(scenario=item.scenario, year=item.year),
             da,
@@ -44,11 +48,15 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         )
         self.generate_single_map(item, target, target)
 
-    def generate_single_map(self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray):
+    def generate_single_map(
+        self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray
+    ):
         source_path = item.resource.path.format(scenario=item.scenario, year=item.year)
         assert item.resource.map is not None
         assert isinstance(source, OscZarr) and isinstance(target, OscZarr)
-        target_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
+        target_path = item.resource.map.path.format(
+            scenario=item.scenario, year=item.year
+        )
         tiles.create_tile_set(source, source_path, target, target_path, check_fill=True)
         # tiles.create_image_set(source, source_path, target, target_path)
 

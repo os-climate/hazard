@@ -26,7 +26,9 @@ class Ukcp18(OpenDataset):
             username=os.environ["CEDA_FTP_USERNAME"],
             password=os.environ["CEDA_FTP_PASSWORD"],
         )
-        self.quantities: Dict[str, Dict[str, str]] = {"tas": {"name": "Daily average temperature"}}
+        self.quantities: Dict[str, Dict[str, str]] = {
+            "tas": {"name": "Daily average temperature"}
+        }
 
         # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to # noqa
         self._dataset_member_id = dataset_member_id
@@ -47,8 +49,10 @@ class Ukcp18(OpenDataset):
         catalog_url: Optional[str] = None,
         collection_id: Optional[str] = None,  # type: ignore
     ) -> Generator[xr.Dataset, None, None]:
-        files_available_for_quantity: List[str] = self._get_files_available_for_quantity_and_year(
-            gcm, scenario, quantity, year
+        files_available_for_quantity: List[str] = (
+            self._get_files_available_for_quantity_and_year(
+                gcm, scenario, quantity, year
+            )
         )
 
         if not files_available_for_quantity:
@@ -63,7 +67,9 @@ class Ukcp18(OpenDataset):
 
         yield converted_to_kelvin
 
-    def _combine_all_files_data(self, files_available_for_quantity: List[str]) -> xr.Dataset:
+    def _combine_all_files_data(
+        self, files_available_for_quantity: List[str]
+    ) -> xr.Dataset:
         datasets = []
         for file in files_available_for_quantity:
             with self._fs.open(file, "rb") as f:

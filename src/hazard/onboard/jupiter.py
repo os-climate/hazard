@@ -48,7 +48,11 @@ class JupiterOscFileSource:
         Returns:
             Dict[str, xr.DataArray]: Data arrays, keyed by Jupiter name.
         """
-        df = pd.read_csv(os.path.join(self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename))
+        df = pd.read_csv(
+            os.path.join(
+                self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename
+            )
+        )
         ids = [c for c in df.columns if c not in ["key", "latitude", "longitude"]]
         df_pv = df.pivot(index="latitude", columns="longitude", values=ids)
         arrays: Dict[str, xr.DataArray] = {}
@@ -437,13 +441,21 @@ Open oceans are excluded.
         (min, max) = (float("inf"), float("-inf"))
         for scenario in item.model.scenarios:
             for year in scenario.years:
-                da = arrays[item.jupiter_array_name.format(scenario=scenario.id, year=year)]
-                da = da.reindex(latitude=da.latitude[::-1])  # by convention latitude reversed
+                da = arrays[
+                    item.jupiter_array_name.format(scenario=scenario.id, year=year)
+                ]
+                da = da.reindex(
+                    latitude=da.latitude[::-1]
+                )  # by convention latitude reversed
                 (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())  # type: ignore
                 pp = PosixPath(item.model.path.format(scenario=scenario.id, year=year))  # type: ignore
                 target.write(str(pp), da)
-                reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
-                reprojected = da.sel(latitude=slice(85, -85)).rio.reproject(
+                reprojected = transform_epsg4326_to_epsg3857(
+                    da.sel(latitude=slice(85, -85))
+                )
+                reprojected = da.sel(
+                    latitude=slice(85, -85)
+                ).rio.reproject(
                     "EPSG:3857", resampling=rasterio.enums.Resampling.max
                 )  # , shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
                 # bounds = check_map_bounds(reprojected)
