@@ -9,6 +9,12 @@ TPI-images
 
 **/test_output/**
 
+# From hazard_workflow.cwl
+indicator/
+
+# Don't want to commit secrets
+hazard_workflow_input.yml
+
 # Local node cache
 node_modules
 

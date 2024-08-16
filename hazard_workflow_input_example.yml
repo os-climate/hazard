@@ -1,0 +1,11 @@
+window_years: 0  # type 'int'
+store: "./indicator"  # default value of type 'string'.
+source_dataset: a_string  # type 'string'
+scenario_list: a_string  # type 'string'
+indicator: "days_tas_above_indicator"  # default value of type 'string'.
+gcm_list: a_string  # type 'string'
+central_year_list: a_string  # type 'string'
+central_year_historical: 0  # type 'int'
+ceda_ftp_username: a_string  # type 'string'
+ceda_ftp_url: a_string  # type 'string'
+ceda_ftp_password: a_string  # type 'string'
