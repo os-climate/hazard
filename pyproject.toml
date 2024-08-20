@@ -73,6 +73,7 @@ requires = [
     "wheel",
     "pdm"
 ]
+
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -92,14 +93,11 @@ test = [
   "pytest-cov",
   "sphinx-pyproject"
 ]
+
 lint = [
-  "isort",
-  "black",
-  "black[jupyter]",
-  "flake8",
-  "Flake8-pyproject",
   "mypy",
   "pre-commit",
+  "ruff",
 ]
 
 [tool.pdm.scripts]
@@ -108,11 +106,8 @@ release = "scripts/release-versioning.sh"
 test = "pytest"
 docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
-isort = { cmd = "isort --check ." }
-black = { cmd = "black --check ." }
-flake8 = { cmd = "flake8 src" }
 mypy = { cmd = "mypy --install-types --non-interactive src" }
-all = {composite = ["pytest", "mypy", "isort", "black", "flake8"]}
+all = {composite = ["lint", "mypy", "pytest"]}
 
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
@@ -129,44 +124,86 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 warn_unreachable = true
 ignore_missing_imports = true
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-line_length = 120
-
 [tool.coverage.run]
 source = "src"
 omit = "tests/*"
 relative_files = true
 
-[tool.yapf]
-blank_line_before_nested_class_or_def = true
-column_limit = 88
-
-[tool.black]
-line-length = 120
-exclude = '''
-/(
-    \.git
-  | \.tox
-  | \venv
-  | \.venv
-  | \*.env
-  | \build
-  | \dist
-)/
-'''
-
-[tool.flake8]
-max-line-length = "120"
-extend-ignore = [
-  "E501",
-  "E203", # Allow spacing before colon (to favor Black).
-]
-
 [project.scripts]
 os_climate_hazard = "hazard.cli:cli"
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
+extend-fixable = [
+    # Instead of trailing-whitespace
+    "W291", "W293"
+    ]
+
+extend-select = [
+    # Instead of pydocstyle
+    "D",
+    #Instead of flake8
+    "E", "F", "B",
+    # Instead of pep8-naming
+    "N",
+    # Instead of flake8-debugger or debug-statements
+    "T10",
+]
+
+ignore = [
+    "E203",
+    "E501",
+    # Avoid incompatible rules
+    "D203",
+    "D213",
+
+    # Ignore this rules so that precommit passes. Uncomment to start fixing them
+    "B006", "B008", "B904", "B012", "B024", "B020",
+    "D",
+    "F401", "F811",
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# Ignore `D` rules everywhere except for the `src/` directory.
+"!src/**.py" = ["D"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

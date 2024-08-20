@@ -36,20 +36,23 @@ class BatchItem:
 
 
 class ZarrWorkingStore(Protocol):
-    def get_store(self, path: str): ...
+    def get_store(self, path: str): ...  # noqa:E704
 
 
 class S3ZarrWorkingStore(ZarrWorkingStore):
     def __init__(self):
         s3 = s3fs.S3FileSystem(
-            key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None), secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None)
+            key=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
+            secret=os.environ.get("OSC_S3_SECRET_KEY_DEV", None),
         )
         base_path = os.environ["OSC_S3_BUCKET_DEV"] + "/drought/osc/v01"
         self._base_path = base_path
         self._s3 = s3
 
     def get_store(self, path: str):
-        return s3fs.S3Map(root=str(PurePosixPath(self._base_path, path)), s3=self._s3, check=False)
+        return s3fs.S3Map(
+            root=str(PurePosixPath(self._base_path, path)), s3=self._s3, check=False
+        )
 
 
 class LocalZarrWorkingStore(ZarrWorkingStore):
@@ -111,11 +114,12 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         self,
         working_zarr_store: ZarrWorkingStore,
         window_years: int = MultiYearAverageIndicatorBase._default_window_years,
-        gcms: Iterable[str] = ["MIROC6"],  # MultiYearAverageIndicatorBase._default_gcms,
+        gcms: Iterable[str] = [
+            "MIROC6"
+        ],  # MultiYearAverageIndicatorBase._default_gcms,
         scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
         central_years: Sequence[int] = [2005, 2030, 2040, 2050, 2080],
     ):
-
         self.calib_start, self.calib_end = datetime(1985, 1, 1), datetime(2015, 1, 1)
         self.calc_start, self.calc_end = datetime(1985, 1, 1), datetime(2100, 12, 31)
         self.freq, self.window, self.dist, self.method = "MS", 12, "gamma", "APP"
@@ -153,7 +157,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
 
         def download_dataset(variable, year, gcm, scenario, datasource=datasource):
             scenario_ = "historical" if year < 2015 else scenario
-            with datasource.open_dataset_year(gcm, scenario_, variable, year) as ds_temp:
+            with datasource.open_dataset_year(
+                gcm, scenario_, variable, year
+            ) as ds_temp:
                 ds = ds_temp.astype("float32").compute()
                 return ds
 
@@ -166,15 +172,25 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 if year == years[0]:
                     ds.to_zarr(store=self.working_zarr_store, group=group, mode="w")
                 else:
-                    ds.to_zarr(store=self.working_zarr_store, group=group, append_dim="time")
+                    ds.to_zarr(
+                        store=self.working_zarr_store, group=group, append_dim="time"
+                    )
                 logger.info(f"completed processing: variable={quantity}, year={year}.")
 
-    def read_quantity_from_s3_store(self, gcm, scenario, quantity, lat_min, lat_max, lon_min, lon_max) -> xr.Dataset:
-        ds = self.chunked_dataset(gcm, scenario, quantity).sel(lat=slice(lat_min, lat_max), lon=slice(lon_min, lon_max))
+    def read_quantity_from_s3_store(
+        self, gcm, scenario, quantity, lat_min, lat_max, lon_min, lon_max
+    ) -> xr.Dataset:
+        ds = self.chunked_dataset(gcm, scenario, quantity).sel(
+            lat=slice(lat_min, lat_max), lon=slice(lon_min, lon_max)
+        )
         return ds
 
     def chunked_dataset(self, gcm, scenario, quantity) -> xr.Dataset:
-        ds = xr.open_zarr(store=self.working_zarr_store.get_store(quantity + "_" + gcm + "_" + scenario))
+        ds = xr.open_zarr(
+            store=self.working_zarr_store.get_store(
+                quantity + "_" + gcm + "_" + scenario
+            )
+        )
         return ds
 
     def get_datachunks(self):
@@ -186,27 +202,39 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             "Chunk_" + str(i).zfill(4): dict(list(d[0].items()) + list(d[1].items()))
             for i, d in enumerate(
                 itertools.product(
-                    [{"lat_min": x[0], "lat_max": x[1]} for x in zip(lat_bins[:-1], lat_bins[1:])],
-                    [{"lon_min": x[0], "lon_max": x[1]} for x in zip(lon_bins[:-1], lon_bins[1:])],
+                    [
+                        {"lat_min": x[0], "lat_max": x[1]}
+                        for x in zip(lat_bins[:-1], lat_bins[1:])
+                    ],
+                    [
+                        {"lon_min": x[0], "lon_max": x[1]}
+                        for x in zip(lon_bins[:-1], lon_bins[1:])
+                    ],
                 )
             )
         }
         return data_chunks
 
-    def calculate_spei(self, gcm, scenario, progress_store: Optional[ProgressStore] = None):
+    def calculate_spei(
+        self, gcm, scenario, progress_store: Optional[ProgressStore] = None
+    ):
         """Calculate SPEI for the given GCM and scenario, storing"""
         # we infer the lats and lons from the source dataset:
         ds_chunked = self.chunked_dataset(gcm, scenario, "tas")
         data_chunks = self.get_datachunks()
         chunk_names = list(data_chunks.keys())
         if progress_store:
-            chunk_names_remaining = list(np.array(chunk_names)[progress_store.remaining(len(chunk_names))])
+            chunk_names_remaining = list(
+                np.array(chunk_names)[progress_store.remaining(len(chunk_names))]
+            )
         else:
             chunk_names_remaining = chunk_names
 
         # do the first chunk in isolation to ensure that dataset is written without contention
         if chunk_names[0] in chunk_names_remaining:
-            self._calculate_spei_chunk(chunk_names[0], data_chunks, ds_chunked, gcm, scenario)
+            self._calculate_spei_chunk(
+                chunk_names[0], data_chunks, ds_chunked, gcm, scenario
+            )
             chunk_names_remaining.remove(chunk_names[0])
             if progress_store:
                 progress_store.add_completed([0])
@@ -214,7 +242,12 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             futures = {
                 executor.submit(
-                    self._calculate_spei_chunk, chunk_name, data_chunks, ds_chunked, gcm, scenario
+                    self._calculate_spei_chunk,
+                    chunk_name,
+                    data_chunks,
+                    ds_chunked,
+                    gcm,
+                    scenario,
                 ): chunk_name
                 for chunk_name in chunk_names_remaining
             }
@@ -227,11 +260,15 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 except Exception:
                     logger.info(f"chunk {futures[future]} failed.")
 
-    def _calculate_spei_chunk(self, chunk_name, data_chunks, ds_chunked: xr.Dataset, gcm, scenario):
+    def _calculate_spei_chunk(
+        self, chunk_name, data_chunks, ds_chunked: xr.Dataset, gcm, scenario
+    ):
         data_chunk = data_chunks[chunk_name]
         lat_min, lat_max = data_chunk["lat_min"], data_chunk["lat_max"]
         lon_min, lon_max = data_chunk["lon_min"], data_chunk["lon_max"]
-        ds_spei_slice = self._calculate_spei_for_slice(lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario)
+        ds_spei_slice = self._calculate_spei_for_slice(
+            lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario
+        )
         lats_all, lons_all = ds_chunked["lat"].values, ds_chunked["lon"].values
         path = os.path.join("spei", gcm + "_" + scenario)
         store = self.working_zarr_store.get_store(path)
@@ -241,11 +278,17 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             zarr.hierarchy.open_group(store=store, mode="r")
         except GroupNotFoundError:
             # must use deferred dask array to avoid allocating memory for whole array
-            data = da.empty([len(ds_spei_slice["time"].values), len(lats_all), len(lons_all)])
+            data = da.empty(
+                [len(ds_spei_slice["time"].values), len(lats_all), len(lons_all)]
+            )
             ds_spei = (
                 xr.DataArray(
                     data=data,
-                    coords={"time": ds_spei_slice["time"].values, "lat": lats_all, "lon": lons_all},
+                    coords={
+                        "time": ds_spei_slice["time"].values,
+                        "lat": lats_all,
+                        "lon": lons_all,
+                    },
                     dims=["time", "lat", "lon"],
                 )
                 .chunk(chunks={"lat": 40, "lon": 40, "time": 100000})
@@ -256,8 +299,12 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             logger.info("Created new zarr array.")
             # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores # noqa: E501
 
-        lat_indexes = np.where(np.logical_and(lats_all >= lat_min, lats_all <= lat_max))[0]
-        lon_indexes = np.where(np.logical_and(lons_all >= lon_min, lons_all <= lon_max))[0]
+        lat_indexes = np.where(
+            np.logical_and(lats_all >= lat_min, lats_all <= lat_max)
+        )[0]
+        lon_indexes = np.where(
+            np.logical_and(lons_all >= lon_min, lons_all <= lon_max)
+        )[0]
         ds_spei_slice.to_zarr(
             store=self.working_zarr_store,
             mode="r+",
@@ -269,13 +316,15 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         logger.info(f"written chunk {chunk_name} to zarr array.")
         return chunk_name
 
-    def _calculate_spei_for_slice(self, lat_min, lat_max, lon_min, lon_max, *, gcm, scenario, num_workers=2):
-        ds_tas = self.read_quantity_from_s3_store(gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max).chunk(
-            {"time": 100000}
-        )
-        ds_pr = self.read_quantity_from_s3_store(gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max).chunk(
-            {"time": 100000}
-        )
+    def _calculate_spei_for_slice(
+        self, lat_min, lat_max, lon_min, lon_max, *, gcm, scenario, num_workers=2
+    ):
+        ds_tas = self.read_quantity_from_s3_store(
+            gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max
+        ).chunk({"time": 100000})
+        ds_pr = self.read_quantity_from_s3_store(
+            gcm, scenario, "pr", lat_min, lat_max, lon_min, lon_max
+        ).chunk({"time": 100000})
         ds_tas = ds_tas.drop_duplicates(dim=..., keep="last").sortby("time")
         ds_pr = ds_pr.drop_duplicates(dim=..., keep="last").sortby("time")
         ds_pet = (
@@ -286,20 +335,38 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         da_wb = xclim.indices.water_budget(pr=ds_pr["pr"], evspsblpot=ds_pet["pet"])
         with xr.set_options(keep_attrs=True):
             da_wb = da_wb - 1.01 * da_wb.min()
-        da_wb_calib = da_wb.sel(time=slice(self.calib_start.strftime("%Y-%m-%d"), self.calib_end.strftime("%Y-%m-%d")))
-        da_wb_calc = da_wb.sel(time=slice(self.calc_start.strftime("%Y-%m-%d"), self.calc_end.strftime("%Y-%m-%d")))
+        da_wb_calib = da_wb.sel(
+            time=slice(
+                self.calib_start.strftime("%Y-%m-%d"),
+                self.calib_end.strftime("%Y-%m-%d"),
+            )
+        )
+        da_wb_calc = da_wb.sel(
+            time=slice(
+                self.calc_start.strftime("%Y-%m-%d"), self.calc_end.strftime("%Y-%m-%d")
+            )
+        )
         ds_spei = (
             xclim.indices.standardized_precipitation_evapotranspiration_index(
-                da_wb_calc, da_wb_calib, freq=self.freq, window=self.window, dist=self.dist, method=self.method
+                da_wb_calc,
+                da_wb_calib,
+                freq=self.freq,
+                window=self.window,
+                dist=self.dist,
+                method=self.method,
             )
             .astype("float32")
             .to_dataset(name="spei")
             .compute(scheduler="processes", num_workers=num_workers)
         )
-        logger.info(f"calculated SPEI for gcm={gcm}, lats=[{lat_min, lat_max}], lons=[{lon_min, lon_max}]")
+        logger.info(
+            f"calculated SPEI for gcm={gcm}, lats=[{lat_min, lat_max}], lons=[{lon_min, lon_max}]"
+        )
         return ds_spei
 
-    def calculate_annual_average_spei(self, gcm: str, scenario: str, central_year: int, target: OscZarr):
+    def calculate_annual_average_spei(
+        self, gcm: str, scenario: str, central_year: int, target: OscZarr
+    ):
         """Calculate average number of months where 12-month SPEI index is below thresholds
         [0, -1, -1.5, -2, -2.5, -3.6] for 20 years period.
 
@@ -312,7 +379,8 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
 
         def get_spei_full_results(gcm, scenario):
             ds_spei = xr.open_zarr(
-                store=self.working_zarr_store, group=os.path.join("SPEI", "Aggregated", gcm + "_" + scenario)
+                store=self.working_zarr_store,
+                group=os.path.join("SPEI", "Aggregated", gcm + "_" + scenario),
             )
             return ds_spei
 
@@ -320,11 +388,23 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             datetime(central_year - self.window_years // 2, 1, 1),
             datetime(central_year + self.window_years // 2 - 1, 12, 31),
         ]
-        print(gcm + " " + scenario + " " + str(central_year) + " period:   " + str(period[0]) + "---" + str(period[1]))
+        print(
+            gcm
+            + " "
+            + scenario
+            + " "
+            + str(central_year)
+            + " period:   "
+            + str(period[0])
+            + "---"
+            + str(period[1])
+        )
         ds_spei = get_spei_full_results(gcm, scenario)
         lats_all = ds_spei["lat"].values
         lons_all = ds_spei["lon"].values
-        spei_annual = np.nan * np.zeros([len(self.spei_threshold), len(lats_all), len(lons_all)])
+        spei_annual = np.nan * np.zeros(
+            [len(self.spei_threshold), len(lats_all), len(lons_all)]
+        )
         spei_temp = ds_spei.sel(time=slice(period[0], period[1]))
         spei_temp = spei_temp.compute()
         spei_temp = spei_temp["spei"]
@@ -352,7 +432,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         if calculate_spei:
             self.calculate_spei(item.gcm, item.scenario)
         if calculate_average_spei:
-            self.calculate_annual_average_spei(item.gcm, item.scenario, item.central_year, target)
+            self.calculate_annual_average_spei(
+                item.gcm, item.scenario, item.central_year, target
+            )
 
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
@@ -376,7 +458,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             description="",
             display_groups=["Drought SPEI index"],  # display names of groupings
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,

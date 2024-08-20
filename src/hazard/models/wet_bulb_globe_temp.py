@@ -8,7 +8,11 @@ import numpy as np
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import BatchItem, Indicator, ThresholdBasedAverageIndicator
+from hazard.models.multi_year_average import (
+    BatchItem,
+    Indicator,
+    ThresholdBasedAverageIndicator,
+)
 from hazard.protocols import OpenDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -61,13 +65,21 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         )
         self.threshold_temps_c = threshold_temps_c
 
-    def _calculate_single_year_indicators(self, source: OpenDataset, item: BatchItem, year: int) -> List[Indicator]:
+    def _calculate_single_year_indicators(
+        self, source: OpenDataset, item: BatchItem, year: int
+    ) -> List[Indicator]:
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
-            tas = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "tas", year)).tas
-            hurs = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "hurs", year)).hurs
+            tas = stack.enter_context(
+                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
+            ).tas
+            hurs = stack.enter_context(
+                source.open_dataset_year(item.gcm, item.scenario, "hurs", year)
+            ).hurs
             results = self._days_wbgt_above_indicators(tas, hurs)
-        path = item.resource.path.format(gcm=item.gcm, scenario=item.scenario, year=item.central_year)
+        path = item.resource.path.format(
+            gcm=item.gcm, scenario=item.scenario, year=item.central_year
+        )
         assert isinstance(item.resource.map, MapInfo)
         result = [
             Indicator(
@@ -79,7 +91,9 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         logger.info(f"Calculation complete for year {year}")
         return result
 
-    def _days_wbgt_above_indicators(self, tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
+    def _days_wbgt_above_indicators(
+        self, tas: xr.DataArray, hurs: xr.DataArray
+    ) -> xr.DataArray:
         """Create DataArrays containing indicators the thresholds for a single year."""
         tas_c = tas - 273.15  # convert from K to C
         # vpp is water vapour partial pressure in kPa
@@ -106,7 +120,9 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _resource(self) -> HazardResource:
         """Create resource."""
-        with open(os.path.join(os.path.dirname(__file__), "wet_bulb_globe_temp.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "wet_bulb_globe_temp.md"), "r"
+        ) as f:
             description = f.read().replace("\u00c2\u00b0", "\u00b0")
         resource = HazardResource(
             hazard_type="ChronicHeat",
@@ -117,9 +133,11 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
             display_name="Days with wet-bulb globe temperature above threshold in °C/{gcm}",
             description=description,
-            display_groups=["Days with wet-bulb globe temperature above threshold in °C"],  # display names of groupings
+            display_groups=[
+                "Days with wet-bulb globe temperature above threshold in °C"
+            ],  # display names of groupings
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,

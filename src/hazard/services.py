@@ -1,5 +1,5 @@
 import logging  # noqa: E402
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from dask.distributed import Client, LocalCluster  # noqa: E402
 from fsspec.implementations.local import LocalFileSystem
@@ -7,7 +7,7 @@ from fsspec.implementations.local import LocalFileSystem
 from hazard.docs_store import DocStore  # type: ignore # noqa: E402
 from hazard.models.days_tas_above import DaysTasAboveIndicator  # noqa: E402
 from hazard.models.degree_days import DegreeDays  # noqa: E402
-from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6  # noqa: E402
+from hazard.sources import SourceDataset, get_source_dataset_instance
 from hazard.sources.osc_zarr import OscZarr  # noqa: E402
 
 logging.basicConfig(
@@ -17,6 +17,8 @@ logging.basicConfig(
 
 
 def days_tas_above_indicator(
+    source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
+    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
     threshold_list: List[float] = [20],
@@ -39,7 +41,10 @@ def days_tas_above_indicator(
 
     docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
 
-    source = NexGddpCmip6()
+    source_dataset_kwargs = (
+        {} if source_dataset_kwargs is None else source_dataset_kwargs
+    )
+    source = get_source_dataset_instance(source_dataset, source_dataset_kwargs)
 
     model = DaysTasAboveIndicator(
         threshold_temps_c=threshold_list,
@@ -59,6 +64,8 @@ def days_tas_above_indicator(
 
 
 def degree_days_indicator(
+    source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
+    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
     threshold_temperature: float = 32,
@@ -81,7 +88,10 @@ def degree_days_indicator(
 
     docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
 
-    source = NexGddpCmip6()
+    source_dataset_kwargs = (
+        {} if source_dataset_kwargs is None else source_dataset_kwargs
+    )
+    source = get_source_dataset_instance(source_dataset, source_dataset_kwargs)
 
     model = DegreeDays(
         threshold=threshold_temperature,
@@ -105,7 +115,7 @@ def setup(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     extra_xarray_store: Optional[bool] = False,
-) -> tuple[DocStore, OscZarr, Client]:
+) -> Tuple[DocStore, OscZarr, Client]:
     """
     initialize output store, docs store and local dask client
     """
@@ -115,10 +125,14 @@ def setup(
         target = OscZarr(store=store, extra_xarray_store=extra_xarray_store)
     else:
         if bucket is None or prefix is None:
-            raise ValueError("either of `store`, or `bucket` and `prefix` together, must be provided")
+            raise ValueError(
+                "either of `store`, or `bucket` and `prefix` together, must be provided"
+            )
         else:
             docs_store = DocStore(bucket=bucket, prefix=prefix)
-            target = OscZarr(bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store)
+            target = OscZarr(
+                bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store
+            )
 
     cluster = LocalCluster(processes=False)
 

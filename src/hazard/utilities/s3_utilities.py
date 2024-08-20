@@ -50,8 +50,12 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     def copy_file(file: pathlib.Path):
         with open(file, "rb") as f:
             data = f.read()
-            target_key = str(pathlib.PurePosixPath("hazard", "hazard.zarr", array_path, file.name))
-            s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
+            target_key = str(
+                pathlib.PurePosixPath("hazard", "hazard.zarr", array_path, file.name)
+            )
+            s3_target_client.put_object(
+                Body=data, Bucket=target_bucket_name, Key=target_key
+            )
 
     async def copy_all():
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
@@ -94,12 +98,17 @@ def copy_dev_to_prod(prefix: str, dry_run=False):
 
     source_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
     target_bucket_name = os.environ["OSC_S3_BUCKET"]
-    if source_bucket_name != "physrisk-hazard-indicators-dev01" or target_bucket_name != "physrisk-hazard-indicators":
+    if (
+        source_bucket_name != "physrisk-hazard-indicators-dev01"
+        or target_bucket_name != "physrisk-hazard-indicators"
+    ):
         # double check on environment variables
         raise ValueError("unexpected bucket")
     keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
     logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-    logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+    logger.info(
+        f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
+    )
     if not dry_run:
         copy_objects(
             keys,
@@ -133,12 +142,17 @@ def copy_prod_to_public(prefix: str, dry_run=False):
 
     source_bucket_name = os.environ["OSC_S3_BUCKET"]
     target_bucket_name = os.environ["OSC_S3_BUCKET_PUBLIC"]
-    if source_bucket_name != "physrisk-hazard-indicators" or target_bucket_name != "os-climate-public-data":
+    if (
+        source_bucket_name != "physrisk-hazard-indicators"
+        or target_bucket_name != "os-climate-public-data"
+    ):
         # double check on environment variables
         raise ValueError("unexpected bucket")
     keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
     logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-    logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+    logger.info(
+        f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
+    )
     if not dry_run:
         copy_objects(
             keys,
@@ -150,7 +164,9 @@ def copy_prod_to_public(prefix: str, dry_run=False):
 
 
 def list_objects(client, bucket_name, prefix):
-    paginator = client.get_paginator("list_objects_v2")  # , PaginationConfig={"MaxItems": 10000})
+    paginator = client.get_paginator(
+        "list_objects_v2"
+    )  # , PaginationConfig={"MaxItems": 10000})
     pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
     # get the list of keys with the given prefix
     keys = []
@@ -168,7 +184,9 @@ def list_objects(client, bucket_name, prefix):
 
 
 def list_object_etags(client, bucket_name, prefix):
-    paginator = client.get_paginator("list_objects_v2")  # , PaginationConfig={'MaxItems': 10000})
+    paginator = client.get_paginator(
+        "list_objects_v2"
+    )  # , PaginationConfig={'MaxItems': 10000})
     pages = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
     # get the list of keys with the given prefix
     etags = {}
@@ -192,14 +210,18 @@ def copy_objects(
 ):
     """Form of copy that allows separate credentials for source and target buckets."""
 
-    logger.info(f"Source bucket {source_bucket_name}; target bucket {target_bucket_name}")
+    logger.info(
+        f"Source bucket {source_bucket_name}; target bucket {target_bucket_name}"
+    )
 
     def copy_object(key):
         obj = s3_source_client.get_object(Bucket=source_bucket_name, Key=key)
         data = obj["Body"].read()
         target_key = rename(key) if rename is not None else key
         # target_key = key.replace('hazard_test/hazard.zarr', 'hazard/hazard.zarr')
-        return s3_target_client.put_object(Body=data, Bucket=target_bucket_name, Key=target_key)
+        return s3_target_client.put_object(
+            Body=data, Bucket=target_bucket_name, Key=target_key
+        )
 
     async def copy_all(keys: Sequence[str]):
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
@@ -246,17 +268,21 @@ def sync_buckets(
     prefix,
     dry_run=True,
 ):
-    logger.info(f"Syncing target bucket {target_bucket_name} to source {source_bucket_name}.")
+    logger.info(
+        f"Syncing target bucket {target_bucket_name} to source {source_bucket_name}."
+    )
 
     source_etags = list_object_etags(s3_source_client, source_bucket_name, prefix)
     target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
     # look for objects that are 1) missing in target and 2) different in target
-    all_diffs = set(key for key, etag in source_etags.items() if target_etags.get(key, "") != etag)
+    all_diffs = set(
+        key for key, etag in source_etags.items() if target_etags.get(key, "") != etag
+    )
     missing = set(key for key in source_etags if key not in target_etags)
     different = set(key for key in all_diffs if key not in missing)
     logger.info(
         f"Copying {len(missing)} missing files from {source_bucket_name} to {target_bucket_name}: "
-        + _first_5_last_5(list(missing))
+        + _first_5_last_5(list(missing))  # noqa:W503
     )
     if not dry_run:
         copy_objects(
@@ -268,7 +294,7 @@ def sync_buckets(
         )
     logger.info(
         f"Copying {len(different)} different files from {source_bucket_name} to {target_bucket_name}: "
-        + _first_5_last_5(list(different))
+        + _first_5_last_5(list(different))  # noqa:W503
     )
     if not dry_run:
         copy_objects(
@@ -293,7 +319,9 @@ def fast_copy(
         target_key = key.replace(source_zarr_path, target_zarr_path)
         # target_key = key
         # print(f"{key} to {target_key} for bucket {bucket_name}")
-        s3_public_client.copy_object(CopySource=copy_source, Bucket=target_bucket_name, Key=target_key)
+        s3_public_client.copy_object(
+            CopySource=copy_source, Bucket=target_bucket_name, Key=target_key
+        )
         if i % 100 == 0:
             logger.info(f"Completed {i}/{len(keys)}")
 

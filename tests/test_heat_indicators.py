@@ -11,7 +11,7 @@ from dask.distributed import Client, LocalCluster
 from pytest import approx
 
 import hazard.utilities.zarr_utilities as zarr_utilities
-from hazard.docs_store import DocStore  # type: ignore
+from hazard.docs_store import DocStore
 from hazard.models.degree_days import BatchItem, DegreeDays, HeatingCoolingDegreeDays
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
@@ -31,7 +31,7 @@ def test_degree_days_mocked():
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
-    source = TestSource(_create_test_datasets_tas())
+    source = TestSource(_create_test_datasets_tas(), [gcm])
     target = TestTarget()
     # cut down the transform
     model = DegreeDays(
@@ -55,7 +55,7 @@ def test_degree_days_mocked():
     )
 
 
-def test_work_loss_mocked():
+def test_work_loss_mocked() -> None:
     """Test degree days calculation based on mocked data."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -65,7 +65,7 @@ def test_work_loss_mocked():
     alpha_light = (32.98, 17.81)
     alpha_medium = (30.94, 16.64)
     alpha_heavy = (24.64, 22.72)
-    source = TestSource(test_sets)
+    source = TestSource(test_sets, [gcm])
     target = TestTarget()
     # cut down the transform
     model = WorkLossIndicator(
@@ -220,8 +220,12 @@ def test_example_run_degree_days():
 
 
 def download_test_datasets(
-    test_output_dir, gcm, scenario, years, indicators=["tasmax"]
-):  # noqa: F811
+    test_output_dir,  # noqa: F811
+    gcm,
+    scenario,
+    years,
+    indicators=["tasmax"],
+):
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:

@@ -51,7 +51,11 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         resource = self._resource()
         for gcm in self.gcms:
             for scenario in self.scenarios:
-                central_years = [self.central_year_historical] if scenario == "historical" else self.central_years
+                central_years = (
+                    [self.central_year_historical]
+                    if scenario == "historical"
+                    else self.central_years
+                )
                 for central_year in central_years:
                     yield WorkLossBatchItem(
                         resource=resource,
@@ -78,7 +82,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             display_groups=["Mean work loss"],  # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
             group_id="",
-            map=MapInfo(
+            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
                     nodata_index=0,
@@ -109,8 +113,12 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
     ) -> List[Indicator]:
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
-            tas = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "tas", year)).tas
-            hurs = stack.enter_context(source.open_dataset_year(item.gcm, item.scenario, "hurs", year)).hurs
+            tas = stack.enter_context(
+                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
+            ).tas
+            hurs = stack.enter_context(
+                source.open_dataset_year(item.gcm, item.scenario, "hurs", year)
+            ).hurs
             results = self._work_loss_indicators(tas, hurs)
         resource = item.resource
         paths = [
@@ -124,13 +132,17 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         ]
         assert isinstance(resource.map, MapInfo)
         result = [
-            Indicator(array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds)
+            Indicator(
+                array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds
+            )
             for i, array in enumerate(results)
         ]
         logger.info(f"Calculation complete for year {year}")
         return result
 
-    def _work_loss_indicators(self, tas: xr.DataArray, hurs: xr.DataArray) -> List[xr.DataArray]:
+    def _work_loss_indicators(
+        self, tas: xr.DataArray, hurs: xr.DataArray
+    ) -> List[xr.DataArray]:
         tas_c = tas - 273.15  # convert from K to C
         # vpp is water vapour partial pressure in kPa
         vpp = (hurs / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))

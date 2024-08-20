@@ -48,7 +48,11 @@ class JupiterOscFileSource:
         Returns:
             Dict[str, xr.DataArray]: Data arrays, keyed by Jupiter name.
         """
-        df = pd.read_csv(os.path.join(self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename))
+        df = pd.read_csv(
+            os.path.join(
+                self._dir, "OSC_Distribution", "OS-C-DATA", "OS-C Tables", csv_filename
+            )
+        )
         ids = [c for c in df.columns if c not in ["key", "latitude", "longitude"]]
         df_pv = df.pivot(index="latitude", columns="longitude", values=ids)
         arrays: Dict[str, xr.DataArray] = {}
@@ -127,10 +131,10 @@ This fire model computes the maximum monthly probability per annum of a wildfire
 a given location based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs).
 For example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September
 and 0% for other months, the hazard indicator value is 20%.
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -176,10 +180,10 @@ The SPEI itself is a standardized variable with a mean value 0 and standard devi
 This drought model computes the number of months per annum where the 3-month rolling average
 of SPEI is below -2 based on the mean values of several parameters from
 bias-corrected and downscaled multiple Global Climate Models (GCMs).
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -219,10 +223,10 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
 This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year
 return period based on the mean of the precipitation distribution from multiple bias corrected and
 downscaled Global Climate Models (GCMs).
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -262,10 +266,10 @@ downscaled Global Climate Models (GCMs).
 This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible
 based on the mean distribution of several parameters
 across multiple bias-corrected and downscaled Global Climate Models (GCMs).
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -305,10 +309,10 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
 This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits
 to the bias-corrected and downscaled high temperature distribution
 across multiple Global Climate Models (GCMs).
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -348,10 +352,10 @@ across multiple Global Climate Models (GCMs).
 This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a
 100 year return period based on mean wind speed distributions
 from multiple Global Climate Models (GCMs).
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -393,10 +397,10 @@ It is derived from higher-resolution flood hazards, and computed directly as the
 cells within the 30-km cell that have non-zero flooding at that return period.
 This model uses a 30-km grid that experiences flooding at the 200-year return period.
 Open oceans are excluded.
-                """,
+                """,  # noqa:W503
                 group_id="jupiter_osc",
                 display_groups=[],
-                map=MapInfo(
+                map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[
                         (-180.0, 85.0),
                         (180.0, 85.0),
@@ -437,13 +441,21 @@ Open oceans are excluded.
         (min, max) = (float("inf"), float("-inf"))
         for scenario in item.model.scenarios:
             for year in scenario.years:
-                da = arrays[item.jupiter_array_name.format(scenario=scenario.id, year=year)]
-                da = da.reindex(latitude=da.latitude[::-1])  # by convention latitude reversed
+                da = arrays[
+                    item.jupiter_array_name.format(scenario=scenario.id, year=year)
+                ]
+                da = da.reindex(
+                    latitude=da.latitude[::-1]
+                )  # by convention latitude reversed
                 (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())  # type: ignore
                 pp = PosixPath(item.model.path.format(scenario=scenario.id, year=year))  # type: ignore
                 target.write(str(pp), da)
-                reprojected = transform_epsg4326_to_epsg3857(da.sel(latitude=slice(85, -85)))
-                reprojected = da.sel(latitude=slice(85, -85)).rio.reproject(
+                reprojected = transform_epsg4326_to_epsg3857(
+                    da.sel(latitude=slice(85, -85))
+                )
+                reprojected = da.sel(
+                    latitude=slice(85, -85)
+                ).rio.reproject(
                     "EPSG:3857", resampling=rasterio.enums.Resampling.max
                 )  # , shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
                 # bounds = check_map_bounds(reprojected)

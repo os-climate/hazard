@@ -14,14 +14,14 @@ def test_future_streams_source():
     _, url = source.water_temp_download_path("E2O", "historical", 1995)
     assert (
         url
-        == "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/"
-        + "waterTemp/hist/E2O/waterTemp_weekAvg_output_E2O_hist_1986-01-07_to_1995-12-30.nc"
+        == "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/"  # noqa:W503
+        + "waterTemp/hist/E2O/waterTemp_weekAvg_output_E2O_hist_1986-01-07_to_1995-12-30.nc"  # noqa:W503
     )
     _, url = source.water_temp_download_path("NorESM", "rcp8p5", 2019)
     assert (
         url
-        == "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/"
-        + "waterTemp/rcp8p5/noresm/waterTemp_weekAvg_output_noresm_rcp8p5_2006-01-07_to_2019-12-30.nc"
+        == "https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/"  # noqa:W503
+        + "waterTemp/rcp8p5/noresm/waterTemp_weekAvg_output_noresm_rcp8p5_2006-01-07_to_2019-12-30.nc"  # noqa:W503
     )
 
 
@@ -41,7 +41,7 @@ def test_water_temp_above_mocked():
             ],
         )
     )
-    source = TestSource(dataset)
+    source = TestSource(dataset, [gcm])
     target = TestTarget()
     # cut down the transform
     model = WaterTemperatureAboveIndicator(

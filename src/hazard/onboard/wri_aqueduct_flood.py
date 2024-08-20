@@ -51,7 +51,7 @@ class WRIAqueductFlood(IndicatorModel):
         # "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]]
         return items
 
-    def batch_items_riverine(self):
+    def batch_items_riverine(self) -> List[BatchItem]:
         gcms = [
             "00000NorESM1-M",
             "0000GFDL-ESM2M",
@@ -65,7 +65,9 @@ class WRIAqueductFlood(IndicatorModel):
         for gcm in gcms:
             for year in years:
                 for scenario in scenarios:
-                    path, filename_return_period = self.path_riverine(scenario, gcm, year)
+                    path, filename_return_period = self.path_riverine(
+                        scenario, gcm, year
+                    )
                     items.append(
                         BatchItem(
                             self._resource(path),
@@ -77,11 +79,17 @@ class WRIAqueductFlood(IndicatorModel):
                     )
         # plus one extra historical/baseline item
         scenario, year = "historical", 1980
-        path, filename_return_period = self.path_riverine(scenario, "000000000WATCH", year)
-        items.append(BatchItem(self._resource(path), path, scenario, str(year), filename_return_period))
+        path, filename_return_period = self.path_riverine(
+            scenario, "000000000WATCH", year
+        )
+        items.append(
+            BatchItem(
+                self._resource(path), path, scenario, str(year), filename_return_period
+            )
+        )
         return items
 
-    def batch_items_coastal(self):
+    def batch_items_coastal(self) -> List[BatchItem]:
         models = ["0", "0_perc_05", "0_perc_50"]
         subs = ["wtsub", "nosub"]
         years = [2030, 2050, 2080]
@@ -91,7 +99,9 @@ class WRIAqueductFlood(IndicatorModel):
             for sub in subs:
                 for year in years:
                     for scenario in scenarios:
-                        path, filename_return_period = self.path_coastal(scenario, sub, str(year), model)
+                        path, filename_return_period = self.path_coastal(
+                            scenario, sub, str(year), model
+                        )
                         items.append(
                             BatchItem(
                                 self._resource(path),
@@ -103,14 +113,17 @@ class WRIAqueductFlood(IndicatorModel):
                         )
         # plus two extra historical/baseline items
         for sub in subs:
-            scenario, year = "historical", "hist"
-            path, filename_return_period = self.path_coastal(scenario, sub, year, "0")
+            hist_scenario: str = "historical"
+            hist_year: str = "hist"
+            path, filename_return_period = self.path_coastal(
+                hist_scenario, sub, hist_year, "0"
+            )
             items.append(
                 BatchItem(
                     self._resource(path),
                     path,
-                    scenario,
-                    str(year),
+                    hist_scenario,
+                    hist_year,
                     filename_return_period,
                 )
             )
@@ -129,7 +142,9 @@ class WRIAqueductFlood(IndicatorModel):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Here we create the JSON directly, as a demonstration and for the sake of variety."""
-        with open(os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r"
+        ) as f:
             aqueduct_description = f.read()
 
         wri_colormap = {
@@ -153,7 +168,7 @@ class WRIAqueductFlood(IndicatorModel):
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}_map",
@@ -179,7 +194,7 @@ World Resources Institute Aqueduct Floods riverine model using GCM model from
 Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -203,7 +218,7 @@ World Resource Institute Aqueduct Floods riverine model using GCM model from
 Geophysical Fluid Dynamics Laboratory (NOAA).
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -227,7 +242,7 @@ World Resource Institute Aqueduct Floods riverine model using GCM model:
 Met Office Hadley Centre.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -251,7 +266,7 @@ World Resource Institute Aqueduct Floods riverine model using GCM model from
 Institut Pierre Simon Laplace
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -276,7 +291,7 @@ Institut Pierre Simon Laplace
  for Marine-Earth Science and Technology.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -311,7 +326,7 @@ Institut Pierre Simon Laplace
 World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -333,7 +348,7 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
 World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -357,7 +372,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
 World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -381,7 +396,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
 World Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -405,7 +420,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
 World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -426,7 +441,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
 World Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -450,7 +465,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
 World Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -474,7 +489,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
 World Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.
 
                 """
-                + aqueduct_description,
+                + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "index_values": [8],
@@ -535,7 +550,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         logger.info(f"Running batch item with path {item.path}")
         for i, ret in enumerate(self.return_periods):
             logger.info(f"Copying return period {i + 1}/{len(self.return_periods)}")
-            with source.open_dataset(item.filename_return_period.format(return_period=ret)) as da:
+            with source.open_dataset(
+                item.filename_return_period.format(return_period=ret)
+            ) as da:
                 assert da is not None
                 if ret == self.return_periods[0]:
                     z = target.create_empty(
@@ -554,7 +571,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                         indexes=self.return_periods,
                     )
                 # ('band', 'y', 'x')
-                values = da[0, :, :].data  # will load into memory; assume source not chunked efficiently
+                values = da[
+                    0, :, :
+                ].data  # will load into memory; assume source not chunked efficiently
                 values[values == -9999.0] = float("nan")
                 z[i, :, :] = values
         print("done")
@@ -563,7 +582,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         logger.info(f"Generating tile-set for batch item with path {item.path})")
         source_path = item.path
         assert item.resource.map is not None
-        target_path = item.resource.map.path.format(scenario=item.scenario, year=item.year)
+        target_path = item.resource.map.path.format(
+            scenario=item.scenario, year=item.year
+        )
         if target_path != source_path + "_map":
             raise ValueError(f"unexpected target path {target_path}")
         create_tile_set(

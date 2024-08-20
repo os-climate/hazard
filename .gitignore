@@ -5,6 +5,9 @@
 OECM-images
 TPI-images
 
+# Test output paths
+
+**/test_output/**
 
 # Local node cache
 node_modules
@@ -174,6 +177,7 @@ docker-compose_aws.yml
 .noseids
 test/.DS_Store
 .DS_Store
+tests/test_output/*
 
 # pytype static type analyzer
 .pytype/

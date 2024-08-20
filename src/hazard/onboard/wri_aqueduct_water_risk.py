@@ -21,7 +21,11 @@ from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
-from hazard.utilities.xarray_utilities import affine_to_coords, enforce_conventions_lat_lon, global_crs_transform
+from hazard.utilities.xarray_utilities import (
+    affine_to_coords,
+    enforce_conventions_lat_lon,
+    global_crs_transform,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,13 +130,17 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         if not isinstance(self.fs, LocalFileSystem):
             # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
             assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0])
+            download_and_unzip(
+                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
             for file in os.listdir(working_dir):
                 with open(file, "rb") as f:
                     self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
         else:
             # download and unzip directly in location
-            download_and_unzip(self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0])
+            download_and_unzip(
+                self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
 
     def open_dataset_year(
         self,
@@ -149,12 +157,18 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             "Aqueduct40_{key}_annual_y2023m07d05.csv".format(key=key),
         )
         if indicator not in self.indicator_map[key]:
-            raise ValueError("unexpected indicator {indicator}".format(indicator=indicator))
+            raise ValueError(
+                "unexpected indicator {indicator}".format(indicator=indicator)
+            )
         label = self.indicator_map[key][indicator]
         if key == "future":
             if scenario not in self.scenario_map:
-                raise ValueError("unexpected scenario {scenario}".format(scenario=scenario))
-            label = "_".join([self.scenario_map[scenario] + str(year)[-2:], label, "x", "r"])
+                raise ValueError(
+                    "unexpected scenario {scenario}".format(scenario=scenario)
+                )
+            label = "_".join(
+                [self.scenario_map[scenario] + str(year)[-2:], label, "x", "r"]
+            )
         else:
             label = "_".join([label, "raw"])
 
@@ -164,11 +178,15 @@ class WRIAqueductWaterRiskSource(OpenDataset):
                 columns={label: indicator, category: "_".join([indicator, "category"])}
             )
         else:
-            df = pd.read_csv(filename, usecols=[joint_on, label]).rename(columns={label: indicator})
+            df = pd.read_csv(filename, usecols=[joint_on, label]).rename(
+                columns={label: indicator}
+            )
         df = (
             df[df[indicator] != -9999]
             .drop_duplicates()
-            .merge(self.geometry[joint_on], how="left", on=joint_on, validate="one_to_one")
+            .merge(
+                self.geometry[joint_on], how="left", on=joint_on, validate="one_to_one"
+            )
             .drop(columns=[joint_on])
         )
 
@@ -179,7 +197,9 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
         da: Dict[str, xr.DataArray] = dict()
         for column in [column for column in df.columns if column != "geometry"]:
-            shapes = [(geometry, value) for geometry, value in zip(df["geometry"], df[column])]
+            shapes = [
+                (geometry, value) for geometry, value in zip(df["geometry"], df[column])
+            ]
             rasterized = features.rasterize(
                 shapes,
                 out_shape=[height, width],
@@ -223,7 +243,9 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
 
         self.fs = fs if fs else LocalFileSystem()
         self.source_dir = source_dir
-        self.zip_url = "https://files.wri.org/d8/s3fs-public/aqueduct_projections_20150309_shp.zip"
+        self.zip_url = (
+            "https://files.wri.org/d8/s3fs-public/aqueduct_projections_20150309_shp.zip"
+        )
         self.prepare()
 
         self.indicator_map = {
@@ -244,26 +266,40 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         if not isinstance(self.fs, LocalFileSystem):
             # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
             assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0])
+            download_and_unzip(
+                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
             for file in os.listdir(working_dir):
                 with open(file, "rb") as f:
                     self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
         else:
             # download and unzip directly in location
-            download_and_unzip(self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0])
+            download_and_unzip(
+                self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
+            )
 
-    def open_dataset_year(self, _: str, scenario: str, indicator: str, year: int, chunks=None) -> Optional[xr.Dataset]:
+    def open_dataset_year(
+        self, _: str, scenario: str, indicator: str, year: int, chunks=None
+    ) -> Optional[xr.Dataset]:
         if indicator.replace("_multiplier", "") not in self.indicator_map:
-            raise ValueError("unexpected indicator {indicator}".format(indicator=indicator.replace("_multiplier", "")))
+            raise ValueError(
+                "unexpected indicator {indicator}".format(
+                    indicator=indicator.replace("_multiplier", "")
+                )
+            )
 
         df = gpd.read_file(self.filename)
         if "_multiplier" in indicator:
             df[indicator] = df[
-                [self.indicator_map[indicator.replace("_multiplier", "")] + "3024cr"]  # hard-coded
+                [
+                    self.indicator_map[indicator.replace("_multiplier", "")] + "3024cr"
+                ]  # hard-coded
             ].apply(lambda x: 1.0 if x[0] == 0.0 else 1.0 / x[0], axis=1)
         else:
             keys = [
-                self.indicator_map[indicator] + str(year)[-2:] + self.scenario_map[scenario_key]
+                self.indicator_map[indicator]
+                + str(year)[-2:]
+                + self.scenario_map[scenario_key]
                 for year in self.years
                 for scenario_key in self.scenario_map
             ]
@@ -277,7 +313,9 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
 
-        shapes = [(geometry, value) for geometry, value in zip(df["geometry"], df[indicator])]
+        shapes = [
+            (geometry, value) for geometry, value in zip(df["geometry"], df[indicator])
+        ]
 
         rasterized = features.rasterize(
             shapes,
@@ -317,17 +355,25 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         self.central_year_historical = central_year_historical
         self.resources = self._resources()
 
-    def run_single(self, item: BatchItem, source, target: ReadWriteDataArray, _: Client):
+    def run_single(
+        self, item: BatchItem, source, target: ReadWriteDataArray, _: Client
+    ):
         """Run a single item of the batch."""
 
         indicator_suffix = ""
         if type(source).__name__ == "WRIAqueductWaterSupplyDemandBaselineSource":
             indicator_suffix = "_multiplier"
-            if item.indicator not in ["water_demand", "water_supply"] or item.scenario != "historical":
+            if (
+                item.indicator not in ["water_demand", "water_supply"]
+                or item.scenario != "historical"
+            ):
                 return
 
         if type(source).__name__ == "WRIAqueductWaterRiskSource":
-            if item.indicator in ["water_demand", "water_supply"] and item.scenario == "historical":
+            if (
+                item.indicator in ["water_demand", "water_supply"]
+                and item.scenario == "historical"
+            ):
                 return
 
         logger.info(
@@ -338,7 +384,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
 
         assert target is None or isinstance(target, OscZarr)
 
-        dataset = source.open_dataset_year("", item.scenario, item.indicator + indicator_suffix, item.year)
+        dataset = source.open_dataset_year(
+            "", item.scenario, item.indicator + indicator_suffix, item.year
+        )
         for key in dataset:
             if key.replace("_multiplier", "") in self.resources:
                 path = self.resources[key.replace("_multiplier", "")].path.format(
@@ -347,7 +395,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                 logger.info(f"Writing array to {path}")
                 if "_multiplier" in key:
                     # hard-coded
-                    reference_path = path.replace(item.scenario, "ssp126").replace(str(item.year), "2030")
+                    reference_path = path.replace(item.scenario, "ssp126").replace(
+                        str(item.year), "2030"
+                    )
                     reference_data = target.read(reference_path)
                     dataset[key].values *= reference_data[0].values
                 target.write(path, dataset[key])
@@ -361,7 +411,11 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
         items: List[BatchItem] = []
         for indicator in self.indicators:
             for scenario in self.scenarios:
-                for year in [self.central_year_historical] if scenario == "historical" else self.central_years:
+                for year in (
+                    [self.central_year_historical]
+                    if scenario == "historical"
+                    else self.central_years
+                ):
                     items.append(BatchItem(indicator, scenario, year))
         return items
 
@@ -417,7 +471,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
             },
         }
 
-        with open(os.path.join(os.path.dirname(__file__), "wri_aqueduct_water_risk.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "wri_aqueduct_water_risk.md"), "r"
+        ) as f:
             description = f.read()
 
         resources: Dict[str, HazardResource] = dict()
@@ -459,7 +515,9 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                     units=resource_map[key]["units"],  # type:ignore
                     scenarios=(
                         [
-                            Scenario(id="historical", years=[self.central_year_historical]),
+                            Scenario(
+                                id="historical", years=[self.central_year_historical]
+                            ),
                             Scenario(id="ssp126", years=list(self.central_years)),
                             Scenario(id="ssp370", years=list(self.central_years)),
                             Scenario(id="ssp585", years=list(self.central_years)),

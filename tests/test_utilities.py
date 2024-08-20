@@ -10,6 +10,8 @@ from hazard.utilities.xarray_utilities import (
     global_crs_transform,
 )
 
+from .conftest import test_output_dir  # noqa:F401 used, it's a fixture
+
 
 def test_xarray_write_small(test_output_dir):  # noqa: F811
     _, affine = global_crs_transform(3600, 1800)

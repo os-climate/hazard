@@ -81,8 +81,12 @@ class STORMIndicator(IndicatorModel[BatchItem]):
             xarray_utilities.assert_sources_combinable(list(data_arrays.values()))
 
             # infer parent size from first child array, assuming global coverage
-            _, transform0, crs0 = xarray_utilities.get_array_components(list(data_arrays.values())[0])
-            size = np.array(~transform0 * (180, -90)) - np.array(~transform0 * (-180, 90))
+            _, transform0, crs0 = xarray_utilities.get_array_components(
+                list(data_arrays.values())[0]
+            )
+            size = np.array(~transform0 * (180, -90)) - np.array(
+                ~transform0 * (-180, 90)
+            )
             width, height = np.array(np.round(size), dtype=int)
             if not np.allclose([width, height], size):
                 raise ValueError("size is not integer.")
@@ -110,12 +114,17 @@ class STORMIndicator(IndicatorModel[BatchItem]):
                     x = np.where(x > 180 + 1e-6, x - 360, x)
                     da_child["x"] = x
                 da_child = da_child.squeeze(dim="band")
-                xarray_utilities.add_children_to_parent(da_parent, zarr_parent, index, da_child)
+                xarray_utilities.add_children_to_parent(
+                    da_parent, zarr_parent, index, da_child
+                )
 
             for da in data_arrays.values():
                 xi, yi = len(da["x"]) // 2, len(da["y"]) // 2
                 value = da.data[0, yi, xi]
-                xip, yip = np.round(np.array(~trans_parent * (float(da["x"][xi]), float(da["y"][yi]))) - [0.5, 0.5])
+                xip, yip = np.round(
+                    np.array(~trans_parent * (float(da["x"][xi]), float(da["y"][yi])))
+                    - [0.5, 0.5]
+                )
                 check_value = zarr_parent[index, int(yip), int(xip)]
                 if not np.allclose([value], [check_value]):
                     raise ValueError("check failed.")

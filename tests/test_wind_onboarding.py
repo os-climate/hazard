@@ -6,6 +6,8 @@ import zarr  # type: ignore
 from hazard.onboard.storm_wind import BatchItem, STORMIndicator  # type: ignore
 from hazard.sources.osc_zarr import OscZarr
 
+from .conftest import test_output_dir  # noqa:F401 used, its a fixture
+
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_wind_onboarding(test_output_dir):  # noqa: F811
