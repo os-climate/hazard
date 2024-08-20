@@ -177,6 +177,7 @@ docker-compose_aws.yml
 .noseids
 test/.DS_Store
 .DS_Store
+tests/test_output/*
 
 # pytype static type analyzer
 .pytype/
