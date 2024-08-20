@@ -8,16 +8,21 @@ import pytest
 import s3fs
 import zarr
 import zarr.convenience
-
 from hazard.docs_store import DocStore
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
-from hazard.onboard.jupiter import Jupiter  # type: ignore
-from hazard.onboard.jupiter import JupiterOscFileSource
-from hazard.onboard.tudelft_flood import TUDelftRiverFlood
+from hazard.onboard.jrc_landslides import JRCLandslides
+from hazard.onboard.jrc_subsidence import JRCSubsidence
+from hazard.onboard.jupiter import (
+    Jupiter,  # type: ignore
+    JupiterOscFileSource,
+)
+from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
+from hazard.onboard.tudelft_wildfire import TUDelftFire
+from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRisk,
@@ -236,6 +241,79 @@ def test_wet_bulb_globe_temp(test_output_dir):
     model = WetBulbGlobeTemperatureAboveIndicator()
     model.run_all(source, target)
     model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_landslides_jrc(test_output_dir):
+    source_path = os.path.join(test_output_dir, "jrc", "jrc_landslides")
+    model = JRCLandslides(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_subsidence_jrc(test_output_dir):
+    source_path = os.path.join(test_output_dir, "jrc", "jrc_subsidence")
+    model = JRCSubsidence(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_fire_tudelft(test_output_dir):
+    source_path = os.path.join(test_output_dir, "tudelft", "tudelft_fire")
+    model = TUDelftFire(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.prepare(batch_item)
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_conv_wind_tudelft(test_output_dir):
+    source_path = os.path.join(test_output_dir, "tudelft", "tudelft_conv_wind")
+    model = TUDelftConvectiveWindstorm(source_path)
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.prepare(batch_item)
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_coastalflood_tudelft(test_output_dir):
+    source_path = os.path.join(test_output_dir, "tudelft", "tudelft_coastal")
+    model = TUDelftCoastalFlood(source_path)
+    model.prepare()
+
+    batch_items = model.batch_items()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    for batch_item in batch_items:
+        model.run_single(batch_item, None, target, None)
+
+    # model.create_maps(target, target)
 
 
 @pytest.mark.skip(reason="on-boarding script")
