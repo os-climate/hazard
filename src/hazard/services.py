@@ -5,6 +5,7 @@ from dask.distributed import Client, LocalCluster  # noqa: E402
 from fsspec.implementations.local import LocalFileSystem
 
 from hazard.docs_store import DocStore  # type: ignore # noqa: E402
+from hazard.indicator_model import IndicatorModel
 from hazard.models.days_tas_above import DaysTasAboveIndicator  # noqa: E402
 from hazard.models.degree_days import DegreeDays  # noqa: E402
 from hazard.sources import SourceDataset, get_source_dataset_instance
@@ -28,7 +29,7 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    extra_xarray_store: Optional[bool] = False,
+    write_xarray_compatible_zarr: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
 ):
     """
@@ -39,7 +40,9 @@ def days_tas_above_indicator(
     An inventory filed is stored at the root of the zarr directory.
     """
 
-    docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
+    docs_store, target, client = setup(
+        bucket, prefix, store, write_xarray_compatible_zarr
+    )
 
     source_dataset_kwargs = (
         {} if source_dataset_kwargs is None else source_dataset_kwargs
@@ -55,10 +58,7 @@ def days_tas_above_indicator(
         central_year_historical=central_year_historical,
     )
 
-    if inventory_format == "stac":
-        docs_store.write_inventory_stac(model.inventory())
-    else:
-        docs_store.update_inventory(model.inventory())
+    _write_inventory_files(docs_store, inventory_format, model)
 
     model.run_all(source, target, client=client)
 
@@ -75,7 +75,7 @@ def degree_days_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    extra_xarray_store: Optional[bool] = False,
+    write_xarray_compatible_zarr: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
 ):
     """
@@ -86,7 +86,9 @@ def degree_days_indicator(
     An inventory filed is stored at the root of the zarr directory.
     """
 
-    docs_store, target, client = setup(bucket, prefix, store, extra_xarray_store)
+    docs_store, target, client = setup(
+        bucket, prefix, store, write_xarray_compatible_zarr
+    )
 
     source_dataset_kwargs = (
         {} if source_dataset_kwargs is None else source_dataset_kwargs
@@ -102,19 +104,28 @@ def degree_days_indicator(
         central_year_historical=central_year_historical,
     )
 
-    if inventory_format == "stac":
-        docs_store.write_inventory_stac(model.inventory())
-    else:
-        docs_store.update_inventory(model.inventory())
+    _write_inventory_files(docs_store, inventory_format, model)
 
     model.run_all(source, target, client=client)
+
+
+def _write_inventory_files(
+    docs_store: DocStore, inventory_format: Optional[str], model: IndicatorModel
+):
+    if inventory_format == "stac":
+        docs_store.write_inventory_stac(model.inventory())
+    elif inventory_format == "osc":
+        docs_store.update_inventory(model.inventory())
+    elif inventory_format == "all":
+        docs_store.write_inventory_stac(model.inventory())
+        docs_store.update_inventory(model.inventory())
 
 
 def setup(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    extra_xarray_store: Optional[bool] = False,
+    write_xarray_compatible_zarr: Optional[bool] = False,
 ) -> Tuple[DocStore, OscZarr, Client]:
     """
     initialize output store, docs store and local dask client
@@ -122,7 +133,9 @@ def setup(
 
     if store is not None:
         docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
-        target = OscZarr(store=store, extra_xarray_store=extra_xarray_store)
+        target = OscZarr(
+            store=store, write_xarray_compatible_zarr=write_xarray_compatible_zarr
+        )
     else:
         if bucket is None or prefix is None:
             raise ValueError(
@@ -131,7 +144,9 @@ def setup(
         else:
             docs_store = DocStore(bucket=bucket, prefix=prefix)
             target = OscZarr(
-                bucket=bucket, prefix=prefix, extra_xarray_store=extra_xarray_store
+                bucket=bucket,
+                prefix=prefix,
+                write_xarray_compatible_zarr=write_xarray_compatible_zarr,
             )
 
     cluster = LocalCluster(processes=False)

@@ -40,6 +40,9 @@ $graph:
       inventory_format:
         type: string
         default: "osc"
+      write_xarray_compatible_zarr:
+        type: boolean
+        default: false
 
     outputs:
       - id: indicator-result
@@ -63,6 +66,7 @@ $graph:
           indicator: indicator
           store: store
           inventory_format: inventory_format
+          write_xarray_compatible_zarr: write_xarray_compatible_zarr
         out:
           - indicator-results
 
@@ -72,7 +76,7 @@ $graph:
 
     hints:
       DockerRequirement:
-        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:ukcp18compat
+        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:latest
 
     requirements:
       ResourceRequirement:
@@ -111,12 +115,14 @@ $graph:
         type: string
       inventory_format:
         type: string
+      write_xarray_compatible_zarr:
+        type: boolean
 
     outputs:
       indicator-results:
         type: Directory
         outputBinding:
-          glob: "./indicator"
+          glob: $(inputs.store)
 
     baseCommand: os_climate_hazard
 
@@ -138,3 +144,5 @@ $graph:
         valueFrom: $(inputs.window_years)
       - prefix: --inventory_format
         valueFrom: $(inputs.inventory_format)
+      - prefix: --write-xarray-compatible-zarr
+        valueFrom: $(inputs.write_xarray_compatible_zarr)
