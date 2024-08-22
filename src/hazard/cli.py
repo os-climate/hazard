@@ -11,7 +11,7 @@ def days_tas_above_indicator(
     source_dataset_kwargs: Optional[Dict[str, Any]] = None,
     gcm_list: List[str] = ["NorESM2-MM"],
     scenario_list: List[str] = ["ssp585"],
-    threshold_list: List[float] = [15],
+    threshold_list: List[float] = [20],
     central_year_list: List[int] = [2090],
     central_year_historical: int = 2005,
     window_years: int = 1,
