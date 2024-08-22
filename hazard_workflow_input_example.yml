@@ -1,6 +1,7 @@
 window_years: 0  # type 'int'
 store: "./indicator"  # default value of type 'string'.
 source_dataset: a_string  # type 'string'
+source_dataset_kwargs: "{'a-key':'a-value','another-key':'another-value'}" # type: string
 scenario_list: a_string  # type 'string'
 indicator: "days_tas_above_indicator"  # default value of type 'string'.
 gcm_list: a_string  # type 'string'

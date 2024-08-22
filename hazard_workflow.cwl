@@ -21,6 +21,9 @@ $graph:
         default: ""
       source_dataset:
         type: string
+      source_dataset_kwargs:
+        type: string
+        default: "{}"
       gcm_list:
         type: string
       scenario_list:
@@ -58,6 +61,7 @@ $graph:
           ceda_ftp_password: ceda_ftp_password
           ceda_ftp_url: ceda_ftp_url
           source_dataset: source_dataset
+          source_dataset_kwargs: source_dataset_kwargs
           gcm_list: gcm_list
           scenario_list: scenario_list
           central_year_list: central_year_list
@@ -99,6 +103,8 @@ $graph:
         type: string
       source_dataset:
         type: string
+      source_dataset_kwargs:
+        type: string
       gcm_list:
         type: string
       scenario_list:
@@ -132,6 +138,8 @@ $graph:
         valueFrom: $(inputs.store)
       - prefix: --source_dataset
         valueFrom: $(inputs.source_dataset)
+      - prefix: --source_dataset_kwargs
+        valueFrom: $(inputs.source_dataset_kwargs)
       - prefix: --gcm_list
         valueFrom: $(inputs.gcm_list)
       - prefix: --scenario_list
