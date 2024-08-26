@@ -1,13 +1,13 @@
 # Temporary devops repo
-.devops
+/.devops
+
+# Twine temporary files
+package-lock.json
+package.json
 
 # Output files from co2budget.ipynb (ITR-Examples)
 OECM-images
 TPI-images
-
-# Test output paths
-
-**/test_output/**
 
 # Local node cache
 node_modules
@@ -103,8 +103,8 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
-target/
+/.pybuilder/
+/target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -177,7 +177,6 @@ docker-compose_aws.yml
 .noseids
 test/.DS_Store
 .DS_Store
-tests/test_output/*
 
 # pytype static type analyzer
 .pytype/

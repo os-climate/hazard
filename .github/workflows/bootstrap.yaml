@@ -212,8 +212,8 @@ jobs:
             git branch -D "$AUTOMATION_BRANCH" || :
             git checkout -b "$AUTOMATION_BRANCH"
           else
-            # The -B flag swaps branch and creates it if NOT present
-            git checkout -B "$AUTOMATION_BRANCH"
+            git fetch origin "$AUTOMATION_BRANCH"
+            git switch -c "$AUTOMATION_BRANCH" "origin/$AUTOMATION_BRANCH"
           fi
 
           # Only if NOT running in GitHub

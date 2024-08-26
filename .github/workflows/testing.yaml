@@ -11,21 +11,28 @@ on:
       - "!update-devops-tooling"
 
 jobs:
+  get-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.parse-project-metadata.outputs.python-matrix-versions }}
 
-  parse-project-metadata:
-    name: "Determine Python versions"
-    # yamllint disable-line rule:line-length
-    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Populate environment variables"
+        id: parse-project-metadata
+        # yamllint disable-line rule:line-length
+        uses: os-climate/devops-reusable-workflows/.github/actions/python-versions-matrix@main
 
   testing:
     name: "Run unit tests"
-    needs: [parse-project-metadata]
+    needs: [get-python-versions]
     runs-on: ubuntu-latest
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.get-python-versions.outputs.matrix) }}
 
     steps:
       - name: "Checkout repository"

@@ -16,21 +16,29 @@ on:
       - "!update-devops-tooling"
 
 jobs:
-
-  parse-project-metadata:
-    name: "Determine Python versions"
-    # yamllint disable-line rule:line-length
-    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
-
-  build:
-    name: "Audit Python dependencies"
-    needs: [parse-project-metadata]
+  get-python-versions:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.parse-project-metadata.outputs.python-matrix-versions }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Populate environment variables"
+        id: parse-project-metadata
+        # yamllint disable-line rule:line-length
+        uses: os-climate/devops-reusable-workflows/.github/actions/python-versions-matrix@main
+
+  builds:
+    name: "Python builds"
+    needs: [get-python-versions]
+    runs-on: "ubuntu-latest"
+    continue-on-error: true
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.get-python-versions.outputs.matrix) }}
 
     steps:
       - name: "Checkout repository"
@@ -57,4 +65,4 @@ jobs:
           pdm list --graph
 
       - name: "Run: pip-audit"
-        uses: pypa/gh-action-pip-audit@v1.1.0
+        uses: pypa/gh-action-pip-audit@v1.0.8
