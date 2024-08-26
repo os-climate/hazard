@@ -10,22 +10,34 @@ on:
       - "*"
       - "!update-devops-tooling"
 
-jobs:
-  parse-project-metadata:
-    name: "Determine Python versions"
-    # yamllint disable-line rule:line-length
-    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+env:
+  package-path: "dist/"
 
-  test-builds:
-    name: "Build: Python"
-    needs: [parse-project-metadata]
+jobs:
+  get-python-versions:
+    name: "Validate Python project"
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.parse-project-metadata.outputs.python-matrix-versions }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Parse: pyproject.toml"
+        id: parse-project-metadata
+        # yamllint disable-line rule:line-length
+        uses: os-climate/devops-reusable-workflows/.github/actions/python-versions-matrix@main
+
+  builds:
+    name: "Python builds"
+    needs: [get-python-versions]
     runs-on: "ubuntu-latest"
     continue-on-error: true
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.get-python-versions.outputs.matrix) }}
 
     steps:
       - name: "Populate environment variables"
@@ -81,8 +93,8 @@ jobs:
             python -m build
           fi
 
-      - name: "Validating Artefacts with Twine"
-        run: |
-          echo "Validating artefacts with: twine check dist/*"
-          pip install --upgrade twine
-          twine check dist/*
+      - name: "Validate Artefacts with Twine"
+        id: twine-check-artefacts
+        env:
+          package-path: ${{ env.package-path }}
+        uses: os-climate/devops-reusable-workflows/.github/actions/twine-check-artefacts@main

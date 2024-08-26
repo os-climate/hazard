@@ -62,7 +62,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        uses: sigstore/gh-action-sigstore-python@v2
 
         with:
           inputs: >-
@@ -117,7 +117,7 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
-            dist/*.sigstore*
+            dist/*.sigstore
 
   ### PUBLISH TEST PYPI ###
 
@@ -143,7 +143,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.sigstore*
+          rm dist/*.sigstore
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,17 +1,13 @@
 ---
-name: "🐍📦 Production build and release"
+name: "🐍📦 Old Production build and release"
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
 # yamllint disable-line rule:truthy
 on:
-  # workflow_dispatch:
   push:
     # Only invoked on release tag pushes
-    branches:
-      - 'main'
-      - 'master'
     tags:
       - 'v*.*.*'
 
@@ -28,8 +24,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
-      # IMPORTANT: mandatory for Sigstore
+      contents: write
       id-token: write
+
     steps:
       ### BUILDING ###
 
@@ -44,10 +41,20 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v4
 
+      - name: "Fetch current semantic tag"
+        id: fetch-tags
+        # yamllint disable-line rule:line-length
+        uses: os-climate/devops-reusable-workflows/.github/actions/latest-semantic-tag@main
+
       - name: "Update version from tags for production release"
         run: |
-          echo "Github versioning: ${{ github.ref_name }}"
-          scripts/release-versioning.sh
+          echo "Github tag/versioning: ${{ github.ref_name }}"
+          if (grep 'dynamic = \[\"version\"\]' pyproject.toml > /dev/null); then
+            echo "Proceeding build with dynamic versioning"
+          else
+            echo "Using legacy script to bump release version"
+            scripts/release-versioning.sh
+          fi
 
       - name: "Build with PDM backend"
         run: |
@@ -56,6 +63,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
+        # Use new action
         uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
           inputs: >-
@@ -72,8 +80,6 @@ jobs:
 
   github:
     name: "📦 Publish to GitHub"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -94,8 +100,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
           tag_name: ${{ github.ref_name }}
-          name: "Test/Development Build \
-            ${{ github.ref_name }}"
+          name: ${{ github.ref_name }}"
           # body_path: ${{ github.workspace }}/CHANGELOG.rst
           files: |
             dist/*.tar.gz
@@ -105,9 +110,7 @@ jobs:
   ### PUBLISH PYPI TEST ###
 
   testpypi:
-    name: "📦 Publish to PyPi Test"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
+    name: "📦 Test publishing to PyPI"
     needs:
       - build
     runs-on: ubuntu-latest
@@ -130,7 +133,7 @@ jobs:
           fi
           rm dist/*.sigstore*
 
-      - name: Publish distribution to Test PyPI
+      - name: "Test publishing to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -140,8 +143,6 @@ jobs:
 
   pypi:
     name: "📦 Publish to PyPi"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - testpypi
     runs-on: ubuntu-latest
