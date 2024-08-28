@@ -13,9 +13,14 @@ from rasterio import CRS
 from hazard.protocols import OpenDataset
 
 _WGS84 = "EPSG:4326"
+_RESOLUTION_TO_COLLECTION_MAPPINGS = {
+    "60km": "land-gcm",
+    "12km": "land-rcm",
+    "5km": "land-cpm",
+    "2.2km": "land-cpm",
+}
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class Ukcp18(OpenDataset):
@@ -24,15 +29,18 @@ class Ukcp18(OpenDataset):
         dataset_member_id: str = "01",
         dataset_frequency: str = "day",
         dataset_version: str = "latest",
-        collection: str = "land-rcm",
         domain: str = "uk",
         resolution: str = "12km",
     ):
         self._fs = fsspec.filesystem(
-            protocol="ftp",
-            host=os.environ["CEDA_FTP_URL"],
-            username=os.environ["CEDA_FTP_USERNAME"],
-            password=os.environ["CEDA_FTP_PASSWORD"],
+            "filecache",
+            target_protocol="ftp",
+            target_options={
+                "host": os.environ["CEDA_FTP_URL"],
+                "username": os.environ["CEDA_FTP_USERNAME"],
+                "password": os.environ["CEDA_FTP_PASSWORD"],
+            },
+            cache_storage="/tmp/ukcp18cache/",
         )
         self.quantities: Dict[str, Dict[str, str]] = {
             "tas": {"name": "Daily average temperature"}
@@ -43,7 +51,7 @@ class Ukcp18(OpenDataset):
         self._dataset_frequency = dataset_frequency
         self._dataset_version = dataset_version
 
-        self._collection = collection
+        self._collection = _RESOLUTION_TO_COLLECTION_MAPPINGS[resolution]
         self._domain = domain
         self._resolution = resolution
 
@@ -172,8 +180,8 @@ class Ukcp18(OpenDataset):
             )
         elif self._domain == "global" and self._resolution == "60km":
             prepped_data_array = self._prepare_data_array(dataset[quantity], crs, [])
-            dataset[quantity] = prepped_data_array.rename(
-                {"longitude": "lon", "latitude": "lat"}
+            dataset[quantity] = self._reproject_and_rename_coordinates(
+                prepped_data_array, _WGS84, "x", "y"
             )
         else:
             logger.warning(

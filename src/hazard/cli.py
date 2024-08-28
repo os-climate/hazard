@@ -20,6 +20,8 @@ def days_tas_above_indicator(
     store: Optional[str] = None,
     inventory_format: Optional[str] = "osc",
     write_xarray_compatible_zarr: Optional[bool] = False,
+    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs,
 ):
     hazard_services.days_tas_above_indicator(
         source_dataset,
@@ -35,6 +37,7 @@ def days_tas_above_indicator(
         store,
         write_xarray_compatible_zarr,
         inventory_format,
+        dask_cluster_kwargs,
     )
 
 
@@ -52,6 +55,8 @@ def degree_days_indicator(
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
+    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs,
 ):
     hazard_services.degree_days_indicator(
         source_dataset,
@@ -67,6 +72,7 @@ def degree_days_indicator(
         store,
         write_xarray_compatible_zarr,
         inventory_format,
+        dask_cluster_kwargs,
     )
 
 

@@ -28,6 +28,12 @@ $graph:
         type: string
       scenario_list:
         type: string
+      threshold_list:
+        type: string
+        default: "[]"
+      threshold_temperature:
+        type: float
+        default: 0
       central_year_list:
         type: string
       central_year_historical:
@@ -46,6 +52,9 @@ $graph:
       write_xarray_compatible_zarr:
         type: boolean
         default: false
+      dask_cluster_kwargs:
+        type: string
+        default: "{'n_workers': 1, 'threads_per_worker': 1}"
 
     outputs:
       - id: indicator-result
@@ -64,6 +73,8 @@ $graph:
           source_dataset_kwargs: source_dataset_kwargs
           gcm_list: gcm_list
           scenario_list: scenario_list
+          threshold_list: threshold_list
+          threshold_temperature: threshold_temperature
           central_year_list: central_year_list
           central_year_historical: central_year_historical
           window_years: window_years
@@ -71,6 +82,7 @@ $graph:
           store: store
           inventory_format: inventory_format
           write_xarray_compatible_zarr: write_xarray_compatible_zarr
+          dask_cluster_kwargs: dask_cluster_kwargs
         out:
           - indicator-results
 
@@ -80,7 +92,7 @@ $graph:
 
     hints:
       DockerRequirement:
-        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:latest
+        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:ee1aa39
 
     requirements:
       ResourceRequirement:
@@ -109,6 +121,10 @@ $graph:
         type: string
       scenario_list:
         type: string
+      threshold_list:
+        type: string
+      threshold_temperature:
+        type: float
       central_year_list:
         type: string
       central_year_historical:
@@ -123,6 +139,8 @@ $graph:
         type: string
       write_xarray_compatible_zarr:
         type: boolean
+      dask_cluster_kwargs:
+        type: string
 
     outputs:
       indicator-results:
@@ -144,6 +162,10 @@ $graph:
         valueFrom: $(inputs.gcm_list)
       - prefix: --scenario_list
         valueFrom: $(inputs.scenario_list)
+      - prefix: --threshold_list
+        valueFrom: $(inputs.threshold_list)
+      - prefix: --threshold_temperature
+        valueFrom: $(inputs.threshold_temperature)
       - prefix: --central_year_list
         valueFrom: $(inputs.central_year_list)
       - prefix: --central_year_historical
@@ -152,5 +174,7 @@ $graph:
         valueFrom: $(inputs.window_years)
       - prefix: --inventory_format
         valueFrom: $(inputs.inventory_format)
-      - prefix: --write-xarray-compatible-zarr
+      - prefix: --write_xarray_compatible_zarr
         valueFrom: $(inputs.write_xarray_compatible_zarr)
+      - prefix: --dask_cluster_kwargs
+        valueFrom: $(inputs.dask_cluster_kwargs)

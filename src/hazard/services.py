@@ -31,6 +31,7 @@ def days_tas_above_indicator(
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
+    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
     Run the days_tas_above indicator generation for a list of models,scenarios, thresholds,
@@ -41,7 +42,7 @@ def days_tas_above_indicator(
     """
 
     docs_store, target, client = setup(
-        bucket, prefix, store, write_xarray_compatible_zarr
+        bucket, prefix, store, write_xarray_compatible_zarr, dask_cluster_kwargs
     )
 
     source_dataset_kwargs = (
@@ -77,6 +78,7 @@ def degree_days_indicator(
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
     inventory_format: Optional[str] = "osc",
+    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
     Run the degree days indicator generation for a list of models,scenarios, a threshold temperature,
@@ -87,7 +89,7 @@ def degree_days_indicator(
     """
 
     docs_store, target, client = setup(
-        bucket, prefix, store, write_xarray_compatible_zarr
+        bucket, prefix, store, write_xarray_compatible_zarr, dask_cluster_kwargs
     )
 
     source_dataset_kwargs = (
@@ -126,6 +128,7 @@ def setup(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
+    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Tuple[DocStore, OscZarr, Client]:
     """
     initialize output store, docs store and local dask client
@@ -149,7 +152,8 @@ def setup(
                 write_xarray_compatible_zarr=write_xarray_compatible_zarr,
             )
 
-    cluster = LocalCluster(processes=False)
+    dask_cluster_kwargs = dask_cluster_kwargs or {}
+    cluster = LocalCluster(processes=False, **dask_cluster_kwargs)
 
     client = Client(cluster)
 

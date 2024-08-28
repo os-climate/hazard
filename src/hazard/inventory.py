@@ -167,7 +167,6 @@ class HazardResource(BaseModel):
         """
         converts a hazard resource along with combined parameters (params and scenarios) to a single STAC item.
         """
-
         data_asset_path = self.path.format(**combined_parameters)
         item_id = data_asset_path.replace("/", "_")
         osc_properties = self.model_dump()
@@ -205,10 +204,24 @@ class HazardResource(BaseModel):
 
         stac_item.validate()
 
+        templated_out_item = self._expand_template_values_for_stac_record(
+            combined_parameters, stac_item
+        )
+
         if item_as_dict:
-            return stac_item.to_dict()
+            return templated_out_item.to_dict()
         else:
-            return stac_item
+            return templated_out_item
+
+    def _expand_template_values_for_stac_record(
+        self, combined_parameters: Dict[Any, str], stac_item: pystac.Item
+    ):
+        item_string = json.dumps(stac_item.to_dict())
+        for k, v in combined_parameters.items():
+            item_string = item_string.replace(f"{{{k}}}", str(v))
+        templated_out_item = stac_item.from_dict(json.loads(item_string))
+        templated_out_item.validate()
+        return templated_out_item
 
 
 class HazardResources(BaseModel):
