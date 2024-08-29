@@ -1,10 +1,15 @@
+write_xarray_compatible_zarr: false  # type 'boolean'
 window_years: 0  # type 'int'
+threshold_temperature: 0.1  # type 'float'
+threshold_list: "[]"  # default value of type 'string'.
 store: "./indicator"  # default value of type 'string'.
+source_dataset_kwargs: "{}"  # default value of type 'string'.
 source_dataset: a_string  # type 'string'
-source_dataset_kwargs: "{'a-key':'a-value','another-key':'another-value'}" # type: string
 scenario_list: a_string  # type 'string'
+inventory_format: "osc"  # default value of type 'string'.
 indicator: "days_tas_above_indicator"  # default value of type 'string'.
 gcm_list: a_string  # type 'string'
+dask_cluster_kwargs: "{'n_workers': 1, 'threads_per_worker': 1}"  # default value of type 'string'.
 central_year_list: a_string  # type 'string'
 central_year_historical: 0  # type 'int'
 ceda_ftp_username: a_string  # type 'string'
