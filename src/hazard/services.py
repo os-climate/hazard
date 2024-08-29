@@ -57,6 +57,7 @@ def days_tas_above_indicator(
         scenarios=scenario_list,
         central_years=central_year_list,
         central_year_historical=central_year_historical,
+        source_dataset=source_dataset,
     )
 
     _write_inventory_files(docs_store, inventory_format, model)
@@ -104,6 +105,7 @@ def degree_days_indicator(
         scenarios=scenario_list,
         central_years=central_year_list,
         central_year_historical=central_year_historical,
+        source_dataset=source_dataset,
     )
 
     _write_inventory_files(docs_store, inventory_format, model)

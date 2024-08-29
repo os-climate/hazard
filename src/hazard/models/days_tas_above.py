@@ -13,6 +13,7 @@ from hazard.models.multi_year_average import (
     ThresholdBasedAverageIndicator,
 )
 from hazard.protocols import OpenDataset
+from hazard.utilities.description_utilities import get_indicator_period_descriptions
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         central_years: Iterable[
             int
         ] = MultiYearAverageIndicatorBase._default_central_years,
+        source_dataset: str = MultiYearAverageIndicatorBase._default_source_dataset,
     ):
         """Create indicators based on average number of days above different temperature thresholds.
 
@@ -50,6 +52,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             scenarios=scenarios,
             central_year_historical=central_year_historical,
             central_years=central_years,
+            source_dataset=source_dataset,
         )
         self.threshold_temps_c = threshold_temps_c
 
@@ -98,10 +101,8 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 continue
             scenarios.append(Scenario(id=s, years=list(self.central_years)))
 
-        with open(
-            os.path.join(os.path.dirname(__file__), "days_tas_above.md"), "r"
-        ) as f:
-            description = f.read().replace("\u00c2\u00b0", "\u00b0")
+        description = self._generate_description()
+
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_tas/above/{temp_c}c",
@@ -138,3 +139,26 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             scenarios=scenarios,
         )
         return resource
+
+    def _generate_description(self):
+        current_file_dir_name = os.path.dirname(__file__)
+        with open(os.path.join(current_file_dir_name, "days_tas_above.md"), "r") as f:
+            description = f.read().replace("\u00c2\u00b0", "\u00b0")
+
+        sources_dir_name = os.path.join(
+            os.path.dirname(current_file_dir_name), "sources"
+        )
+        source_dataset_filename = self.source_dataset.lower().replace("-", "_")
+        with open(
+            os.path.join(sources_dir_name, f"{source_dataset_filename}.md"), "r"
+        ) as source_dataset_description:
+            description += "\n" + source_dataset_description.read()
+
+        description += "\n" + get_indicator_period_descriptions(
+            self.scenarios,
+            self.central_year_historical,
+            self.central_years,
+            self.window_years,
+        )
+
+        return description

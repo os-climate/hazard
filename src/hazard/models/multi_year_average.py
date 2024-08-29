@@ -48,6 +48,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     _default_scenarios: Iterable[str] = ["historical", "ssp126", "ssp245", "ssp585"]
     _default_central_year_historical: int = 2005
     _default_central_years: Iterable[int] = [2030, 2040, 2050]
+    _default_source_dataset: str = "NEX-GDDP-CMIP6"
 
     def __init__(
         self,
@@ -56,6 +57,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         scenarios: Iterable[str] = _default_scenarios,
         central_year_historical: int = _default_central_year_historical,
         central_years: Iterable[int] = _default_central_years,
+        source_dataset: str = _default_source_dataset,
     ):
         """Construct model to calculate degree days from temperature data sets.
 
@@ -78,6 +80,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         self.scenarios = scenarios
         self.central_years = central_years
         self.central_year_historical = central_year_historical
+        self.source_dataset = source_dataset
 
     def run_single(
         self, item: T, source: OpenDataset, target: ReadWriteDataArray, client: Client
