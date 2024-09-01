@@ -190,3 +190,6 @@ tests/test_output/*
 
 # Cython debug symbols
 cython_debug/
+
+# Tests (test_output for files created in running tests but not to be committed, e.g. not expected results)
+tests/test_output/*
