@@ -86,18 +86,18 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         The files comprise flood depth and flood extent, protected and unprotected.
         Flood extent is understood to contain the minimum return period for which a flood can occur.
         This implies that *unprotected* flood extent is simply inferred from flood depth, presenting the
-        minimum return period for which flood depth is non-zero. This can be (and was for some examples) checked, e.g. for 
+        minimum return period for which flood depth is non-zero. This can be (and was for some examples) checked, e.g. for
         pixels where the 30 year return flood depth is non-zero and the 10 year return flood depth is zero, which
         should then have a 30 year flood extent. Protected flood extent is defined in the same way, but some caution required.
         The data set takes into account a minimum and maximum standard of protection (SoP) from FLOPROS as shown
         in Fig 3.2 of http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf
-        The protected extent (assuming flood depth curve all non-zero) would then be the maximum SoP. In the UK, 
+        The protected extent (assuming flood depth curve all non-zero) would then be the maximum SoP. In the UK,
         for example, the SoP is between 100 years and 300 years. It it tempting to set protected flood depths which are less
         than the maximum SoP to zero, however this will not give us the behaviour we want in calculations.
         Say we have 30, 100, 300 and 1000 year flood depths of 0.2, 0.4, 0.5 and 0.6m and we know the SoP is between 100 years and 300 years.
         Unprotected we would have a probability of (1/100 - 1/300) of a depth between 0.4 and 0.5m and (1/300 - 1/1000) of a depth between 0.5 and 0.6m.
         Protected, we either want to set our probability of depth between 0.4 and 0.5m to zero or - more likely - some
-        lower value to reflect the uncertainty of the SoP. In neither case do we get the desired result by setting the flood depth to zero. 
+        lower value to reflect the uncertainty of the SoP. In neither case do we get the desired result by setting the flood depth to zero.
         In summary, we think it's best to provide data sets of
         - unprotected depth
         - SoP
@@ -163,10 +163,15 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             self.source_dir, item.extent_protected_filename
         )
         assert target is None or isinstance(target, OscZarr)
-        shape = [39420, 38374]  # y, x not all returns have same size (first one smaller at 38371)
+        shape = [
+            39420,
+            38374,
+        ]  # y, x not all returns have same size (first one smaller at 38371)
         # not all return periods have the same size. We pick the
         i, return_period = 1, self.return_periods[1]
-        full_path_depth = str(full_path_depth_format).format(return_period=self.return_period_str[return_period])
+        full_path_depth = str(full_path_depth_format).format(
+            return_period=self.return_period_str[return_period]
+        )
         with self.fs.open(full_path_depth, "rb") as fd:
             da_depth = xr.open_rasterio(fd).isel(band=0)
             coords_x, coords_y = np.array(da_depth.x), np.array(da_depth.y)
@@ -177,7 +182,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 da_sop = xr.open_rasterio(fe).isel(band=0)
                 # bounds = da.rio.bounds()
                 z_sop = target.create_empty(
-                    self._sop_resource.path.format(scenario=item.scenario, year=item.central_year),
+                    self._sop_resource.path.format(
+                        scenario=item.scenario, year=item.central_year
+                    ),
                     shape[1],
                     shape[0],
                     da_sop.rio.transform(),
@@ -201,7 +208,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 da_depth = xr.open_rasterio(fd).isel(band=0)
                 if return_period == self.return_periods[0]:
                     z_depth = target.create_empty(
-                        self._depth_resource.path.format(scenario=item.scenario, year=item.central_year),
+                        self._depth_resource.path.format(
+                            scenario=item.scenario, year=item.central_year
+                        ),
                         shape[1],
                         shape[0],
                         da_depth.rio.transform(),
@@ -211,19 +220,35 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 if da_depth.shape[1] == 38375:
                     da_depth = da_depth[:, 0:38374]
                 # not quite the same coordinates: check if close, within rounding error, and align exactly
-                lenx, leny = min(len(da_depth.x), len(coords_x)), min(len(da_depth.y), len(coords_y))
-                assert np.abs(np.array(da_depth.x[0:lenx]) - coords_x[0:lenx]).max() < 1e-4
-                assert np.abs(np.array(da_depth.y[0:leny]) - coords_y[0:leny]).max() < 1e-4
+                lenx, leny = (
+                    min(len(da_depth.x), len(coords_x)),
+                    min(len(da_depth.y), len(coords_y)),
+                )
+                assert (
+                    np.abs(np.array(da_depth.x[0:lenx]) - coords_x[0:lenx]).max() < 1e-4
+                )
+                assert (
+                    np.abs(np.array(da_depth.y[0:leny]) - coords_y[0:leny]).max() < 1e-4
+                )
                 # da_depth = da_depth.assign_coords({"x": da_depth.x, "y": da_depth.y})
                 values_depth = da_depth.data
                 depth_no_data = da_depth.attrs["nodatavals"]
                 values_depth[values_depth == depth_no_data] = float("nan")
-                z_depth[i, 0 : len(da_depth.y), 0 : len(da_depth.x)] = values_depth[:, :]
+                z_depth[i, 0 : len(da_depth.y), 0 : len(da_depth.x)] = values_depth[
+                    :, :
+                ]
                 del values_depth
 
     def _get_mins(self, maxes: np.ndarray):
         mins = np.empty_like(maxes)
-        for min, max in [(2, 10), (10, 30), (30, 100), (100, 300), (300, 1000), (1000, 10000)]:
+        for min, max in [
+            (2, 10),
+            (10, 30),
+            (30, 100),
+            (100, 300),
+            (300, 1000),
+            (1000, 10000),
+        ]:
             mins = np.where(maxes == max, min, mins)
         return mins
 
@@ -240,7 +265,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             os.path.join(os.path.dirname(__file__), "tudelft_flood.md"), "r"
         ) as f:
             description = f.read()
-        with open(os.path.join(os.path.dirname(__file__), "tudelft_flood_sop.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "tudelft_flood_sop.md"), "r"
+        ) as f:
             description_sop = f.read()
         return [
             HazardResource(
@@ -257,7 +284,6 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 map=MapInfo(
                     bbox=[],
                     bounds=[],
-                    bbox=[],
                     colormap=Colormap(
                         max_index=255,
                         min_index=1,

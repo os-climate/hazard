@@ -106,12 +106,21 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
         raise ValueError("unexpected bucket")
     if sync:
         sync_buckets(
-            s3_source_client, source_bucket_name, s3_target_client, target_bucket_name, prefix=prefix, dry_run=dry_run
+            s3_source_client,
+            source_bucket_name,
+            s3_target_client,
+            target_bucket_name,
+            prefix=prefix,
+            dry_run=dry_run,
         )
     else:
         keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
-        logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-        logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+        logger.info(
+            f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB"
+        )
+        logger.info(
+            f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
+        )
         if not dry_run:
             copy_objects(
                 keys,
@@ -153,12 +162,21 @@ def copy_prod_to_public(prefix: str, dry_run=False, sync=True):
         raise ValueError("unexpected bucket")
     if sync:
         sync_buckets(
-            s3_source_client, source_bucket_name, s3_target_client, target_bucket_name, prefix=prefix, dry_run=dry_run
+            s3_source_client,
+            source_bucket_name,
+            s3_target_client,
+            target_bucket_name,
+            prefix=prefix,
+            dry_run=dry_run,
         )
     else:
         keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
-        logger.info(f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB")
-        logger.info(f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}")
+        logger.info(
+            f"Prefix {prefix} {len(keys)} objects with total size {size / 1e9}GB"
+        )
+        logger.info(
+            f"Copying from bucket {source_bucket_name} to bucket {target_bucket_name}"
+        )
         if not dry_run:
             copy_objects(
                 keys,

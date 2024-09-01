@@ -283,11 +283,18 @@ class OscZarr(ReadWriteDataArray):
             "int64",
         ]:
             indexes = [int(i) for i in indexes]
-        self._add_attributes(z.attrs, transform, crs, index_name=index_name, indexes=indexes)
+        self._add_attributes(
+            z.attrs, transform, crs, index_name=index_name, indexes=indexes
+        )
         return z
 
     def _add_attributes(
-        self, attrs: Dict[str, Any], transform: Affine, crs: str, index_name: Optional[str] = None, indexes=None
+        self,
+        attrs: Dict[str, Any],
+        transform: Affine,
+        crs: str,
+        index_name: Optional[str] = None,
+        indexes=None,
     ):
         trans_members = [
             transform.a,
@@ -306,7 +313,9 @@ class OscZarr(ReadWriteDataArray):
         )
         if indexes is not None:
             attrs["index_values"] = list(indexes)
-            attrs["index_name"] = index_name if index_name is not None else "return period (years)"
+            attrs["index_name"] = (
+                index_name if index_name is not None else "return period (years)"
+            )
 
     @staticmethod
     def normalize_dims(da: xr.DataArray) -> xr.DataArray:
