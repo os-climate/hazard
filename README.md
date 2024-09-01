@@ -53,6 +53,34 @@ docker run -it -v $HOME/data:/data os-hazard-indicator os_climate_hazard days_ta
 
 ### In a CWL (Common Workflow Language) workflow
 
+At the root of the repository you'll find `hazard_workflow.cwl` - This contains a definition to invoke the `os_climate_hazard` CLI within a CWL environment.
+
+Structurally, it goes:
+
+```
+# Define the class (CommandLineTool)
+# Hints (We define the docker image to use)
+# Requirements (Networking access, resource access, and environment variables)
+# Inputs (Map to CLI args and environment variables)
+# Outputs (Where to mount and save results)
+# Command (What to run)
+# Arguments (What to pass directly to the CLI as args)
+```
+
+There is also `hazard_workflow_input_example.yml` which shows the structure of inputs expected.
+
+Copy `hazard_workflow_input_example.yml`, rename to `hazard_workflow_input.yml`, and provide the relevant input values.
+
+You can then invoke the CWL with:
+
+```
+$ cwltool hazard_workflow.cwl#produce-hazard-indicator hazard_workflow_input.yml
+```
+
+If successful, you'll find indicators generated in `indicators/` in the repo root.
+
+If you don't have `cwltool` installed you can find it here: [cwltool installation](https://cwltool.readthedocs.io/en/latest/#install)
+
 ## Arguments parsing in CLI
 
 The CLI for this package is built on top of google's `fire` package. Arguments passed to the command line are parsed not based on their declared type in python but their string value at runtime. For complex types such as lists, this can lead to confusion if internal list elements have special characters like hyphens.

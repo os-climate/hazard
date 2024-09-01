@@ -26,7 +26,7 @@ class OscZarr(ReadWriteDataArray):
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
         store: Optional[Any] = None,
-        extra_xarray_store: Optional[bool] = False,
+        write_xarray_compatible_zarr: Optional[bool] = False,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
@@ -34,9 +34,11 @@ class OscZarr(ReadWriteDataArray):
 
         Args:
             bucket: Name of S3 bucket.
-            root: Path to Zarr Group, i.e. objects are located in S3://{bucket}/{prefix}/hazard.zarr/{rest of key}.
-            store: If provided, Zarr will use this store.
+            prefix: S3 bucket item prefix
             s3: S3File to use if present and if store not provided.
+            store: If provided, Zarr will use this store.
+            write_xarray_compatible_zarr: If true, an xarray compatible zarr
+             will be created alongside the default zarr output
         """
         if store is None:
             if s3 is None:
@@ -56,7 +58,7 @@ class OscZarr(ReadWriteDataArray):
 
         self.root = zarr.group(store=store)
 
-        self.extra_xarray_store = extra_xarray_store
+        self.write_xarray_compatible_zarr = write_xarray_compatible_zarr
 
     def create_empty(
         self,
@@ -118,11 +120,6 @@ class OscZarr(ReadWriteDataArray):
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
         else:
             data = z.get_coordinate_selection((iy, ix))
-        if len(z.shape) == 3:
-            iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
-            data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
-        else:
-            data = z.get_coordinate_selection((iy, ix))
         return data
 
     def read_numpy(self, path: str, index=0) -> Tuple[np.ndarray, Affine, str]:
@@ -149,8 +146,8 @@ class OscZarr(ReadWriteDataArray):
         chunks: Optional[List[int]] = None,
         spatial_coords: Optional[bool] = True,
     ):
-        if self.extra_xarray_store and spatial_coords:
-            self.write_data_array(f"{path}-xarray", da)
+        if self.write_xarray_compatible_zarr and spatial_coords:
+            self.write_data_array(f"{path}_xarray", da)
 
         self.write_zarr(path, da, chunks)
 
