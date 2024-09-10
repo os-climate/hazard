@@ -6,9 +6,13 @@ from contextlib import contextmanager
 from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import fsspec
+import numpy as np
 import rasterio
+import rasterio.crs
+import rasterio.warp
 import xarray as xr
 from rasterio import CRS
+from rioxarray.rioxarray import affine_to_coords
 
 from hazard.protocols import OpenDataset
 
@@ -142,6 +146,50 @@ class Ukcp18(OpenDataset):
         reprojected = data_array.rio.reproject(target_crs)
         return reprojected.rename({to_rename_to_lon: "lon", to_rename_to_lat: "lat"})
 
+    def _process_2_2km_rotated_poles_data(
+        self, data_array: xr.DataArray
+    ) -> xr.DataArray:
+        lon2d = data_array["longitude"].values
+        lat2d = data_array["latitude"].values
+        source = data_array.isel(ensemble_member=0).values
+        wgs84 = rasterio.crs.CRS.from_epsg(4326)
+
+        src_height, src_width = lon2d.shape
+        dst_transform, dst_width, dst_height = (
+            rasterio.warp.calculate_default_transform(
+                src_crs=wgs84,
+                dst_crs=wgs84,
+                width=src_width,
+                height=src_height,
+                src_geoloc_array=(lon2d, lat2d),
+            )
+        )
+
+        destination = np.full((len(source), dst_height, dst_width), np.nan)
+
+        data, transform = rasterio.warp.reproject(
+            source,
+            destination=destination,
+            src_crs=wgs84,
+            dst_crs=wgs84,
+            dst_transform=dst_transform,
+            dst_nodata=np.nan,
+            src_geoloc_array=np.stack((lon2d, lat2d)),
+        )
+
+        coords = affine_to_coords(
+            transform, width=dst_width, height=dst_height, x_dim="x", y_dim="y"
+        )
+        coords.update(time=data_array["time"].values)
+
+        filtered_attributes = data_array.attrs.copy()
+        filtered_attributes.pop("grid_mapping", None)
+
+        data_array_reprojected = xr.DataArray(
+            data, coords=coords, dims=("time", "y", "x"), attrs=filtered_attributes
+        )
+        return data_array_reprojected.rename({"x": "lon", "y": "lat"})
+
     def _reproject_quantity(
         self, dataset: xr.Dataset, quantity: str, crs: rasterio.CRS
     ) -> xr.Dataset:
@@ -155,16 +203,8 @@ class Ukcp18(OpenDataset):
                 prepped_data_array, _WGS84, "x", "y"
             )
         elif self._domain == "uk" and self._resolution == "2.2km":
-            prepped_data_array = self._prepare_data_array(
-                dataset[quantity],
-                crs,
-                drop_vars=["latitude", "longitude"],
-            )
-            prepped_data_array.rio.set_spatial_dims(
-                "grid_longitude", "grid_latitude", inplace=True
-            )
-            dataset[quantity] = self._reproject_and_rename_coordinates(
-                prepped_data_array, _WGS84, "x", "y"
+            dataset[quantity] = self._process_2_2km_rotated_poles_data(
+                dataset[quantity]
             )
         elif self._domain == "eur" and self._resolution == "12km":
             prepped_data_array = self._prepare_data_array(
