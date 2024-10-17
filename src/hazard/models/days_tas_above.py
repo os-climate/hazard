@@ -1,7 +1,9 @@
+"""Climate Hazard Indicator: Days Above Threshold Temperature."""
+
 import logging
 import os
 from contextlib import ExitStack
-from typing import Iterable, List
+from typing_extensions import Iterable, List, Optional, override
 
 import xarray as xr
 
@@ -13,15 +15,23 @@ from hazard.models.multi_year_average import (
     ThresholdBasedAverageIndicator,
 )
 from hazard.protocols import OpenDataset
+from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.utilities.description_utilities import get_indicator_period_descriptions
 
 logger = logging.getLogger(__name__)
 
 
 class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
+    """Indicator for counting the number of days with temperatures above given thresholds.
+
+    This class calculates the number of days where the daily average temperature exceeds
+    specified threshold values over a given time window. The calculations use temperature
+    data from different Global Circulation Models (GCMs) and climate scenarios.
+    """
+
     def __init__(
         self,
-        threshold_temps_c: List[float] = [25, 30, 35, 40, 45, 50, 55],
+        threshold_temps_c: Optional[List[float]] = None,
         window_years: int = MultiYearAverageIndicatorBase._default_window_years,
         gcms: Iterable[str] = MultiYearAverageIndicatorBase._default_gcms,
         scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
@@ -35,17 +45,21 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
         Args:
             threshold_temps_c (List[float], optional): Temperature thresholds in degrees C.
-            Defaults to [25, 30, 35, 40, 45, 50, 55].
+                Defaults to [25, 30, 35, 40, 45, 50, 55].
             window_years (int, optional): Number of years for average. Defaults to 20.
             gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
-            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
+                Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
             scenarios (Iterable[str], optional): Scenarios to include in calculation.
-            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+                Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
             central_year_historical (int): Central year to include in calculation for historical scenario.
-            Defaults to 2005.
+                Defaults to 2005.
             central_years (Iterable[int], optional): Central years to include in calculation.
-            Defaults to [2010, 2030, 2040, 2050].
+                Defaults to [2010, 2030, 2040, 2050].
+            source_dataset (str): Name of the dataset used for temperature data.
+
         """
+        if threshold_temps_c is None:
+            threshold_temps_c = [25, 30, 35, 40, 45, 50, 55]
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -70,6 +84,10 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         # Get Indicators for reach array, looking up path using "threshold"
         return self._get_indicators(item, results, "temp_c")
 
+    def _onboard_single(self, target, download_dir):
+        source = NexGddpCmip6()
+        self.run_all(source, target)
+
     def _days_tas_above_indicators(
         self, tas: xr.DataArray, year: int, threshold_temps_c: List[float]
     ) -> List[xr.DataArray]:
@@ -88,7 +106,6 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _resource(self) -> HazardResource:
         """Create resource."""
-
         scenarios = []
 
         if "historical" in self.scenarios:
@@ -163,3 +180,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
         )
 
         return description
+
+    @override
+    def prepare(self, force, download_dir, force_download):
+        return super().prepare(force, download_dir, force_download)

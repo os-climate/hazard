@@ -1,10 +1,14 @@
+"""Module for handling the onboarding of the Davydzenka et al. land subsidence dataset."""
+
 import logging
 import os
-import pathlib
 from dataclasses import dataclass
-from typing import Any, Iterable, Optional
+from pathlib import PurePath, Path
+from typing_extensions import Any, Iterable, Optional, override
 
 import xarray as xr
+from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
@@ -18,14 +22,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represents a batch item with a scenario and year for hazard processing."""
+
     scenario: str
     year: int
 
 
 class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: Optional[str]):
-        """
-        Define every attribute of the onboarding class for the land subsidence dataset.
+    """Handles the onboarding and processing of the Davydzenka et al. land subsidence dataset."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the land subsidence dataset.
 
         METADATA:
         Link: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2023GL104497
@@ -41,23 +48,35 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         new subsiding areas with a spatial resolution of 30 × 30 arc seconds.
 
         Args:
-            source_dir (str): directory containing source files.
+            source_dir_base (str): directory containing source files.
+            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none,
+            a LocalFileSystem is used.
+
         """
+        self.fs = fs if fs else LocalFileSystem()
         self.resource = list(self.inventory())[0]
-        if source_dir is not None:
-            self.source = pathlib.PurePosixPath(
-                pathlib.Path(source_dir).as_posix(), "ds03.tif"
+        self.source_dir = PurePath(source_dir_base, "csm_subsidence").as_posix() + "/"
+        self.download_url = (
+            "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
+        )
+
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        if (
+            Path(PurePath(self.source_dir + "ds03.tif")).exists()
+            and not force
+            and not force_download
+        ):
+            return
+        else:  # if source_dir not exists or force:
+            self.fs.makedirs(self.source_dir, exist_ok=True)
+            download_file(
+                url=self.download_url,
+                directory=(Path((self.source_dir))),
             )
-            if not os.path.exists(source_dir):
-                os.makedirs(source_dir)
-            if not os.path.exists(str(self.source)):
-                # Download source data
-                url = "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
-                download_file(
-                    url, str(self.source.parent), filename=self.source.parts[-1]
-                )
 
     def batch_items(self) -> Iterable[BatchItem]:
+        """Return the batch items for processing the land subsidence dataset."""
         return [
             BatchItem(
                 scenario=self.resource.scenarios[0].id,
@@ -65,11 +84,32 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
             ),
         ]
 
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
+
     def run_single(
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Any
     ):
+        """Process a single batch item, writing data to the Zarr store."""
         assert target is None or isinstance(target, OscZarr)
-        da = xr.open_rasterio(self.source).isel(band=0)
+        da = xr.open_rasterio(self.resource).isel(band=0)  # type: ignore[attr-defined]
         z = target.create_empty(
             self.resource.path.format(scenario=item.scenario, year=item.year),
             len(da.x),
@@ -84,9 +124,7 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         z[0, :, :] = values
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self.resource)
 

@@ -1,3 +1,5 @@
+"""."""
+
 import logging
 import os
 import math
@@ -28,14 +30,21 @@ logger = logging.getLogger(__name__)
 
 
 class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
+    """Source that provides FLOPROS data as an XArray raster.
+
+    This class is responsible for downloading, extracting, and reading FLOPROS
+    data into a GeoDataFrame. It supports both local and remote file systems.
+    """
+
     def __init__(self, source_dir, fs: Optional[AbstractFileSystem] = None):
-        """Source that can provide FLOPROS data as an XArray raster.
+        """Initialize the FLOPROS data source.
 
         Args:
             source_dir (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance.
             If None, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
         self.source_dir = source_dir
@@ -44,6 +53,13 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
         self.prepare()
 
     def prepare(self, working_dir: Optional[str] = None):
+        """Prepare the FLOPROS dataset by downloading and extracting the data.
+
+        Args:
+            working_dir (Optional[str], optional): Temporary directory for extraction
+                if using a remote file system. Defaults to None.
+
+        """
         if not isinstance(self.fs, LocalFileSystem):
             # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
             assert working_dir is not None
@@ -67,7 +83,7 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
     ) -> xr.Dataset:
-        """_summary_
+        """_summary_.
 
         Args:
             gcm (str): Ignored.
@@ -78,6 +94,7 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
         Returns:
             xr.Dataset: Data set named 'indicator' with 'max' and 'min' coordinate labels in the index coordinate.
+
         """
         hazard_type = quantity
 
@@ -91,10 +108,12 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
             Args:
                 row: GeoDataFrame row
+                min_max (str): Specifies whether to retrieve the "Min" or "Max" protection level for the given flood type.
                 flood_type (str, optional): "Riv" or "Co". Defaults to "Riv".
 
             Returns:
                 float: Protection level as return period in years.
+
             """
             layers = ["DL", "PL", "ModL"] if flood_type == "Riv" else ["DL", "PL"]
             for layer in layers:  # design layer, policy layer, modelled layer
@@ -166,9 +185,14 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
 
 class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
+    """Source that provides FLOPROS data as an XArray raster.
+
+    This class is responsible for downloading, extracting, and reading FLOPROS
+    data into a GeoDataFrame. It supports both local and remote file systems.
+    """
+
     def __init__(self):
-        """
-        Flood protection standards expressed as return period.
+        """Flood protection standards expressed as return period.
 
         METADATA:
         Link: https://nhess.copernicus.org/articles/16/1049/2016/
@@ -196,6 +220,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
     def run_single(
         self, item: str, source: Any, target: ReadWriteDataArray, client: Client
     ):
+        """Run a single item of the batch."""
         assert isinstance(source, FLOPROSFloodStandardOfProtectionSource)
         logger.info("Writing rasters")
         for hazard_type, resource in self._resources().items():

@@ -1,8 +1,10 @@
+"""Module for handling the onboarding and processing of TUDelft fire data."""
+
 import logging
 import os
 from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Any, Iterable, Optional
+from pathlib import PurePath
+from typing_extensions import Any, Iterable, Optional, override
 
 import numpy as np
 import xarray as xr
@@ -22,16 +24,22 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represent a batch item for hazard processing.
+
+    It includes scenario, central_year and input_dataset_filename.
+
+    """
+
     scenario: str
     central_year: int
     input_dataset_filename: str
 
 
 class TUDelftFire(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Pan-European data sets of forest fire probability of occurrence under
-        present and future climate.
+    """On-board returns data set from TUDelft for fire hazard."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Pan-European data sets of forest fire probability of occurrence under present and future climate.
 
         METADATA:
         Link: https://data.4tu.nl/datasets/f9a134ad-fff9-44d5-ad4e-a0e9112b551e
@@ -56,13 +64,15 @@ class TUDelftFire(IndicatorModel[BatchItem]):
         Coordinate system is rotated longitud and latitude. Needs to be transformed.
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
-        """
 
+        """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = PurePath(source_dir_base, "tudelft_wildfire").as_posix() + "/"
+        # if not os.path.exists(self.source_dir):
+        #     os.makedirs(self.source_dir, exist_ok=True)
 
         # Download source data
         self._url = "https://opendap.4tu.nl/thredds/fileServer/data2/uuid/a9f42f0a-1db4-4728-ad8c-d03a1d3f3c4d/"
@@ -71,6 +81,7 @@ class TUDelftFire(IndicatorModel[BatchItem]):
         self._resource_fwi45 = list(self.inventory())[1]
 
     def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
         return [
             BatchItem(
                 scenario="historical",
@@ -124,25 +135,50 @@ class TUDelftFire(IndicatorModel[BatchItem]):
             ),
         ]
 
-    def prepare(self, item: BatchItem, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            nc_url = self._url + item.input_dataset_filename
-            download_file(nc_url, working_dir, "tudelft_fire")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            nc_url = self._url + item.input_dataset_filename
-            download_file(nc_url, str(source), item.input_dataset_filename)
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
+
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        if (
+            not self.fs.exists(self.source_dir)
+            or len(self.fs.listdir(self.source_dir)) == 0
+            or force_download
+        ):
+            for batch_item in self.batch_items():
+                nc_url = self._url + batch_item.input_dataset_filename
+                download_file(
+                    url=nc_url,
+                    directory=self.source_dir,
+                    filename=os.path.basename(batch_item.input_dataset_filename),
+                    force_download=force_download,
+                )
 
     def run_single(
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
     ):
-        input = PurePosixPath(self.source_dir, item.input_dataset_filename)
+        """Process a single batch item and writes the data to the Zarr store."""
+        input = os.path.join(
+            self.source_dir, "fire_tudelft", item.input_dataset_filename
+        )
         assert target is None or isinstance(target, OscZarr)
         filename = str(input)
 
@@ -163,9 +199,7 @@ class TUDelftFire(IndicatorModel[BatchItem]):
         target.write(path_, da)
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self._resource_fwi20)
         create_tiles_for_resource(source, target, self._resource_fwi45)

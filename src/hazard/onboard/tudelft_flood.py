@@ -1,8 +1,11 @@
+"""Module for handling the onboarding and processing of TUDelft riverine and coastal inundations data."""
+
 import logging
 import os
 from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Any, Iterable, Optional
+from pathlib import PurePath
+from typing_extensions import Any, Iterable, Optional, override
+import zipfile
 
 import numpy as np
 import rioxarray  # noqa: F401
@@ -15,7 +18,7 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.download_utilities import download_and_unzip
+from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
@@ -23,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represents a batch item for hazard processing.
+
+    It includes scenario, central_year, flood_depth_filename and extent_protected_filename.
+
+    """
+
     scenario: str
     central_year: int
     flood_depth_filename: str
@@ -31,16 +40,18 @@ class BatchItem:
 
 @dataclass
 class BatchItemRiverine:
+    """Represents a batch item for hazard processing, including scenario, central_year, and input_dataset_filename."""
+
     scenario: str
     central_year: int
     input_dataset_filename: str
 
 
 class TUDelftRiverFlood(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Define every attribute of the onboarding class for the Delft University of Technology
-        river flood data.
+    """On-board returns data set from TUDelft for river inundation."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the Delft University of Technology river flood data.
 
         METADATA:
         Link: https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122 # noqa: E501
@@ -63,12 +74,15 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         climate simulation (EURO-CORDEX).
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = (
+            PurePath(source_dir_base, "tudelft_river_flood").as_posix() + "/"
+        )
 
         # Download source data
         self.return_periods = [10, 30, 100, 300, 1000]
@@ -80,6 +94,11 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             1000: "1000y",
         }
         self.zip_url = "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        self.dataset_filename = "data_river_flood.zip"
+
+        self.urls = {
+            "data_river_flood.zip": "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        }
 
         """
         This is a comment on the understanding of the data that underlies the processing herein.
@@ -105,7 +124,34 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
         self._depth_resource, self._sop_resource = self.inventory()
 
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+
+        if (
+            not os.path.exists(PurePath(download_dir, self.dataset_filename))
+            or force_download
+        ):
+            download_file(
+                url=self.urls[self.dataset_filename],
+                directory=download_dir,
+                filename=self.dataset_filename,
+                force_download=force_download,
+            )
+
+        with zipfile.ZipFile(
+            os.path.join(download_dir, self.dataset_filename), "r"
+        ) as z:
+            zip2source = {
+                name: PurePath(self.source_dir, os.path.basename(name)).as_posix()
+                for name in z.namelist()
+            }
+            for zname, target_file in zip2source.items():
+                with self.fs.open(target_file, mode="wb") as mifi:
+                    mifi.write(z.read(name=zname))
+
     def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
         return [
             BatchItem(
                 scenario="historical",
@@ -139,28 +185,36 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             ),
         ]
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, "tudelft_river")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
 
     def run_single(
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
     ):
+        """Process a single batch item and writes the data to the Zarr store."""
         assert isinstance(target, OscZarr)
-        full_path_depth_format = PurePosixPath(
-            self.source_dir, item.flood_depth_filename
+        full_path_depth_format = os.path.join(
+            self.source_dir, "river_tudelft", item.flood_depth_filename
         )
-        full_path_extent = PurePosixPath(
-            self.source_dir, item.extent_protected_filename
+        full_path_extent = os.path.join(
+            self.source_dir, "river_tudelft", item.extent_protected_filename
         )
         assert target is None or isinstance(target, OscZarr)
         shape = [
@@ -173,13 +227,13 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             return_period=self.return_period_str[return_period]
         )
         with self.fs.open(full_path_depth, "rb") as fd:
-            da_depth = xr.open_rasterio(fd).isel(band=0)
+            da_depth = xr.open_rasterio(fd).isel(band=0)  # type: ignore[attr-defined]
             coords_x, coords_y = np.array(da_depth.x), np.array(da_depth.y)
 
         # only create SoP for historical
         if item.scenario == "historical":
             with self.fs.open(full_path_extent, "rb") as fe:
-                da_sop = xr.open_rasterio(fe).isel(band=0)
+                da_sop = xr.open_rasterio(fe).isel(band=0)  # type: ignore[attr-defined]
                 # bounds = da.rio.bounds()
                 z_sop = target.create_empty(
                     self._sop_resource.path.format(
@@ -205,7 +259,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 return_period=self.return_period_str[return_period]
             )
             with self.fs.open(full_path_depth, "rb") as fd:
-                da_depth = xr.open_rasterio(fd).isel(band=0)
+                da_depth = xr.open_rasterio(fd).isel(band=0)  # type: ignore[attr-defined]
                 if return_period == self.return_periods[0]:
                     z_depth = target.create_empty(
                         self._depth_resource.path.format(
@@ -253,9 +307,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         return mins
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         # for TUDelft data, zero risk of flooding seems to be NaN
         # this presents a problem when creating lower resolution images where we might want to see an
@@ -263,6 +315,13 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             source,
             target,
             self._depth_resource,
+            max_zoom=10,
+            nodata_as_zero_coarsening=True,
+        )
+        create_tiles_for_resource(
+            source,
+            target,
+            self._sop_resource,
             max_zoom=10,
             nodata_as_zero_coarsening=True,
         )
@@ -352,10 +411,10 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
 
 class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Define every attribute of the onboarding class for the Delft University of Technology
-        coastal flood data.
+    """On-board returns data set from TUDelft for coastal inundation."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the Delft University of Technology coastal flood data.
 
         METADATA:
         Link: https://data.4tu.nl/articles/Pan-European_data_sets_of_coastal_flood_probability_of_occurrence_under_present_and_future_climate/12717446
@@ -378,12 +437,15 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
         regional climate simulation (EURO-CORDEX).
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = (
+            PurePath(source_dir_base, "tudelft_costal_flood").as_posix() + "/"
+        )
 
         # Download source data
         self.return_periods = [10, 30, 100, 300, 1000]
@@ -396,9 +458,16 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
         }
         self.zip_url = "https://data.4tu.nl/file/57254e09-82ce-4257-8907-87a7be45bb21/f076ed16-066d-4d5a-a2a9-c2ed4b1a0e76"
 
+        self.dataset_filename = "data_coastal_flood.zip"
+
+        self.urls = {
+            "data_coastal_flood.zip": "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        }
+
         self._resource = list(self.inventory())[0]
 
     def batch_items(self) -> Iterable[BatchItemRiverine]:
+        """Get a list of all batch items."""
         return [
             BatchItemRiverine(
                 scenario="historical",
@@ -427,18 +496,50 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
             ),
         ]
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, "tudelft_coastal")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
+
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        if (
+            not os.path.exists(PurePath(download_dir, self.dataset_filename))
+            or force_download
+        ):
+            download_file(
+                url=self.urls[self.dataset_filename],
+                directory=download_dir,
+                filename=self.dataset_filename,
+                force_download=force_download,
+            )
+
+        with zipfile.ZipFile(
+            os.path.join(download_dir, self.dataset_filename), "r"
+        ) as z:
+            zip2source = {
+                name: PurePath(self.source_dir, os.path.basename(name)).as_posix()
+                for name in z.namelist()
+            }
+            for zname, target_file in zip2source.items():
+                with self.fs.open(target_file, mode="wb") as mifi:
+                    mifi.write(z.read(name=zname))
 
     def run_single(
         self,
@@ -447,7 +548,10 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
         target: ReadWriteDataArray,
         client: Client,
     ):
-        input = PurePosixPath(self.source_dir, "data", item.input_dataset_filename)
+        """Process a single batch item and writes the data to the Zarr store."""
+        input = os.path.join(
+            self.source_dir, "coastal_tudelft", "data", item.input_dataset_filename
+        )
         assert target is None or isinstance(target, OscZarr)
         shape = [40300, 38897]  # y, x not all returns have same size. Use max shapes
         for i, return_period in enumerate(self.return_periods):
@@ -455,7 +559,7 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                 return_period=self.return_period_str[return_period]
             )
             with self.fs.open(filename, "rb") as f:
-                da = xr.open_rasterio(f).isel(band=0)
+                da = xr.open_rasterio(f).isel(band=0)  # type: ignore[attr-defined]
                 # bounds = da.rio.bounds()
                 if return_period == self.return_periods[0]:
                     z = target.create_empty(
@@ -474,15 +578,12 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                 z[i, 0 : len(da.y), 0 : len(da.x)] = values[:, :]
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self._resource)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
                 hazard_type="CoastalInundation",

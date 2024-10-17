@@ -1,9 +1,15 @@
+"""Module for handling the onboarding and processing of IRIS - Imperial College Storm Model data."""
+
 import os
 from dataclasses import dataclass
-from typing import Iterable
+from pathlib import PurePath
+from typing import Optional
+from typing_extensions import Iterable, override
 
 import xarray as xr
 from dask.distributed import Client
+from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
@@ -14,6 +20,8 @@ from hazard.utilities import tiles
 
 @dataclass
 class BatchItem:
+    """Represents a batch item for hazard processing, including resource, year, and scenario."""
+
     resource: HazardResource  # type of hazard
     year: int
     scenario: str
@@ -22,17 +30,39 @@ class BatchItem:
 class IRISIndicator(IndicatorModel[BatchItem]):
     """On-board returns data set from IRIS - Imperial College Storm Model."""
 
-    def __init__(self, input_dir: str):
-        """
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Initialize the IRISIndicator class with the input directory for IRIS data.
 
-        Args:
-            input_dir (str): Directory containing IRIS inputs.
+        Assumes iris downloaded data is of the form wind/IRIS/return_value_maps/--files and that they are in the downloads folder.
+
         """
-        self.input_dir = input_dir
+        self.source_dir = PurePath(source_dir_base, "iris_wind").as_posix() + "/"
+
+        self.fs = fs if fs else LocalFileSystem()
+
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        # source_dir = PurePath(download_dir, "wind", "IRIS", "return_value_maps")
+
+        if download_dir and not os.path.exists(download_dir):
+            msg = f"{self.__class__.__name__} requires the file return_value_maps to be in the download_dir.\nThe download_dir was {download_dir}."
+            raise FileNotFoundError(msg)
+
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        if download_dir:
+            for _, _, files in os.walk(download_dir):
+                for file_name in files:
+                    dest_file_path = PurePath(self.source_dir, file_name)
+                    if force or not os.path.exists(dest_file_path):
+                        self.fs.copy(
+                            PurePath(download_dir, file_name),
+                            self.source_dir,
+                        )
 
     def run_single(
         self, item: BatchItem, source, target: ReadWriteDataArray, client: Client
     ):
+        """Process a single batch item and writes the data to the Zarr store."""
         file_name = self._file_name(item.scenario, item.year)
         ds = xr.open_dataset(file_name.format(year=item.year, scenario=item.scenario))
         # dimensions: (rp: 19, latitude: 1200, longitude: 3600)
@@ -51,6 +81,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
     def generate_single_map(
         self, item: BatchItem, source: ReadWriteDataArray, target: ReadWriteDataArray
     ):
+        """Generate a single map from the batch item and writes it to the target store."""
         source_path = item.resource.path.format(scenario=item.scenario, year=item.year)
         assert item.resource.map is not None
         assert isinstance(source, OscZarr) and isinstance(target, OscZarr)
@@ -67,24 +98,38 @@ class IRISIndicator(IndicatorModel[BatchItem]):
             for year in scenario.years:
                 yield BatchItem(resource, year, scenario.id)
 
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+
     def _file_name(self, scenario: str, year: int):
+        """Return the file name for a specific scenario and year."""
         # file name for 0.1 degree resolution sets
         # including radiative forcing (1.9 to 8.5 W/m^2): SSP1 = SSP1-1.9, SSP2 = SSP2-4.5, SSP5 = SSP5-8.5
         if scenario == "historical":
             return os.path.join(
-                self.input_dir,
-                "wind",
-                "IRIS",
-                "return_value_maps",
+                self.source_dir,
                 "IRIS_vmax_maps_PRESENT_tenthdeg.nc",
             )
         else:
             scen_lookup = {"ssp119": "SSP1", "ssp245": "SSP2", "ssp585": "SSP5"}
             return os.path.join(
-                self.input_dir,
-                "wind",
-                "IRIS",
-                "return_value_maps",
+                self.source_dir,
                 f"IRIS_vmax_maps_{year}-{scen_lookup[scenario]}_tenthdeg.nc",
             )
 
@@ -93,6 +138,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         return [self._hazard_resource()]
 
     def _hazard_resource(self) -> HazardResource:
+        """Return the hazard resource details, including metadata and map info, for the IRIS dataset."""
         with open(os.path.join(os.path.dirname(__file__), "iris_wind.md"), "r") as f:
             description = f.read()
         resource = HazardResource(

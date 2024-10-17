@@ -1,11 +1,13 @@
+"""Module for handling the onboarding and processing of WRI - World Resources Institute data."""
+
 import logging
 import os
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing_extensions import Iterable, List, override
 
 from affine import Affine
 from dask.distributed import Client
-from pydantic import parse_obj_as  # type: ignore
+from pydantic import TypeAdapter
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, Period
@@ -20,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represent a batch item for hazard processing.
+
+    It includes scenario, central_year and input_dataset_filename.
+
+    """
+
     resource: HazardResource
     path: str
     scenario: str
@@ -28,11 +36,32 @@ class BatchItem:
 
 
 class WRIAqueductFlood(IndicatorModel):
-    """On-board the WRI Aqueduct flood model data set from
-    http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html
-    """
+    """On-board the WRI Aqueduct flood model data set from http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html."""
 
     def __init__(self):
+        """WRI Aqueduct Floods model of acute riverine and coastal flood hazards, providing flood intensities as return period maps.
+
+        METADATA:
+        Link: https://www.wri.org/aqueduct
+        Data type: Riverine and coastal flood hazard probabilities
+        Hazard indicator: Flood depth at various return periods
+        Region: Global coverage with spatial resolution of 30 × 30 arc seconds (~1 km at the equator)
+        Resolution: ~1 km at the equator
+        Return periods: 2, 5, 10, 25, 50, 100, 250, 500, 1000 years
+        Scenarios: Historical, RCP4.5, RCP8.5
+        Data Source: GLOFRIS model
+
+        DATA DESCRIPTION:
+        Provides inundation depth data for 9 return periods (reoccurrence intervals) at each point, representing the probability of flood events exceeding a given depth each year (exceedance probability). The model builds on the Global Flood Risk with IMAGE Scenarios (GLOFRIS) and uses multi-scenario inputs to simulate riverine and coastal flood risk.
+
+        IMPORTANT NOTES:
+        - Transform coordinates from rotated longitude and latitude for compatibility.
+        - Refer to OS-Climate Physical Climate Risk Methodology for methodology details and usage guidelines.
+
+        Args:
+            None
+
+        """
         self.resources = {}
         for res in self.inventory():
             for scen in res.scenarios:
@@ -44,14 +73,32 @@ class WRIAqueductFlood(IndicatorModel):
     def _resource(self, path):
         return self.resources[path]
 
+    @override
+    def prepare(self, force, download_dir, force_download):
+        return super().prepare(force, download_dir, force_download)
+
     def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
         items = self.batch_items_riverine() + self.batch_items_coastal()
         # filtered = [i for i in items if i.resource.path in \
         # ["inundation/wri/v2/inuncoast_historical_nosub_hist_0",
         # "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]]
         return items
 
+    def onboard_single(self, target, download_dir):
+        """Onboards a single hazard resource by running all batch items."""
+        source = WRIAqueductSource()
+        for item in self.batch_items():
+            map_path = item.resource.map.path.format(
+                scenario=item.scenario, year=item.year
+            )
+            if map_path != (item.path + "_map"):
+                raise ValueError(f"unexpected map path {map_path}")
+            self.run_single(item, source, target, None)
+            self.generate_tiles_single(item, target, target)
+
     def batch_items_riverine(self) -> List[BatchItem]:
+        """Get a list of all riverine batch items."""
         gcms = [
             "00000NorESM1-M",
             "0000GFDL-ESM2M",
@@ -90,6 +137,7 @@ class WRIAqueductFlood(IndicatorModel):
         return items
 
     def batch_items_coastal(self) -> List[BatchItem]:
+        """Get a list of all coastal batch items."""
         models = ["0", "0_perc_05", "0_perc_50"]
         subs = ["wtsub", "nosub"]
         years = [2030, 2050, 2080]
@@ -130,18 +178,20 @@ class WRIAqueductFlood(IndicatorModel):
         return items
 
     def path_riverine(self, scenario: str, gcm: str, year: int):
+        """Get riverine paths."""
         path = "inundation/wri/v2/" + f"inunriver_{scenario}_{gcm}_{year}"
-        return path, f"inunriver_{scenario}_{gcm}_{year}_rp{{return_period:04d}}"
+        return path, f"inunriver_{scenario}_{gcm}_{year}_rp{{return_period:05d}}"
 
     def path_coastal(self, scenario: str, sub: str, year: str, model: str):
+        """Get coastal paths."""
         path = "inundation/wri/v2/" + f"inuncoast_{scenario}_{sub}_{year}_{model}"
         return (
             path,
-            f"inuncoast_{scenario}_{sub}_{year}_rp{{return_period:04d}}_{model}",
+            f"inuncoast_{scenario}_{sub}_{year}_rp{{return_period:05d}}_{model}",
         )
 
     def inventory(self) -> Iterable[HazardResource]:
-        """Here we create the JSON directly, as a demonstration and for the sake of variety."""
+        """Create the JSON directly, as a demonstration and for the sake of variety."""
         with open(
             os.path.join(os.path.dirname(__file__), "wri_aqueduct_flood.md"), "r"
         ) as f:
@@ -503,9 +553,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 ],
             },
         ]
-        resources = parse_obj_as(
-            List[HazardResource],
-            wri_riverine_inundation_models + wri_coastal_inundation_models,
+        resources = TypeAdapter(List[HazardResource]).validate_python(
+            wri_riverine_inundation_models + wri_coastal_inundation_models
         )
         return resources  # self._expand_resources(resources)
 
@@ -546,6 +595,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         target: WriteDataArray,
         client: Client,
     ):
+        """Process a single batch item and writes the data to the Zarr store."""
         assert isinstance(target, OscZarr)
         logger.info(f"Running batch item with path {item.path}")
         for i, ret in enumerate(self.return_periods):
@@ -579,6 +629,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         print("done")
 
     def generate_tiles_single(self, item: BatchItem, source: OscZarr, target: OscZarr):
+        """Generate a tile set for a single batch."""
         logger.info(f"Generating tile-set for batch item with path {item.path})")
         source_path = item.path
         assert item.resource.map is not None
