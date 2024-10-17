@@ -30,6 +30,7 @@ classifiers = [
 
 dependencies = [
     "cartopy",
+    "cdsapi~=0.7.6",
     "cftime~=1.6.4.post1",
     "dask[dataframe,distributed]",
     "fire~=0.7.0",
@@ -54,6 +55,7 @@ dependencies = [
     "seaborn~=0.13.2",
     "shapely",
     "tomli~=2.2.1; python_version < \"3.11\"",
+    "typer~=0.16.0",
     "xarray",
     "cf_xarray~=0.10.6",
     "xclim~=0.44.0",
@@ -101,6 +103,14 @@ source = "src"
 omit = "tests/*"
 relative_files = true
 
+
+
+
+
+
+
+
+
 [tool.pdm.resolution.overrides]
 numpy = "<2"
 zarr = "<3"
@@ -122,6 +132,7 @@ complete = { call = "tasks.complete:main", help = "Create autocomplete files for
 
 [project.scripts]
 os_climate_hazard = "hazard.cli:cli"
+osc_hazard = "hazard.cli:app"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
