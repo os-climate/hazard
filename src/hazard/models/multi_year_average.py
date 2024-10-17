@@ -1,12 +1,15 @@
+"""Module for calculating multi-year average indicators for climate hazard models."""
+
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Iterable, List, Optional, Tuple, TypeVar
+from typing_extensions import Iterable, List, Tuple, TypeVar
 
 import xarray as xr
 from dask.distributed import Client
 from rasterio.crs import CRS  # type: ignore
+
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
@@ -16,8 +19,6 @@ from hazard.protocols import (
     ReadWriteDataArray,
     WriteDataArray,
 )
-from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,8 @@ T = TypeVar("T", bound=Averageable)
 
 @dataclass
 class Indicator:
+    """Representation of a climate hazard indicator with a DataArray, file path, and geographic bounds."""
+
     array: xr.DataArray  # Union[xr.DataArray, Sequence[xr.DataArray]]
     path: PurePosixPath
     bounds: List[Tuple[float, float]]
@@ -34,6 +37,7 @@ class Indicator:
 
 class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     """Indicator which is the average of indicators produced for a number of individual years.
+
     Such calculations can be split by year and run in parallel.
     """
 
@@ -45,6 +49,16 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         "MPI-ESM1-2-LR",
         "MIROC6",
         "NorESM2-MM",
+    ]
+    # see Palmer et al. 'Performance-based sub-selection of CMIP6 models for impact assessments in Europe'
+    # https://esd.copernicus.org/articles/14/457/2023/
+    _europe_gcms: Iterable[str] = [
+        "ACCESS-CM2",
+        "CESM2-WACCM",
+        "CNRM-CM6-1",
+        "EC-Earth3",
+        "GFDL-ESM4",
+        "MRI-ESM2-0",
     ]
     _default_scenarios: Iterable[str] = ["historical", "ssp126", "ssp245", "ssp585"]
     _default_central_year_historical: int = 2005
@@ -73,8 +87,9 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
                                            Defaults to 2005.
             central_years (Iterable[int], optional): Central years to include in calculation.
                                                      Defaults to [2010, 2030, 2040, 2050].
-        """
+            source_dataset: Source dataset. Defaults to "NEX-GDDP-CMIP6"
 
+        """
         # 1995 to 2014 (2010), 2021 tp 2040 (2030), 2031 to 2050 (2040), 2041 to 2060 (2050)
         self.window_years = window_years
         self.gcms = gcms
@@ -86,18 +101,12 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     def run_single(
         self, item: T, source: OpenDataset, target: ReadWriteDataArray, client: Client
     ):
+        """Execute the averaging process for a single climate indicator."""
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
             logger.info(f"Writing array to {str(indicator.path)}")
             target.write(str(indicator.path), indicator.array)
-
-    def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
-        for resource in self.inventory():
-            create_tiles_for_resource(source, target, resource)
 
     def _years(self, _: OpenDataset, item: Averageable):
         return range(
@@ -155,22 +164,29 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         self, source: OpenDataset, item: T, year: int
     ) -> List[Indicator]:
         """Calculate indicators for a single year for a single batch item.
-        If just a single indicator per batch, a list of length one is expected."""
+
+        If just a single indicator per batch, a list of length one is expected.
+        """
         ...
 
 
 @dataclass
 class BatchItem:
+    """Represents a batch item for processing climate data with specific model, scenario, and year parameters."""
+
     resource: HazardResource
     gcm: str
     scenario: str
     central_year: int
 
     def __str__(self):
+        """Return a descriptive string representation of the batch item."""
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
 
 class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
+    """Model for calculating threshold-based multi-year average indicators."""
+
     def batch_items(self) -> Iterable[BatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
         resource = self._resource()
@@ -196,7 +212,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
     def _get_indicators(
         self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
     ) -> List[Indicator]:
-        """Find the
+        """Generate a list of indicators for given thresholds and data arrays.
 
         Args:
             item (BatchItem): _description_
@@ -205,6 +221,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
 
         Returns:
             List[Indicator]: _description_
+
         """
         resource = item.resource
         paths = [

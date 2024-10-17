@@ -1,20 +1,21 @@
+"""."""
+
 import logging
 import os
 import math
-from pathlib import Path, PurePosixPath
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from pathlib import Path, PurePath
+from typing_extensions import Any, Dict, Iterable, List, Optional, Tuple, override
 
 import geopandas as gpd
-from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 from rasterio import features
 from rasterio.enums import MergeAlg
 import xarray as xr
 
-from hazard.indicator_model import IndicatorModel
+
+from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import OpenDataset, ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -27,47 +28,96 @@ from hazard.utilities.xarray_utilities import (
 logger = logging.getLogger(__name__)
 
 
-class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
-    def __init__(self, source_dir, fs: Optional[AbstractFileSystem] = None):
-        """Source that can provide FLOPROS data as an XArray raster.
+class FLOPROSFloodStandardOfProtection(Onboarder):
+    """Source that provides FLOPROS data as an XArray raster.
 
-        Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
-            <bucket name>/<prefix> is expected.
-            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance.
-            If None, a LocalFileSystem is used.
+    This class is responsible for downloading, extracting, and reading FLOPROS
+    data into a GeoDataFrame. It supports both local and remote file systems.
+    """
+
+    def __init__(self, source_dir_base, fs: Optional[AbstractFileSystem] = None):
+        """Flood protection standards expressed as return period.
+
+        METADATA:
+        Link: https://nhess.copernicus.org/articles/16/1049/2016/
+        Data type: Global database of flood protection standards.
+        Hazard indicator: Riverine and coastal flood
+        Region: Global
+        Resolution: Country / country unit
+        Scenarios: Not applicable
+        Time range: Not applicable
+        File type: Shape File (.shx)
+
+        DATA DESCRIPTION:
+        FLOod PROtection Standards, FLOPROS, which comprises information in the form of the flood return period
+        associated with protection measures, at different spatial scales. FLOPROS comprises three layers
+        of information, and combines them into one consistent database. The design layer contains empirical
+        information about the actual standard of existing protection already in place; the policy layer contains
+        information on protection standards from policy regulations; and the model layer uses a validated modelling
+        approach to calculate protection standards.
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = PurePath(source_dir_base, "flopros_flood").as_posix() + "/"
         self.zip_url = "https://nhess.copernicus.org/articles/16/1049/2016/nhess-16-1049-2016-supplement.zip"
         self.archive_name = self.zip_url.split("/")[-1].split(".")[0]
-        self.prepare()
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, self.archive_name)
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            download_and_unzip(self.zip_url, self.source_dir, self.archive_name)
+    @override
+    def prepare(self, download_dir=None):
+        """Prepare the FLOPROS dataset by downloading and extracting the data.
+
+        Args:
+            working_dir (Optional[str], optional): Temporary directory for extraction
+                if using a remote file system. Defaults to None.
+
+        """
+        os.makedirs(self.source_dir, exist_ok=True)
+        # download and extract the data
+        download_and_unzip(self.zip_url, self.source_dir, self.archive_name)
         logger.info("Reading database into GeoDataFrame")
-        path = (
+        self.path = (
             Path(self.source_dir)
             / self.archive_name
             / "Scussolini_etal_Suppl_info"
             / "FLOPROS_shp_V1"
             / "FLOPROS_shp_V1.shp"
         )
-        self.df = gpd.read_file(path)
+
+    @override
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        return Path(self.path).exists() is not None or not force or not force_download
+
+    @override
+    def onboard(self, target):
+        self.df = gpd.read_file(self.path)
+        """ Onboard the data, reading from the file source and writing to the target provided."""
+        logger.info("Writing rasters")
+        for hazard_type, resource in self._resources().items():
+            ds = self.open_dataset_year("", "", hazard_type, -1)
+            array_name = "sop"
+            # note that the co-ordinates will be written into the parent of resource.path
+            target.write(
+                resource.path,
+                ds[array_name].compute(),
+                spatial_coords=resource.store_netcdf_coords,
+            )
+
+    @override
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """Create map images."""
+        for resource in self.inventory():
+            create_tiles_for_resource(
+                source,
+                target,
+                resource,
+                nodata_as_zero=True,
+                nodata_as_zero_coarsening=True,
+            )
 
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
     ) -> xr.Dataset:
-        """_summary_
+        """_summary_.
 
         Args:
             gcm (str): Ignored.
@@ -78,6 +128,7 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
         Returns:
             xr.Dataset: Data set named 'indicator' with 'max' and 'min' coordinate labels in the index coordinate.
+
         """
         hazard_type = quantity
 
@@ -91,10 +142,12 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
             Args:
                 row: GeoDataFrame row
+                min_max (str): Specifies whether to retrieve the "Min" or "Max" protection level for the given flood type.
                 flood_type (str, optional): "Riv" or "Co". Defaults to "Riv".
 
             Returns:
                 float: Protection level as return period in years.
+
             """
             layers = ["DL", "PL", "ModL"] if flood_type == "Riv" else ["DL", "PL"]
             for layer in layers:  # design layer, policy layer, modelled layer
@@ -164,60 +217,8 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
             da[index, :, :] = rasterized[:, :]
         return da.to_dataset(name="sop")
 
-
-class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
-    def __init__(self):
-        """
-        Flood protection standards expressed as return period.
-
-        METADATA:
-        Link: https://nhess.copernicus.org/articles/16/1049/2016/
-        Data type: Global database of flood protection standards.
-        Hazard indicator: Riverine and coastal flood
-        Region: Global
-        Resolution: Country / country unit
-        Scenarios: Not applicable
-        Time range: Not applicable
-        File type: Shape File (.shx)
-
-        DATA DESCRIPTION:
-        FLOod PROtection Standards, FLOPROS, which comprises information in the form of the flood return period
-        associated with protection measures, at different spatial scales. FLOPROS comprises three layers
-        of information, and combines them into one consistent database. The design layer contains empirical
-        information about the actual standard of existing protection already in place; the policy layer contains
-        information on protection standards from policy regulations; and the model layer uses a validated modelling
-        approach to calculate protection standards.
-        """
-
-    def batch_items(self):
-        """Get a list of all batch items."""
-        return ["min_max"]  # just one!
-
-    def run_single(
-        self, item: str, source: Any, target: ReadWriteDataArray, client: Client
-    ):
-        assert isinstance(source, FLOPROSFloodStandardOfProtectionSource)
-        logger.info("Writing rasters")
-        for hazard_type, resource in self._resources().items():
-            ds = source.open_dataset_year("", "", hazard_type, -1)
-            array_name = "sop"
-            # note that the co-ordinates will be written into the parent of resource.path
-            target.write(
-                resource.path,
-                ds[array_name].compute(),
-                spatial_coords=resource.store_netcdf_coords,
-            )
-
-    def create_maps(self, source: OscZarr, target: OscZarr):
-        """Create map images."""
-        for resource in self.inventory():
-            create_tiles_for_resource(
-                source,
-                target,
-                resource,
-                nodata_as_zero=True,
-                nodata_as_zero_coarsening=True,
-            )
+    def gcms(self):
+        return super().gcms()
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
@@ -246,6 +247,9 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                 display_name="Standard of protection (FLOPROS)",
                 description=description,
                 group_id="",
+                source="https://nhess.copernicus.org/articles/16/1049/2016/",
+                version="",
+                license="Creative Commons Attribution 3.0 License",
                 display_groups=[],
                 map=MapInfo(
                     bbox=[],

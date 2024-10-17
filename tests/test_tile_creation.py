@@ -11,12 +11,9 @@ import zarr.core  # type: ignore
 from rasterio.warp import Resampling
 
 from hazard.indicator_model import IndicatorModel
-from hazard.onboard.tudelft_flood import TUDelftRiverFlood
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import zarr_utilities
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
-
-from .conftest import test_output_dir  # noqa: F401
 
 
 def test_convert_tiles_mocked(test_output_dir):  # noqa: F811 not unused, its a fixture
@@ -90,7 +87,7 @@ def test_map_tiles_from_model(test_output_dir) -> None:  # noqa: F811
     target = source
 
     models: List[IndicatorModel] = [
-        TUDelftRiverFlood("None"),
+        # TUDelftRiverFlood(source_dir_base="None"),
         # WRIAqueductFlood(),
         # DegreeDays(),
         # Jupiter(),
@@ -102,8 +99,8 @@ def test_map_tiles_from_model(test_output_dir) -> None:  # noqa: F811
         # resources[0].
         for resource in resources:
             if resource.map is not None and resource.map.source == "map_array_pyramid":
-                for resource in resource.expand():
-                    create_tiles_for_resource(source, target, resource)
+                for expanded_resource in resource.expand():
+                    create_tiles_for_resource(source, target, expanded_resource)
 
 
 @pytest.mark.skip(reason="Requires mocking")

@@ -1,8 +1,6 @@
 import os
-from typing import List, Optional
 
 import numpy as np  # type: ignore
-import xarray as xr
 import zarr  # type: ignore
 
 from hazard.sources.osc_zarr import OscZarr
@@ -11,8 +9,6 @@ from hazard.utilities.xarray_utilities import (
     empty_data_array,
     global_crs_transform,
 )
-
-from .conftest import test_output_dir  # noqa:F401 used, it's a fixture
 
 
 def test_xarray_write_small(test_output_dir):  # noqa: F811

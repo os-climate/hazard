@@ -1,6 +1,8 @@
 import os
+import shutil
+import tempfile
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd  # type: ignore
@@ -30,8 +32,18 @@ def test_output_dir():
     # shutil.rmtree(output_dir)
 
 
+@pytest.fixture
+def test_dir():
+    """Like test_output_dir but uses a temp directory which is cleaned-up."""
+    test_dir = tempfile.mkdtemp()
+    yield test_dir
+    shutil.rmtree(test_dir)
+
+
 class TestSource(OpenDataset):
     """Mocked source for testing."""
+
+    __test__ = False
 
     def __init__(
         self, datasets: Dict[Tuple[str, int], xr.Dataset], gcms: Iterable[str]
@@ -53,6 +65,8 @@ class TestSource(OpenDataset):
 class TestTarget(ReadWriteDataArray):
     """Mocked target for testing."""
 
+    __test__ = False
+
     def __init__(self):
         self.datasets = {}
 
@@ -60,7 +74,7 @@ class TestTarget(ReadWriteDataArray):
         self,
         path: str,
         data_array: xr.DataArray,
-        chunks: Optional[List[int]] = None,
+        chunks: Optional[Sequence[int]] = None,
         spatial_coords: Optional[bool] = True,
     ):
         self.datasets[path] = data_array
