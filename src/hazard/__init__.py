@@ -10,6 +10,7 @@ from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
+from hazard.onboard.ipcc_drought import IPCCDrought
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jrc_landslides import JRCLandslides
 from hazard.onboard.jrc_subsidence import JRCSubsidence
@@ -25,6 +26,7 @@ hazard_map = {
     "DavydzenkaEtAlLandSubsidence": DavydzenkaEtAlLandSubsidence,
     "DaysTasAboveIndicator": DaysTasAboveIndicator,
     "ETHZurichLitPop": ETHZurichLitPop,
+    "IPCCDrought": IPCCDrought,
     "IRISIndicator": IRISIndicator,
     "JRCLandslides": JRCLandslides,
     "JRCSubsidence": JRCSubsidence,
