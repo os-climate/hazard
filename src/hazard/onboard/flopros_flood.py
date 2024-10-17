@@ -1,7 +1,9 @@
+"""."""
+
 import logging
 import os
 import math
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import geopandas as gpd
@@ -12,6 +14,8 @@ from rasterio import features
 from rasterio.enums import MergeAlg
 import xarray as xr
 
+
+from hazard.onboarder import Onboarder
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import OpenDataset, ReadWriteDataArray
@@ -28,46 +32,60 @@ logger = logging.getLogger(__name__)
 
 
 class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
-    def __init__(self, source_dir, fs: Optional[AbstractFileSystem] = None):
-        """Source that can provide FLOPROS data as an XArray raster.
+    """Source that provides FLOPROS data as an XArray raster.
+
+    This class is responsible for downloading, extracting, and reading FLOPROS
+    data into a GeoDataFrame. It supports both local and remote file systems.
+    """
+
+    def __init__(self, source_dir_base, fs: Optional[AbstractFileSystem] = None):
+        """Initialize the FLOPROS data source.
 
         Args:
             source_dir (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance.
             If None, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = PurePath(source_dir_base, "flopros_flood").as_posix() + "/"
         self.zip_url = "https://nhess.copernicus.org/articles/16/1049/2016/nhess-16-1049-2016-supplement.zip"
         self.archive_name = self.zip_url.split("/")[-1].split(".")[0]
         self.prepare()
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, self.archive_name)
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            download_and_unzip(self.zip_url, self.source_dir, self.archive_name)
+    def prepare(self, download_dir: Optional[str] = None):
+        """Prepare the FLOPROS dataset by downloading and extracting the data.
+
+        Args:
+            working_dir (Optional[str], optional): Temporary directory for extraction
+                if using a remote file system. Defaults to None.
+
+        """
+        os.makedirs(self.source_dir, exist_ok=True)
+        # download and extract the data
+        download_and_unzip(self.zip_url, self.source_dir, self.archive_name)
         logger.info("Reading database into GeoDataFrame")
-        path = (
+        self.path = (
             Path(self.source_dir)
             / self.archive_name
             / "Scussolini_etal_Suppl_info"
             / "FLOPROS_shp_V1"
             / "FLOPROS_shp_V1.shp"
         )
-        self.df = gpd.read_file(path)
+
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        return Path(self.path).exists() is not None or not force or not force_download
+
+    def onboard(self):
+        """Onboard the data."""
+        self.df = gpd.read_file(self.path)
 
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
     ) -> xr.Dataset:
-        """_summary_
+        """_summary_.
 
         Args:
             gcm (str): Ignored.
@@ -78,6 +96,7 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
         Returns:
             xr.Dataset: Data set named 'indicator' with 'max' and 'min' coordinate labels in the index coordinate.
+
         """
         hazard_type = quantity
 
@@ -91,10 +110,12 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
 
             Args:
                 row: GeoDataFrame row
+                min_max (str): Specifies whether to retrieve the "Min" or "Max" protection level for the given flood type.
                 flood_type (str, optional): "Riv" or "Co". Defaults to "Riv".
 
             Returns:
                 float: Protection level as return period in years.
+
             """
             layers = ["DL", "PL", "ModL"] if flood_type == "Riv" else ["DL", "PL"]
             for layer in layers:  # design layer, policy layer, modelled layer
@@ -164,11 +185,19 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
             da[index, :, :] = rasterized[:, :]
         return da.to_dataset(name="sop")
 
+    def gcms(self):
+        return super().gcms()
 
-class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
-    def __init__(self):
-        """
-        Flood protection standards expressed as return period.
+
+class FLOPROSFloodStandardOfProtection(Onboarder):
+    """Source that provides FLOPROS data as an XArray raster.
+
+    This class is responsible for downloading, extracting, and reading FLOPROS
+    data into a GeoDataFrame. It supports both local and remote file systems.
+    """
+
+    def __init__(self, source_dir_base, fs: Optional[AbstractFileSystem] = None):
+        """Flood protection standards expressed as return period.
 
         METADATA:
         Link: https://nhess.copernicus.org/articles/16/1049/2016/
@@ -189,6 +218,10 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
         approach to calculate protection standards.
         """
 
+        self.source = FLOPROSFloodStandardOfProtectionSource(
+            source_dir_base=source_dir_base
+        )
+
     def batch_items(self):
         """Get a list of all batch items."""
         return ["min_max"]  # just one!
@@ -196,6 +229,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
     def run_single(
         self, item: str, source: Any, target: ReadWriteDataArray, client: Client
     ):
+        """Run a single item of the batch."""
         assert isinstance(source, FLOPROSFloodStandardOfProtectionSource)
         logger.info("Writing rasters")
         for hazard_type, resource in self._resources().items():
@@ -218,6 +252,21 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                 nodata_as_zero=True,
                 nodata_as_zero_coarsening=True,
             )
+
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        return (
+            self.source.is_prepared(force=force, force_download=force_download)
+            or not force
+            or not force_download
+        )
+
+    def prepare(self, download_dir=None):
+        self.source.prepare()
+
+    def onboard(self, target):
+        self.source.onboard()
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""

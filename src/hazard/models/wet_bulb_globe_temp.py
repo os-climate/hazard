@@ -1,8 +1,10 @@
+"""Module for calculating indicators of days exceeding wet-bulb globe temperature (WBGT) thresholds."""
+
 import logging
 import os
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Iterable, List
+from typing_extensions import Iterable, List, Optional, override
 
 import numpy as np
 import xarray as xr
@@ -14,6 +16,7 @@ from hazard.models.multi_year_average import (
     ThresholdBasedAverageIndicator,
 )
 from hazard.protocols import OpenDataset
+from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 
@@ -21,41 +24,65 @@ logger = logging.getLogger(__name__)
 
 
 class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
+    """Calculates days exceeding specified WBGT temperature thresholds based on climate data for various scenarios and years, storing results for global heat risk assessment.
+
+    Attributes
+        threshold_temps_c : List[float]
+            Temperature thresholds in Celsius for calculating exceedance days.
+        window_years : int
+            Number of years over which to average data.
+        gcms : Iterable[str]
+            Climate models to use for data analysis.
+        scenarios : Iterable[str]
+            Emission scenarios to consider for projections.
+        central_year_historical : int
+            Central year for historical scenario calculations.
+        central_years : Iterable[int]
+            Central years for projected scenario calculations.
+
+    """
+
     def __init__(
         self,
-        threshold_temps_c: List[float] = [
-            5,
-            10,
-            15,
-            20,
-            25,
-            30,
-            35,
-            40,
-            45,
-            50,
-            55,
-            60,
-        ],
+        threshold_temps_c: Optional[List[float]] = None,
         window_years: int = 20,
-        gcms: Iterable[str] = [
-            "ACCESS-CM2",
-            "CMCC-ESM2",
-            "CNRM-CM6-1",
-            "MPI-ESM1-2-LR",
-            "MIROC6",
-            "NorESM2-MM",
-        ],
-        scenarios: Iterable[str] = [
-            "historical",
-            "ssp126",
-            "ssp245",
-            "ssp370",
-            "ssp585",
-        ],
+        gcms: Optional[Iterable[str]] = None,
+        scenarios: Optional[Iterable[str]] = None,
         central_year_historical: int = 2005,
-        central_years: Iterable[int] = [2030, 2040, 2050, 2060, 2070, 2080, 2090],
+        central_years: Optional[Iterable[int]] = None,
     ):
+        """Initialize the WBGT indicator with specified thresholds, climate models, and scenarios.
+
+        Args:
+            threshold_temps_c : List[float]
+                Temperature thresholds for exceedance calculations in Celsius.
+            window_years : int
+                Number of years for averaging data.
+            gcms : Iterable[str]
+                Global Climate Models to include.
+            scenarios : Iterable[str]
+                Emission scenarios to evaluate.
+            central_year_historical : int
+                Central year for historical averages.
+            central_years : Iterable[int]
+                Target years for future scenario calculations.
+
+        """
+        if central_years is None:
+            central_years = [2030, 2040, 2050, 2060, 2070, 2080, 2090]
+        if scenarios is None:
+            scenarios = ["historical", "ssp126", "ssp245", "ssp370", "ssp585"]
+        if gcms is None:
+            gcms = [
+                "ACCESS-CM2",
+                "CMCC-ESM2",
+                "CNRM-CM6-1",
+                "MPI-ESM1-2-LR",
+                "MIROC6",
+                "NorESM2-MM",
+            ]
+        if threshold_temps_c is None:
+            threshold_temps_c = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -64,6 +91,10 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             central_years=central_years,
         )
         self.threshold_temps_c = threshold_temps_c
+
+    @override
+    def prepare(self, force, download_dir, force_download):
+        return super().prepare(force, download_dir, force_download)
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
@@ -112,10 +143,13 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             output[i, :, :] = xr.where(wbgt > threshold_c, scale, 0.0).sum(dim=["time"])
         return output
 
+    def _onboard_single(self, target, download_dir):
+        source = NexGddpCmip6()
+        self.run_all(source, target)
+        self.create_maps(target, target)
+
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         create_tiles_for_resource(source, target, self._resource())
 
     def _resource(self) -> HazardResource:
