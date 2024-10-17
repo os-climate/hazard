@@ -119,7 +119,7 @@ def test_progress_store(test_output_dir):
 
 @pytest.mark.skip(reason="example")
 def test_doc_store(test_output_dir, s3_credentials):
-    docs_store = DocStore()
+    docs_store = DocStore(local_path=test_output_dir)
     docs_store.write_new_empty_inventory()
     zarr_store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "drought", "hazard.zarr")
