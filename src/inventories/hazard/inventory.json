@@ -1,6 +1,65 @@
 {
     "resources": [
         {
+            "hazard_type": "Subsidence",
+            "group_id": "",
+            "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
+            "indicator_id": "land_subsidence_rate",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_groups": [],
+            "description": "# Global map of land subsidence rates (Davydzenka et al. (2024))\n\nLand subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "millimetres/year"
+                },
+                "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "bbox": [
+                    -180.0,
+                    -60.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2021
+                    ]
+                }
+            ],
+            "units": "millimetres/year"
+        },
+        {
             "hazard_type": "RiverineInundation",
             "group_id": "public",
             "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}",
@@ -10,7 +69,7 @@
             "params": {},
             "display_name": "Flood depth/baseline (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -70,7 +129,7 @@
             "params": {},
             "display_name": "Flood depth/NorESM1-M (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resources Institute Aqueduct Floods riverine model using GCM model from\nBjerknes Centre for Climate Research, Norwegian Meteorological Institute.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resources Institute Aqueduct Floods riverine model using GCM model from\nBjerknes Centre for Climate Research, Norwegian Meteorological Institute.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -142,7 +201,7 @@
             "params": {},
             "display_name": "Flood depth/GFDL-ESM2M (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nGeophysical Fluid Dynamics Laboratory (NOAA).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nGeophysical Fluid Dynamics Laboratory (NOAA).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -214,7 +273,7 @@
             "params": {},
             "display_name": "Flood depth/HadGEM2-ES (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model:\nMet Office Hadley Centre.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model:\nMet Office Hadley Centre.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -286,7 +345,7 @@
             "params": {},
             "display_name": "Flood depth/IPSL-CM5A-LR (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nInstitut Pierre Simon Laplace\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nInstitut Pierre Simon Laplace\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -358,7 +417,7 @@
             "params": {},
             "display_name": "Flood depth/MIROC-ESM-CHEM (WRI)",
             "display_groups": [],
-            "description": "World Resource Institute Aqueduct Floods riverine model using\n GCM model from Atmosphere and Ocean Research Institute\n (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency\n for Marine-Earth Science and Technology.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "World Resource Institute Aqueduct Floods riverine model using\n GCM model from Atmosphere and Ocean Research Institute\n (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency\n for Marine-Earth Science and Technology.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -430,7 +489,7 @@
             "params": {},
             "display_name": "Flood depth/baseline, no subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -492,7 +551,7 @@
             "params": {},
             "display_name": "Flood depth/95%, no subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -564,7 +623,7 @@
             "params": {},
             "display_name": "Flood depth/5%, no subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -636,7 +695,7 @@
             "params": {},
             "display_name": "Flood depth/50%, no subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -708,7 +767,7 @@
             "params": {},
             "display_name": "Flood depth/baseline, with subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -770,7 +829,7 @@
             "params": {},
             "display_name": "Flood depth/95%, with subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -842,7 +901,7 @@
             "params": {},
             "display_name": "Flood depth/5%, with subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -914,7 +973,7 @@
             "params": {},
             "display_name": "Flood depth/50%, with subsidence (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1092,7 +1151,7 @@
                     "nodata_index": 0,
                     "units": ""
                 },
-                "path": "fire_probability_{scenario}_{year}_map",
+                "path": "maps/fire/jupiter/v1/fire_probability_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1168,7 +1227,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "months_spei3m_below_-2_{scenario}_{year}_map",
+                "path": "maps/drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1244,7 +1303,7 @@
                     "nodata_index": 0,
                     "units": "mm"
                 },
-                "path": "max_daily_water_equivalent_{scenario}_{year}_map",
+                "path": "maps/precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1320,7 +1379,7 @@
                     "nodata_index": 0,
                     "units": "days/year"
                 },
-                "path": "days_above_5cm_{scenario}_{year}_map",
+                "path": "maps/hail/jupiter/v1/days_above_5cm_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1396,7 +1455,7 @@
                     "nodata_index": 0,
                     "units": "days/year"
                 },
-                "path": "days_above_35c_{scenario}_{year}_map",
+                "path": "maps/chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1461,7 +1520,7 @@
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in m/s) experienced over a\n100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a\n100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1470,9 +1529,9 @@
                     "max_value": 120.0,
                     "name": "heating",
                     "nodata_index": 0,
-                    "units": "m/s"
+                    "units": "km/hour"
                 },
-                "path": "max_1min_{scenario}_{year}_map",
+                "path": "maps/wind/jupiter/v1/max_1min_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1525,7 +1584,7 @@
                     ]
                 }
             ],
-            "units": "m/s"
+            "units": "km/hour"
         },
         {
             "hazard_type": "CombinedInundation",
@@ -1548,7 +1607,7 @@
                     "nodata_index": 0,
                     "units": ""
                 },
-                "path": "fraction_{scenario}_{year}_map",
+                "path": "maps/combined_flood/jupiter/v1/fraction_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1812,7 +1871,7 @@
             "group_id": "iris_osc",
             "path": "wind/iris/v1/max_speed_{scenario}_{year}",
             "indicator_id": "max_speed",
-            "indicator_model_id": null,
+            "indicator_model_id": "iris",
             "indicator_model_gcm": "combined",
             "params": {},
             "display_name": "Max wind speed (IRIS)",
@@ -1906,7 +1965,7 @@
             "display_groups": [
                 "Mean degree days"
             ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n",
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00c2\u00b0C.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2005,7 +2064,7 @@
             "display_groups": [
                 "Mean degree days"
             ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n",
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00c2\u00b0C.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2109,7 +2168,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 52.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "weeks/year"
@@ -2239,7 +2298,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 52.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "weeks/year"
@@ -2326,7 +2385,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 52.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "days/year"
@@ -2443,7 +2502,7 @@
             "display_groups": [
                 "Water demand in centimeters/year (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2529,7 +2588,7 @@
             "display_groups": [
                 "Water supply in centimeters/year (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2615,7 +2674,7 @@
             "display_groups": [
                 "Water stress (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2701,7 +2760,7 @@
             "display_groups": [
                 "Water depletion (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2787,7 +2846,7 @@
             "display_groups": [
                 "Water stress category (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2873,7 +2932,7 @@
             "display_groups": [
                 "Water depletion category (Aqueduct 4.0)"
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u2019s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00d7 5 arc minutes which equates roughly to 10 kilometer (km) \u00d7 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex\nhydrological data into intuitive indicators of water-related risk:\n\n- **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (centimeters/year).\n\n- **Water supply**: available blue water, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed, includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (centimeters/year).\n\n- **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water. It can be classified into six categories: -1: Arid and low water use, 0: Low (<10%), 1: Low-medium (10-20%), 2: Medium-high (20-40%), 3: High (40-80%), 4: Extremely high (>80%).\n\n- **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only. It can be classified into six categories: -1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%).\n\n[Aqueduct 4.0 FAQ](https://github.com/wri/Aqueduct40/blob/master/data_FAQ.md) explains why the water supply and demand values are measured as fluxes instead of volumes. Volumes (cubic meters) can vary significantly based on the size of each sub-basin, potentially misleading as they might primarily reflect a larger geographical area rather than indicating a higher rate of water flow. On the other hand, fluxes (centimeters/year), which measure the rate of water flow, offer a more direct and equitable means of comparing water availability between different sub-basins. Volume = Flux x Area.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels.\nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2956,12 +3015,7 @@
             "indicator_model_gcm": "{gcm}",
             "params": {
                 "gcm": [
-                    "ACCESS-CM2",
-                    "CMCC-ESM2",
-                    "CNRM-CM6-1",
-                    "MPI-ESM1-2-LR",
-                    "MIROC6",
-                    "NorESM2-MM"
+                    "MIROC6"
                 ]
             },
             "display_name": "Drought SPEI index",
@@ -2979,7 +3033,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -3135,6 +3189,328 @@
             "units": "years"
         },
         {
+            "hazard_type": "CoastalInundation",
+            "group_id": "coastal_tudelft",
+            "path": "inundation/coastal_tudelft/v2/flood_depth_{scenario}_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
+            "params": {},
+            "display_name": "Flood depth (TUDelft)",
+            "display_groups": [],
+            "description": "\n                Flood water depth, part of data set containing data related to the probability of\n                coastal floods occurring in Europe under present and future climate.\n                Based upon CLMcom-CCLM4-8-17-EC-EARTH regional\n                climate simulation (EURO-CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "metres"
+                },
+                "path": "maps/inundation/coastal_tudelft/v2/flood_depth_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_tudelft",
+            "path": "fire/fire_tudelft/v1/fwi_greater_than_20_{scenario}_{year}",
+            "indicator_id": "daily_probability_fwi20",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-CLM3-5",
+            "params": {},
+            "display_name": "Daily Probabilities of High Forest Fire (FWI exceeding 20) (TUDelft)",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing daily probabilities of high forest fire danger in\n                Europe under present and projected future climates. Includes gridded (NetCDF)\n                datasets of high forest fire danger probabilities for the present climate\n                (1981-2010) based on the ERA-Interim reanalysis and for the projected\n                climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050\n                and 2071-2100).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "maps/fire/fire_tudelft/v1/fwi_greater_than_20_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "probability"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_tudelft",
+            "path": "fire/fire_tudelft/v1/fwi_greater_than_45_{scenario}_{year}",
+            "indicator_id": "daily_probability_fwi45",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-CLM3-5",
+            "params": {},
+            "display_name": "Daily Probabilities of High Forest Fire (FWI exceeding 45) (TUDelft)",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing daily probabilities of high forest fire danger in\n                Europe under present and projected future climates. Includes gridded (NetCDF)\n                datasets of high forest fire danger probabilities for the present climate\n                (1981-2010) based on the ERA-Interim reanalysis and for the projected\n                climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050\n                and 2071-2100).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "maps/fire/fire_tudelft/v1/fwi_greater_than_45_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "probability"
+        },
+        {
+            "hazard_type": "ChronicWind",
+            "group_id": "wind_tudelft",
+            "path": "convective_windstorm/conv_wind_tudelft/v2/severe_gust_speed_{scenario}_{year}",
+            "indicator_id": "severe_windstorm_probability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-CLM3-5",
+            "params": {},
+            "display_name": "Annual Probability of Severe Convective Windstorm (TUDelft)",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing gridded annual probability of severe convective\n                windstorms (wind gusts > 25 m/s) for present day and the future climate.\n                The fields are multi model means of 15 regional climate model simulations (CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "maps/convective_windstorm/conv_wind_tudelft/v2/severe_gust_speed_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "probability"
+        },
+        {
+            "hazard_type": "ChronicWind",
+            "group_id": "wind_tudelft",
+            "path": "convective_windstorm/conv_wind_tudelft/v2/extremely_severe_gust_speed_{scenario}_{year}",
+            "indicator_id": "extreme_windstorm_probability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "CLMcom-CCLM4-8-17-CLM3-5",
+            "params": {},
+            "display_name": "Annual Probability of Extremely Severe Convective Windstorm (TUDelft)",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing gridded annual probability of extremely severe convective\n                windstorms (wind gusts > 32 m/s) for present day and the future climate.\n                The fields are multi model means of 15 regional climate model simulations (CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "maps/convective_windstorm/conv_wind_tudelft/v2/extremely_severe_gust_speed_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "probability"
+        },
+        {
+            "hazard_type": "Landslide",
+            "group_id": "landslide_jrc",
+            "path": "landslide/landslide_jrc/v1/susceptability_{scenario}_{year}",
+            "indicator_id": "landslide_susceptability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Landslide Susceptability (JRC)",
+            "display_groups": [],
+            "description": "\n                The spatial dataset (GIS map) shows landslide susceptibility levels at European scale,\n                derived from heuristic-statistical modelling of main landslide conditioning factors\n                using also landslide location data. It covers all EU member states except Malta, in\n                addition to Albania, Andorra, Bosnia and Herzegovina, Croatia, FYR Macedonia, Iceland,\n                Kosovo, Liechtenstein, Montenegro, Norway, San Marino, Serbia, and Switzerland.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "index"
+                },
+                "path": "maps/landslide/landslide_jrc/v1/susceptability_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2018
+                    ]
+                }
+            ],
+            "units": "index"
+        },
+        {
             "hazard_type": "RiverineInundation",
             "group_id": "",
             "path": "inundation/flopros_riverine/v1/flood_sop/sop",
@@ -3212,47 +3588,243 @@
         },
         {
             "hazard_type": "Subsidence",
-            "group_id": "",
-            "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
-            "indicator_id": "land_subsidence_rate",
+            "group_id": "subsidence_jrc",
+            "path": "drought/subsidence_jrc/v1/susceptability_{scenario}_{year}",
+            "indicator_id": "subsidence_susceptability",
             "indicator_model_id": null,
             "indicator_model_gcm": "historical",
             "params": {},
-            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_name": "Subsidence Susceptability (JRC)",
             "display_groups": [],
-            "description": "# Global map of land subsidence rates (Davydzenka et al. (2024))\n\nLand subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
+            "description": "\n                A number of layers for soil properties have been created based on data from the European\n                Soil Database in combination with data from the Harmonized World Soil Database (HWSD)\n                and Soil-Terrain Database (SOTER). The available layers include: Total available water\n                content, Depth available to roots, Clay content, Silt content, Sand content, Organic\n                carbon, Bulk Density, Coarse fragments.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 4.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "index"
+                },
+                "path": "maps/drought/subsidence_jrc/v1/susceptability_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "index"
+        },
+        {
+            "hazard_type": "Drought",
+            "group_id": "",
+            "path": "drought/ipcc/v1/spi6_{scenario}_{year}",
+            "indicator_id": "spi6",
+            "indicator_model_id": "ipcc",
+            "indicator_model_gcm": "IPCC",
+            "params": {},
+            "display_name": "Standardized Precipitation Index (SPI-6)",
+            "display_groups": [],
+            "description": "\n                    ## Standardized Precipitation Index (SPI)\n\n                    The **SPI** is a statistical index that compares cumulated precipitation over \\( n \\) months (commonly \\( n=6 \\) or \\( n=12 \\)) with the long-term precipitation distribution for the same location and accumulation period. The chosen \\( n \\)-month window (e.g., 6 months) represents a medium-term cumulative value that can help measure impacts on river flow and reservoir storage (McKee et al., 1993).\n\n                    Following Spinoni et al. (2014), a drought event starts in the month when SPI drops below \\(-1\\) and ends once the SPI value is positive for **at least two consecutive months**.\n\n                    ### Considerations and Limitations\n\n                    - **High Latitudes & Arid Areas**  \n                      The SPI may be difficult to interpret in high-latitude or arid regions due to statistical inaccuracies in estimating the Gamma function (Spinoni et al., 2014).\n\n                    - **SPI Variants**  \n                      The Intergovernmental Panel on Climate Change (IPCC) Interactive Atlas includes both SPI-6 and SPI-12 versions.\n\n\n                    **Reference**  \n                    [IPCC AR6 WGI Annex VI](https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Annex_VI.pdf)\n                    ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": -10.0,
+                    "max_index": 255,
+                    "max_value": 10.0,
+                    "name": "coolwarm_r",
+                    "nodata_index": 0,
+                    "units": "SPI-6"
+                },
+                "path": "maps/drought/ipcc/v1/spi6_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1994
+                    ]
+                },
+                {
+                    "id": "rcp2p6",
+                    "years": [
+                        2040
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2040
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2040
+                    ]
+                }
+            ],
+            "units": "dimensionless"
+        },
+        {
+            "hazard_type": "Drought",
+            "group_id": "",
+            "path": "drought/ipcc/v1/cdd_{scenario}_{year}",
+            "indicator_id": "cdd",
+            "indicator_model_id": "ipcc",
+            "indicator_model_gcm": "IPCC",
+            "params": {},
+            "display_name": "Consecutive Dry Days",
+            "display_groups": [],
+            "description": "\n                    ## Consecutive Dry Days (CDD)\n                    A **dry day** for a model grid box is defined as any day with precipitation lower than 1 mm. The **Consecutive Dry Days (CDD)** metric counts how many dry days occur in a row. Specifically:\n\n                    1. **Dry Day Criterion**  \n                       For each grid box, precipitation must be less than 1 mm on a given day for it to be considered a dry day.\n\n                    2. **Counting Consecutive Dry Days**  \n                       - The count starts on the first dry day of the year (or directly on the first day of the year, if it is already dry).  \n                       - The count continues until a wet day (precipitation \u2265 1 mm) occurs.  \n                       - If no wet day occurs, the count stops at the year\u2019s end.\n\n                    3. **Annual CDD**  \n                       The **annual maximum number of consecutive dry days** (CDD) is the longest run of dry days that occurs during the year.\n\n                    In practice, you would calculate the yearly CDD values by reviewing the daily precipitation for each grid box, identifying continuous stretches of days where precipitation remains below 1 mm, and retaining the **maximum** length of these stretches over the full year.\n                    **Reference**  \n                    [IPCC AR6 WGI Annex VI](https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Annex_VI.pdf)\n                    ",
             "map": {
                 "colormap": {
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
                     "max_value": 100.0,
-                    "name": "heating",
+                    "name": "Reds",
                     "nodata_index": 0,
-                    "units": "millimetres/year"
+                    "units": "days"
                 },
-                "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
-                "bounds": [
-                    [
-                        -180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        -60.0
-                    ],
-                    [
-                        -180.0,
-                        -60.0
-                    ]
-                ],
+                "path": "maps/drought/ipcc/v1/cdd_{scenario}_{year}_map",
+                "bounds": [],
                 "bbox": [
                     -180.0,
-                    -60.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1994
+                    ]
+                },
+                {
+                    "id": "rcp2p6",
+                    "years": [
+                        2040
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2040
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2040
+                    ]
+                }
+            ],
+            "units": "days"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "rain",
+            "path": "wind/rain_proj/v1/max_speed_{scenario}_{year}",
+            "indicator_id": "max_speed",
+            "indicator_model_id": "rain_proj",
+            "indicator_model_gcm": "combined",
+            "params": {},
+            "display_name": "Max wind speed (RAIN)",
+            "display_groups": [],
+            "description": "Data set of maximum sustained (10 metre) wind speed for various return periods, created by Freie Universit\u00c3\u00a4t Berlin as part of the [RAIN project](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36). The original data set provides 5, 10, 20 and 50 year return periods calculated from a generalized extreme value (GEV) fit at approx 40km resolution. This data set also adds 100 and 200 year values inferred from the GEV fit, although it should be understood that these are extrapolated values. Data is available for current period and for two future dates, 2035 and 2085 for RCP 4.5 and RCP 8.5 scenarios.\n[RAIN project final report](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36).\n[RAIN windstorm probability](https://data.4tu.nl/datasets/6bd24d17-6873-4d43-9355-fe2867a2e0d0).\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "m/s"
+                },
+                "path": "maps/wind/rain_proj/v1/max_speed_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1985
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035,
+                        2085
+                    ]
+                }
+            ],
+            "units": "m/s"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_risk_indicators",
+            "path": "fire/ECB_fire_risk_indicators/v1/{scenario}_{year}",
+            "indicator_id": "fire_probability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "FireRiskAlphaKlima",
+            "params": {},
+            "display_name": "Fire Probability (Alpha-Klima)",
+            "display_groups": [],
+            "description": "\n                This spatial dataset provides annual probabilities of fire occurrence across Europe under both historical conditions and \n                projected future climates (RCP4.5 and RCP8.5). It builds upon the methodology from the paper \"Climate Change Risk Indicators \n                for Central Banking: Explainable AI in Fire Risk Estimations\" https://dx.doi.org/10.2139/ssrn.4865384. and integrates a range of high-quality data \n                sources\u2014such as MODIS land cover and burned areas, Fire Weather Index data from Copernicus, critical infrastructure from HARCI-EU, and population data \n                from OpenStreetMap. Delivered as .zarr files at a resolution of approximately 2.5 km, this resource helps researchers, policymakers, \n                and risk analysts understand changing fire regimes and plan more effectively for climate-related risks.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "Reds",
+                    "nodata_index": 0,
+                    "units": "probability"
+                },
+                "path": "maps/fire/ECB_fire_risk_indicators/v1/{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
                     180.0,
                     85.0
                 ],
@@ -3264,49 +3836,23 @@
                 {
                     "id": "historical",
                     "years": [
-                        2021
+                        2010
                     ]
-                }
-            ],
-            "units": "millimetres/year"
-        },
-        {
-            "hazard_type": "Wind",
-            "group_id": "",
-            "path": "wind/wisc/v1/max_speed_{scenario}_{year}/max_speed",
-            "indicator_id": "wind_speed/3s",
-            "indicator_model_id": "wisc",
-            "indicator_model_gcm": "",
-            "params": {},
-            "display_name": "Max 3 second gust wind speed (WISC)",
-            "display_groups": [],
-            "description": "\nMaximum 10 metre 3 second gust peak wind speed (note 3 second average; by default physrisk wind speeds are 1 minute average) for different return periods, inferred from the Copernicus WISC European storm event set. This allows events and return period maps to be used consistently.\n\nhttps://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview\n\nThe WISC dataset contains a set of synthetic windstorm events consisting of 22,980 individual\nstorm footprints over Europe. These are a physically realistic set of plausible windstorm\nevents based on the modelled climatic conditions, calculated using the Met Office HadGEM3 model\n(Global Atmosphere 3 and Global Land 3 configurations).\nReturn period maps of peak gust wind speed are inferred from this data.\n",
-            "map": {
-                "colormap": {
-                    "min_index": 1,
-                    "min_value": 0.0,
-                    "max_index": 255,
-                    "max_value": 50.0,
-                    "name": "flare",
-                    "nodata_index": 0,
-                    "units": "years"
                 },
-                "path": "maps/wind/wisc/v1/max_speed_{scenario}_{year}/max_speed_map",
-                "bounds": [],
-                "bbox": [],
-                "index_values": null,
-                "source": "map_array_pyramid"
-            },
-            "store_netcdf_coords": true,
-            "scenarios": [
                 {
-                    "id": "historical",
+                    "id": "rcp4p5",
                     "years": [
-                        1999
+                        2035
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035
                     ]
                 }
             ],
-            "units": "years"
+            "units": "probability"
         }
     ]
 }

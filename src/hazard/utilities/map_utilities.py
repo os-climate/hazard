@@ -1,10 +1,12 @@
+"""Utility functions for geospatial data processing and Slippy Map tile generation."""
+
 import hashlib
 import json
 import logging
 import os
 from math import atan, exp, log, pi, tan
 from time import sleep
-from typing import List, Optional, Tuple
+from typing import Sequence, Tuple
 
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
@@ -24,6 +26,16 @@ logger = logging.getLogger(__name__)
 
 
 def epsg3857_to_epsg4326(x, y):
+    """Convert coordinates from EPSG:3857 to EPSG:4326.
+
+    Args:
+        x (float): X coordinate in EPSG:3857.
+        y (float): Y coordinate in EPSG:3857.
+
+    Returns:
+        Tuple[float, float]: (Longitude, Latitude) in EPSG:4326.
+
+    """
     lon = (x / 20037508.34) * 180.0
     lat = (y / 20037508.34) * 180.0
     lat = (180.0 / pi) * (2.0 * atan(exp(lat * pi / 180.0)) - pi / 2)
@@ -31,13 +43,60 @@ def epsg3857_to_epsg4326(x, y):
 
 
 def epsg4326_to_epsg3857(lon, lat):
+    """Convert coordinates from EPSG:4326 to EPSG:3857.
+
+    Args:
+        lon (float): Longitude in EPSG:4326.
+        lat (float): Latitude in EPSG:4326.
+
+    Returns:
+        Tuple[float, float]: (X, Y) in EPSG:3857.
+
+    """
     x = lon * 20037508.34 / 180
     y = log(tan((90.0 + lat) * pi / 360.0)) / (pi / 180.0)
     y = y * 20037508.34 / 180.0
     return x, y
 
 
+def generate_map(
+    path: str,
+    map_path: str,
+    bounds: Sequence[Tuple[float, float]],
+    target: ReadWriteDataArray,
+):
+    """Generate a map projection and write it to file.
+
+    Args:
+        path (str): Path to input file.
+        map_path (str): Path to output map file.
+        bounds (Sequence[Tuple[float, float]]): Map boundaries.
+        target (ReadWriteDataArray): Target data array object.
+
+    """
+    logger.info(f"Generating map projection for file {path}; reading file")
+    da = target.read(path)
+    logger.info("Reprojecting to EPSG:3857")
+    reprojected = transform_epsg4326_to_epsg3857(da)
+    # sanity check bounds:
+    (top, right, bottom, left) = check_map_bounds(reprojected)
+    if top > 85.05 or bottom < -85.05:
+        raise ValueError("invalid range")
+    logger.info(f"Writing map file {map_path}")
+    target.write(map_path, reprojected, spatial_coords=False)
+    return
+
+
 def transform_epsg4326_to_epsg3857(src: xr.DataArray):
+    """Reproject a dataset from EPSG:4326 to EPSG:3857.
+
+    Args:
+        src (xr.DataArray): Input dataset in EPSG:4326.
+
+    Returns:
+        xr.DataArray: Reprojected dataset in EPSG:3857.
+
+    """
     src_crs = CRS.from_epsg(4326)
     dst_crs = CRS.from_epsg(3857)
     src_left, src_bottom, src_right, src_top = src.rio.bounds()
@@ -70,10 +129,21 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     return reprojected
 
 
-def highest_zoom_slippy_maps(src: xr.DataArray): ...  # noqa:E704
+def highest_zoom_slippy_maps(src: xr.DataArray):
+    """Calculate the highest zoom level for Slippy Map tiles based on the source data."""
+    ...  # noqa:E704
 
 
 def check_map_bounds(da: xr.DataArray):
+    """Check and return map bounds in EPSG:4326.
+
+    Args:
+        da (xr.DataArray): Input dataset.
+
+    Returns:
+        Tuple[float, float, float, float]: (Top, Right, Bottom, Left) bounds.
+
+    """
     transform: Affine = da.rio.transform(recalc=True)
     x_min, y_max = transform * (0, 0)
     x_max, y_min = transform * (da.sizes["x"], da.sizes["y"])
@@ -90,7 +160,7 @@ def alphanumeric(text):
 
 
 def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
-    """Converts an integer to a base36 string."""
+    """Convert an integer to a base36 string."""
     if not isinstance(number, int):
         raise TypeError("number must be an integer")
 
@@ -110,10 +180,31 @@ def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
 
 
 def get_path(bucket, prefix, filename):
+    """Construct a file path from bucket, prefix, and filename.
+
+    Args:
+        bucket (str): Root directory or bucket name.
+        prefix (str): Subdirectory or prefix.
+        filename (str): Name of the file.
+
+    Returns:
+        str: Full constructed file path.
+
+    """
     return os.path.join(bucket, prefix, filename)
 
 
 def load(path, s3=None):
+    """Load raster data from either a local file system or S3 storage.
+
+    Args:
+        path (str): Path to the raster file.
+        s3 (optional): S3 storage object if reading from cloud.
+
+    Returns:
+        tuple: Data array and metadata of the raster file.
+
+    """
     if s3 is None:
         return load_fs(path)
     else:
@@ -121,17 +212,48 @@ def load(path, s3=None):
 
 
 def load_fs(path, target_width=None):
+    """Load a raster dataset from the local file system.
+
+    Args:
+        path (str): Path to the raster file.
+        target_width (int, optional): Desired width for rescaling.
+
+    Returns:
+        tuple: Data array and metadata of the raster file.
+
+    """
     with rasterio.open(path) as dataset:
         return load_dataset(dataset, target_width)
 
 
 def load_s3(s3_source, path, target_width=None):
+    """Load a raster dataset from an S3 storage source.
+
+    Args:
+        s3_source: S3 storage object.
+        path (str): Path to the raster file.
+        target_width (int, optional): Desired width for rescaling.
+
+    Returns:
+        tuple: Data array and metadata of the raster file.
+
+    """
     with s3_source.open(path) as f:
         with rasterio.open(f) as dataset:
             return load_dataset(dataset, target_width)
 
 
 def load_dataset(dataset, target_width=None):
+    """Process and rescales a raster dataset.
+
+    Args:
+        dataset: Rasterio dataset object.
+        target_width (int, optional): Desired width for rescaling.
+
+    Returns:
+        tuple: Processed data, metadata, width, height, and transformation matrix.
+
+    """
     scaling = 1 if target_width is None else float(target_width) / dataset.width
     width = int(dataset.width * scaling)
     height = int(dataset.height * scaling)
@@ -161,11 +283,13 @@ def load_dataset(dataset, target_width=None):
 
 def geotiff_profile(epsg: int = 4326) -> profiles.Profile:
     """Create GeoTiff Profile from EPSG.
+
     Args:
         epsg (int, optional): For Web Mercator use 3857. Defaults to 4326.
 
     Returns:
         profiles.Profile: Profile
+
     """
     crs = CRS.from_epsg(4326)
     profile = profiles.Profile(crs=crs)
@@ -180,6 +304,17 @@ def write_map_geotiff(
     output_s3=None,
     lowest_bin_transparent=False,
 ):
+    """Load raster data and writes it as a GeoTIFF file.
+
+    Args:
+        input_dir (str): Directory containing the input raster file.
+        output_dir (str): Directory for saving the output file.
+        filename (str): Name of the raster file.
+        input_s3 (optional): S3 storage object for input.
+        output_s3 (optional): S3 storage object for output.
+        lowest_bin_transparent (bool, optional): Whether to make the lowest bin transparent.
+
+    """
     (data, profile, width, height, transform) = load(
         os.path.join(input_dir, filename), s3=input_s3
     )
@@ -213,6 +348,7 @@ def write_map_geotiff_data(
     max_intensity=2.0,
     palette="flare",
 ):
+    """Generate and save a GeoTIFF heatmap with a specified color palette."""
     # the Seaborn 'flare' palette is the default for representing intensity
     # perceptually uniform, use of hue and luminance, smaller values have lighter colours
 
@@ -335,6 +471,7 @@ def write_map_geotiff_data(
 
 
 def upload_geotiff(path, id, access_token):
+    """Calculate the tile bounds for a given geographic extent at a specified zoom live."""
     uploader = Uploader(access_token=access_token)
     attempt = 0
     with open(path, "rb") as src:

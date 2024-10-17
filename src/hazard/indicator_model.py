@@ -1,3 +1,5 @@
+"""Module for the abstract base class `IndicatorModel` which defines the interface for hazard indicator models."""
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, Iterable, Optional, TypeVar
@@ -32,7 +34,9 @@ class IndicatorModel(ABC, Generic[T]):
         else:
             for item in self.batch_items():
                 try:
-                    self.run_single(item, source, target, client)
+                    self.run_single(
+                        item=item, source=source, target=target, client=client
+                    )
                 except Exception:
                     logger.error("Batch item failed", exc_info=True)
 

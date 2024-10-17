@@ -1,14 +1,16 @@
+"""Module for handling the onboarding of the Davydzenka et al. land subsidence dataset."""
+
 import logging
 import os
-import pathlib
-from dataclasses import dataclass
-from typing import Any, Iterable, Optional
+from pathlib import PurePath, Path
+from typing_extensions import Iterable, Optional, override
 
 import xarray as xr
+from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 
-from hazard.indicator_model import IndicatorModel
+from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -16,16 +18,11 @@ from hazard.utilities.tiles import create_tiles_for_resource
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class BatchItem:
-    scenario: str
-    year: int
+class DavydzenkaEtAlLandSubsidence(Onboarder):
+    """Handles the onboarding and processing of the Davydzenka et al. land subsidence dataset."""
 
-
-class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: Optional[str]):
-        """
-        Define every attribute of the onboarding class for the land subsidence dataset.
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the land subsidence dataset.
 
         METADATA:
         Link: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2023GL104497
@@ -41,37 +38,45 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         new subsiding areas with a spatial resolution of 30 × 30 arc seconds.
 
         Args:
-            source_dir (str): directory containing source files.
-        """
-        self.resource = list(self.inventory())[0]
-        if source_dir is not None:
-            self.source = pathlib.PurePosixPath(
-                pathlib.Path(source_dir).as_posix(), "ds03.tif"
-            )
-            if not os.path.exists(source_dir):
-                os.makedirs(source_dir)
-            if not os.path.exists(str(self.source)):
-                # Download source data
-                url = "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
-                download_file(
-                    url, str(self.source.parent), filename=self.source.parts[-1]
-                )
+            source_dir_base (str): directory containing source files.
+            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none,
+            a LocalFileSystem is used.
 
-    def batch_items(self) -> Iterable[BatchItem]:
-        return [
-            BatchItem(
+        """
+        self.fs = fs if fs else LocalFileSystem()
+        self.resource = list(self.inventory())[0]
+        self.source_dir = PurePath(source_dir_base, "csm_subsidence").as_posix() + "/"
+        self.download_url = (
+            "https://zenodo.org/records/10223637/files/ds03.tif?download=1"
+        )
+
+    @override
+    def prepare(self, download_dir=None):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        download_file(
+            url=self.download_url,
+            directory=(Path((self.source_dir))),
+        )
+
+    @override
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        return (
+            Path(PurePath(self.source_dir + "ds03.tif")).exists()
+            and not force
+            and not force_download
+        )
+
+    @override
+    def onboard(self, target):
+        """Process a single batch item, writing data to the Zarr store."""
+        assert target is None or isinstance(target, OscZarr)
+        da = xr.open_dataarray(self.resource, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+        z = target.create_empty(
+            self.resource.path.format(
                 scenario=self.resource.scenarios[0].id,
                 year=self.resource.scenarios[0].years[0],
             ),
-        ]
-
-    def run_single(
-        self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Any
-    ):
-        assert target is None or isinstance(target, OscZarr)
-        da = xr.open_rasterio(self.source).isel(band=0)
-        z = target.create_empty(
-            self.resource.path.format(scenario=item.scenario, year=item.year),
             len(da.x),
             len(da.y),
             da.rio.transform(),
@@ -83,10 +88,9 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         values[values == -9999.0] = float("nan")
         z[0, :, :] = values
 
+    @override
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self.resource)
 
@@ -107,7 +111,12 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
                 display_name="Land subsidence rate (Davydzenka et Al (2024))",
                 description=description,
                 group_id="",
+                source="https://zenodo.org/records/10223637",
+                version="",
+                license="Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
+                attribution="Davydzenka, T., Tahmasebi, P., & Shokri, N. (2024). Unveiling the global extent of land subsidence: The sinking crisis. Geophysical Research Letters, 51, e2023GL104497. https://doi.org/10.1029/2023GL104497",
                 display_groups=[],
+                resolution="300 m",
                 map=MapInfo(
                     bounds=[
                         (-180.0, 85.0),

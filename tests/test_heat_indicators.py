@@ -4,6 +4,7 @@ from typing import List
 import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import pytest
+import tempfile
 import s3fs  # type: ignore
 import xarray as xr
 import zarr  # type: ignore
@@ -23,7 +24,7 @@ from tests.conftest import (
     _create_test_datasets_tas,
 )
 
-from .conftest import _create_test_datasets_hurs, test_output_dir  # noqa: F401; pylint: disable=unused-variable
+from .conftest import _create_test_datasets_hurs
 
 
 def test_degree_days_mocked():
@@ -183,8 +184,8 @@ def test_work_loss(test_output_dir):  # noqa: F811
     # models = HazardResources(resources=resources)
     # json_str = json.dumps(models.dict(), indent=4)  # pretty print
 
-    local_fs = local.LocalFileSystem()
-    docs_store = DocStore(bucket=test_output_dir, fs=local_fs, prefix="hazard_test")
+    temp_dir = tempfile.TemporaryDirectory()
+    docs_store = DocStore(local_path=temp_dir)
 
     docs_store.update_inventory(model.inventory())
     model.run_all(source, target)
@@ -194,7 +195,9 @@ def test_work_loss(test_output_dir):  # noqa: F811
 def test_example_run_degree_days():
     zarr_utilities.set_credential_env_variables()
 
-    docs_store = DocStore(prefix="hazard_test")
+    temp_dir = tempfile.TemporaryDirectory()
+    local_fs = local.LocalFileSystem(root=temp_dir)
+    docs_store = DocStore(fs=local_fs)
     # json = docs_store.read_inventory_json()
 
     cluster = LocalCluster(processes=False)
@@ -205,7 +208,7 @@ def test_example_run_degree_days():
     year = 2030
     source = NexGddpCmip6()
     target = OscZarr(
-        prefix="hazard_test"
+        group_path_suffix="hazard_test/hazard.zarr"
     )  # test prefix is "hazard_test"; main one "hazard"
     # cut down the transform
     model = DegreeDays(
@@ -224,8 +227,10 @@ def download_test_datasets(
     gcm,
     scenario,
     years,
-    indicators=["tasmax"],
+    indicators=None,
 ):
+    if indicators is None:
+        indicators = ["tasmax"]
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:
