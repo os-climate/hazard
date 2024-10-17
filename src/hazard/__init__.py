@@ -23,7 +23,7 @@ from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
-from hazard.onboard.Global_Seismic_Hazard_v2023_1 import GEMSeismicHazard
+from hazard.onboard.global_seismic_hazard_v2023_1 import GEMSeismicHazard
 from hazard.onboard.jrc_riverflood import JRCRiverFlood
 
 hazard_map = {

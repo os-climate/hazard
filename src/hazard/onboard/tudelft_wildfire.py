@@ -182,7 +182,6 @@ class TUDelftFire(Onboarder):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
                 hazard_type="Fire",
@@ -199,8 +198,12 @@ class TUDelftFire(Onboarder):
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050
                 and 2071-2100).
                 """,
-                group_id="",
+                version="",
+                license="General terms of use for 4TU.Centre for Research Data",
+                source="4TU Research Data:  https://data.4tu.nl/datasets/f9a134ad-fff9-44d5-ad4e-a0e9112b551e",
+                group_id="fire_tudelft",
                 display_groups=[],
+                resolution="72200 m",
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
                     colormap=Colormap(
@@ -237,7 +240,11 @@ class TUDelftFire(Onboarder):
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050
                 and 2071-2100).
                 """,
-                group_id="",
+                version="",
+                license="General terms of use for 4TU.Centre for Research Data",
+                source="4TU Research Data:  https://data.4tu.nl/datasets/f9a134ad-fff9-44d5-ad4e-a0e9112b551e",
+                group_id="fire_tudelft",
+                resolution="72200 m",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

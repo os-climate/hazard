@@ -135,6 +135,10 @@ class DegreeDays(IndicatorModel[BatchItem]):
             description=description,
             params={"gcm": list(self.gcms)},
             group_id="",
+            license="Creative Commons",
+            source="",
+            version="",
+            resolution="1800 m",
             display_groups=["Mean degree days"],
             map=MapInfo(  # type:ignore
                 colormap=Colormap(
@@ -400,7 +404,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 display_name=f"Mean degree days {above_below}" + " index value/{gcm}",
                 attribution="",
                 description=description,
-                params={"gcm": list(self.gcms)},
+                params={"gcm": ["ACCESS-CM2"]},
                 group_id="",
                 display_groups=["Mean degree days"],
                 resolution="1800 m",

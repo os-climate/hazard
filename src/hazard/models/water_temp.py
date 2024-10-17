@@ -346,6 +346,10 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average water temperature above threshold in °C/{gcm}",
             description=description,
+            resolution="400 m",
+            license="Creative Commons",
+            source="",
+            version="",
             display_groups=[
                 "Weeks with average water temperature above threshold in °C"
             ],  # display names of groupings
@@ -356,14 +360,14 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=0.1,
                     max_index=255,
                     units="weeks/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 bbox=[-180.0, -85.0, 180.0, 85.0],
                 path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
-                index_values=self.threshold_temps_c,
+                index_values=[3],
                 source="map_array_pyramid",
             ),
             units="weeks/year",

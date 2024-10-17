@@ -122,7 +122,6 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             scenarios.append(Scenario(id=s, years=list(self.central_years)))
 
         description = self._generate_description()
-
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id="days_tas/above/{temp_c}c",
@@ -139,6 +138,11 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 "Days with average temperature above"
             ],  # display names of groupings
             group_id="",
+            license="Creative Commons",
+            source="",
+            version="",
+            resolution="47100 m",
+            attribution="",
             map=MapInfo(
                 colormap=Colormap(
                     name="heating",
@@ -152,8 +156,8 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
-                path="days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
-                source="map_array",
+                path="maps/chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
+                source="map_array_pyramid",
             ),
             units="days/year",
             store_netcdf_coords=False,

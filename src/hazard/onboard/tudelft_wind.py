@@ -201,22 +201,25 @@ class TUDelftConvectiveWindstorm(Onboarder):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="severe_windstorm_probability",
                 indicator_model_id=None,
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
                 path="convective_windstorm/conv_wind_tudelft/v2/severe_gust_speed_{scenario}_{year}",
                 params={},
                 display_name="Annual Probability of Severe Convective Windstorm (TUDelft)",
+                resolution="47100 m",
                 description="""
                 NetCDF files containing gridded annual probability of severe convective
                 windstorms (wind gusts > 25 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                version="",
+                license="General terms of use for 4TU.Centre for Research Data",
+                source="4TU Research Data: https://data.4tu.nl/datasets/93463344-a63d-4ab2-a16a-f69b989b0e13",
+                group_id="wind_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -240,18 +243,22 @@ class TUDelftConvectiveWindstorm(Onboarder):
                 ],
             ),
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="extreme_windstorm_probability",
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
                 path="convective_windstorm/conv_wind_tudelft/v2/extremely_severe_gust_speed_{scenario}_{year}",
                 params={},
                 display_name="Annual Probability of Extremely Severe Convective Windstorm (TUDelft)",
+                resolution="47100 m",
                 description="""
                 NetCDF files containing gridded annual probability of extremely severe convective
                 windstorms (wind gusts > 32 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                group_id="wind_tudelft",
+                version="",
+                license="General terms of use for 4TU.Centre for Research Data",
+                source="4TU Research Data: https://data.4tu.nl/datasets/93463344-a63d-4ab2-a16a-f69b989b0e13",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

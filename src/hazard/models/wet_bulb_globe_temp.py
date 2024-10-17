@@ -172,6 +172,10 @@ class WetBulbGlobeTemperatureAboveIndicator(
             path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
             display_name="Days with wet-bulb globe temperature above threshold in °C/{gcm}",
             description=description,
+            resolution="1800 m",
+            license="Creative Commons",
+            source="",
+            version="",
             display_groups=[
                 "Days with wet-bulb globe temperature above threshold in °C"
             ],  # display names of groupings
@@ -182,7 +186,7 @@ class WetBulbGlobeTemperatureAboveIndicator(
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=365,
                     max_index=255,
                     units="days/year",
                 ),

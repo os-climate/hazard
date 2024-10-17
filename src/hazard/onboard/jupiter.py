@@ -224,6 +224,7 @@ class Jupiter(Onboarder):
                 path="fire/jupiter/v1/fire_probability_{scenario}_{year}",
                 params={},
                 display_name="Fire probability (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of
@@ -231,6 +232,9 @@ a given location based on several parameters from multiple bias corrected and do
 For example, if the probability of occurrence of a wildfire is 5% in July, 20% in August, 10% in September
 and 0% for other months, the hazard indicator value is 20%.
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -268,6 +272,7 @@ and 0% for other months, the hazard indicator value is 20%.
                 path="drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
                 params={},
                 display_name="Drought (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI).
@@ -280,6 +285,9 @@ This drought model computes the number of months per annum where the 3-month rol
 of SPEI is below -2 based on the mean values of several parameters from
 bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -293,10 +301,10 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                     colormap=Colormap(
                         name="heating",
                         nodata_index=0,
-                        min_index=1,
+                        min_index=10,
                         min_value=0.0,
-                        max_index=255,
-                        max_value=12.0,
+                        max_index=245,
+                        max_value=4.0,
                         units="months/year",
                     ),
                     index_values=None,
@@ -317,12 +325,16 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 path="precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}",
                 params={},
                 display_name="Precipitation (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year
 return period based on the mean of the precipitation distribution from multiple bias corrected and
 downscaled Global Climate Models (GCMs).
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -360,12 +372,16 @@ downscaled Global Climate Models (GCMs).
                 path="hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
                 params={},
                 display_name="Large hail days per year (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible
 based on the mean distribution of several parameters
 across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -382,7 +398,7 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                         min_index=1,
                         min_value=0.0,
                         max_index=255,
-                        max_value=10.0,
+                        max_value=4,
                         units="days/year",
                     ),
                     index_values=None,
@@ -403,12 +419,16 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 path="chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
                 params={},
                 display_name="Days per year above 35°C (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits
 to the bias-corrected and downscaled high temperature distribution
 across multiple Global Climate Models (GCMs).
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -446,12 +466,16 @@ across multiple Global Climate Models (GCMs).
                 path="wind/jupiter/v1/max_1min_{scenario}_{year}",
                 params={},
                 display_name="Max 1 minute sustained wind speed (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 This wind speed model computes the maximum 1-minute sustained wind speed (in m/s) experienced over a
 100 year return period based on mean wind speed distributions
 from multiple Global Climate Models (GCMs).
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -463,12 +487,12 @@ from multiple Global Climate Models (GCMs).
                     ],
                     bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
-                        name="heating",
+                        name="viridis",
                         nodata_index=0,
                         min_index=1,
                         min_value=0.0,
                         max_index=255,
-                        max_value=120.0,
+                        max_value=50.0,
                         units="m/s",
                     ),
                     index_values=None,
@@ -489,6 +513,7 @@ from multiple Global Climate Models (GCMs).
                 path="combined_flood/jupiter/v1/fraction_{scenario}_{year}",
                 params={},
                 display_name="Flooded fraction (Jupiter)",
+                resolution="39400 m",
                 description=self._jupiter_description
                 + """
 Flooded fraction provides the spatial fraction of land flooded in a defined grid.
@@ -497,6 +522,9 @@ cells within the 30-km cell that have non-zero flooding at that return period.
 This model uses a 30-km grid that experiences flooding at the 200-year return period.
 Open oceans are excluded.
                 """,  # noqa:W503
+                source="https://www.jupiterintel.com",
+                version="",
+                license="Commercial",
                 group_id="jupiter_osc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
@@ -527,65 +555,3 @@ Open oceans are excluded.
                 ],
             ),
         ]
-
-    def run_single(
-        self,
-        item: BatchItem,
-        source: JupiterOscFileSource,
-        target: WriteDataArray,
-        client: Client,
-    ):
-        """Run a single item of the batch."""
-        arrays = source.read(item.csv_filename)
-        (min, max) = (float("inf"), float("-inf"))
-        for scenario in item.model.scenarios:
-            for year in scenario.years:
-                da = arrays[
-                    item.jupiter_array_name.format(scenario=scenario.id, year=year)
-                ]
-                da = da.reindex(
-                    latitude=da.latitude[::-1]
-                )  # by convention latitude reversed
-                (min, max) = np.minimum(min, da.min()), np.maximum(max, da.max())  # type: ignore
-                pp = PurePosixPath(
-                    item.model.path.format(scenario=scenario.id, year=year)
-                )  # type: ignore
-                target.write(str(pp), da)
-                reprojected = transform_epsg4326_to_epsg3857(
-                    da.sel(latitude=slice(85, -85))
-                )
-                reprojected = da.sel(
-                    latitude=slice(85, -85)
-                ).rio.reproject(
-                    "EPSG:3857", resampling=rasterio.enums.Resampling.max
-                )  # , shape=da.data.shape, nodata=0) # from EPSG:4326 to EPSG:3857 (Web Mercator)
-                # bounds = check_map_bounds(reprojected)
-                if item.model.map is not None:
-                    pp_map = PurePosixPath(
-                        item.model.map.path.format(scenario=scenario.id, year=year)
-                    )
-                    target.write(str(pp_map), reprojected)
-        print(min, max)
-
-    def onboard_single(
-        self, target, download_dir=None, force_prepare=False, force_download=False
-    ):
-        """Onboard a single batch of hazard data into the system.
-
-        Args:
-            target: Target system for writing the processed data.
-            download_dir (str): Directory where downloaded files will be stored.
-            force_prepare(bool): Flag to force data preparation. Default is False
-            force_download(bool):Flag to force re-download of data. Default is False
-
-        """
-        local_fs = local.LocalFileSystem()
-        source = JupiterOscFileSource(download_dir, local_fs)
-        self.prepare(
-            force=force_prepare,
-            download_dir=download_dir,
-            force_download=force_download,
-        )
-        self.run_all(source=source, target=target, client=None, debug_mode=False)
-        local_fs = local.LocalFileSystem()
-        source = JupiterOscFileSource(download_dir, local_fs)

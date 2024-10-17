@@ -261,16 +261,16 @@ class JRCSubsidence(Onboarder):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Drought",
+                hazard_type="Subsidence",
                 indicator_id="subsidence_susceptability",
                 indicator_model_id=None,
                 indicator_model_gcm="historical",
-                path="subsidence_jrc/v1/susceptability_{scenario}_{year}",
+                path="subsidence/subsidence_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
                 display_name="Subsidence Susceptability (JRC)",
+                resolution="1000 m",
                 description="""
                 A number of layers for soil properties have been created based on data from the European
                 Soil Database in combination with data from the Harmonized World Soil Database (HWSD)
@@ -278,7 +278,11 @@ class JRCSubsidence(Onboarder):
                 content, Depth available to roots, Clay content, Silt content, Sand content, Organic
                 carbon, Bulk Density, Coarse fragments.
                 """,
-                group_id="",
+                version="-",
+                attribution="European Commission, Joint Research Centre (2016): Ground deformation mapping and monitoring by satellite based multi-temporal DInSAR technique (2016-10-17). [Dataset]. PID: http://data.europa.eu/89h/f539651c-1c40-4362-8e9a-fe360923dbd3",
+                source="The data must be requested submitting a form in the next link: https://esdac.jrc.ec.europa.eu/content/european-soil-database-derived-data",
+                license="“European Commission Re-use and Copyright Notice” (link on the page). The notice says “Reuse is authorised, provided the source is acknowledged” and points to Commission Decision 2011/833/EU, which makes re-use (commercial or not) the default.",
+                group_id="subsidence_jrc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -288,10 +292,10 @@ class JRCSubsidence(Onboarder):
                         nodata_index=0,
                         name="flare",
                         min_value=0.0,
-                        max_value=5.0,
+                        max_value=4.0,
                         units="index",
                     ),
-                    path="maps/drought/subsidence_jrc/v1/susceptability_{scenario}_{year}_map",
+                    path="maps/subsidence/subsidence_jrc/v1/susceptability_{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
                 units="index",

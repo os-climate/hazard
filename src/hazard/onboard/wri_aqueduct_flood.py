@@ -279,6 +279,11 @@ class WRIAqueductFlood(Onboarder):
             "max_value": 2.0,
             "units": "m",
         }
+        license = (
+            "WRIs Open Data Commitment: https://www.wri.org/data/open-data-commitment"
+        )
+        source = "WRI"
+        attribution = "Source © WRI — Aqueduct Floods v2 (2020), CC-BY-4.0"
 
         wri_riverine_inundation_models = [
             {
@@ -291,13 +296,19 @@ class WRIAqueductFlood(Onboarder):
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
                 """
-                + aqueduct_description,  # noqa:W503
+                + aqueduct_description,
+                # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
                     "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {
                         "id": "historical",
@@ -325,6 +336,11 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -349,6 +365,11 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -373,6 +394,11 @@ Met Office Hadley Centre.
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -397,6 +423,11 @@ Institut Pierre Simon Laplace
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -422,6 +453,11 @@ Institut Pierre Simon Laplace
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {
                         "id": "rcp4p5",
@@ -458,6 +494,11 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                     "source": "map_array_pyramid",  # "mapbox",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [{"id": "historical", "years": [1980]}],
             },
             {
@@ -479,6 +520,11 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -503,6 +549,11 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -527,6 +578,11 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -551,6 +607,11 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                     "source": "map_array_pyramid",  # "mapbox",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [{"id": "historical", "years": [1980]}],
             },
             {
@@ -572,6 +633,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -596,6 +662,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -620,6 +691,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
+                "resolution": "1000 m",
+                "license": license,
+                "source": source,
+                "attribution": attribution,
+                "version": "",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -662,63 +738,3 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                             )
 
         return expanded_models
-
-    def run_single(
-        self,
-        item: BatchItem,
-        source: WRIAqueductSource,
-        target: WriteDataArray,
-        client: Client,
-    ):
-        """Process a single batch item and writes the data to the Zarr store."""
-        assert isinstance(target, OscZarr)
-        logger.info(f"Running batch item with path {item.path}")
-        for i, ret in enumerate(self.return_periods):
-            logger.info(f"Copying return period {i + 1}/{len(self.return_periods)}")
-            with source.open_dataset(
-                item.filename_return_period.format(return_period=ret)
-            ) as da:
-                assert da is not None
-                if ret == self.return_periods[0]:
-                    z = target.create_empty(
-                        item.resource.path,
-                        len(da.x),
-                        len(da.y),
-                        Affine(
-                            da.transform[0],
-                            da.transform[1],
-                            da.transform[2],
-                            da.transform[3],
-                            da.transform[4],
-                            da.transform[5],
-                        ),
-                        str(da.crs),
-                        index_values=self.return_periods,
-                    )
-                # ('band', 'y', 'x')
-                values = da[
-                    0, :, :
-                ].data  # will load into memory; assume source not chunked efficiently
-                values[values == -9999.0] = float("nan")
-                z[i, :, :] = values
-        print("done")
-
-    def generate_tiles_single(self, item: BatchItem, source: OscZarr, target: OscZarr):
-        """Generate a tile set for a single batch."""
-        logger.info(f"Generating tile-set for batch item with path {item.path})")
-        source_path = item.path
-        assert item.resource.map is not None
-        target_path = item.resource.map.path.format(
-            scenario=item.scenario, year=item.year
-        )
-        if target_path != source_path + "_map":
-            raise ValueError(f"unexpected target path {target_path}")
-        create_tile_set(
-            source,
-            source_path,
-            target,
-            target_path,
-            nodata=-9999.0,
-            nodata_as_zero=True,
-        )
-        # create_tiles_for_resource(source, target, resource)

@@ -236,6 +236,7 @@ Report 2017".
                 "spatial_distribution/ethz/v1/{indicator_id}".format(indicator_id=key)
                 + "_{scenario}_{year}"
             )
+
             resources[key] = HazardResource(
                 hazard_type="SpatialDistribution",
                 indicator_id=key,
@@ -246,6 +247,7 @@ Report 2017".
                 display_name=str(resource_map[key]["display_name"]),
                 description=str(resource_map[key]["description"]),
                 group_id="",
+                resolution="----",
                 display_groups=[],
                 map=MapInfo(
                     bounds=[

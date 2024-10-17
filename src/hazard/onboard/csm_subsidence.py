@@ -111,7 +111,12 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
                 display_name="Land subsidence rate (Davydzenka et Al (2024))",
                 description=description,
                 group_id="",
+                source="https://zenodo.org/records/10223637",
+                version="",
+                license="Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
+                attribution="Davydzenka, T., Tahmasebi, P., & Shokri, N. (2024). Unveiling the global extent of land subsidence: The sinking crisis. Geophysical Research Letters, 51, e2023GL104497. https://doi.org/10.1029/2023GL104497",
                 display_groups=[],
+                resolution="300 m",
                 map=MapInfo(
                     bounds=[
                         (-180.0, 85.0),

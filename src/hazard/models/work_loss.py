@@ -124,7 +124,11 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             description=description,
             display_groups=["Mean work loss"],  # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
+            license="Creative Commons",
+            source="",
+            version="",
             group_id="",
+            resolution="1800 m",
             map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
@@ -138,8 +142,8 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
-                path="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
-                source="map_array",
+                path="maps/chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                source="map_array_pyramid",
             ),
             units="fractional loss",
             scenarios=[

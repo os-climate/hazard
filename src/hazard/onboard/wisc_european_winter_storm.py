@@ -468,8 +468,13 @@ class WISCEuropeanWinterStorm(Onboarder):
                 "wind/wisc/v1/max_speed_{scenario}_{year}/max_speed"
             ),  # the double path allows an XArray-readable data array to be written
             params={},
+            license="Licence to use Copernicus Products",
+            source="Copernicus: https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=download",
+            version="",
             display_name="Max 3 second gust wind speed (WISC)",
             description=description,
+            resolution="2500 m",
+            attribution="Copernicus Climate Change Service, Climate Data Store, (2022): Synthetic windstorm events for Europe from 1986 to 2011. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.ce973f02",
             group_id="",
             display_groups=[],
             map=MapInfo(
@@ -482,25 +487,13 @@ class WISCEuropeanWinterStorm(Onboarder):
                     name="flare",
                     min_value=0.0,
                     max_value=50.0,
-                    units="years",
+                    units="m/s",
                 ),
                 index_values=None,
                 path="maps/wind/wisc/v1/max_speed_{scenario}_{year}/max_speed_map",
                 source="map_array_pyramid",
             ),
-            units="years",
+            units="m/s",
             store_netcdf_coords=True,
             scenarios=[Scenario(id="historical", years=[1999])],
         )
-
-    @override
-    def run_all(self, source, target, client=None, debug_mode=False):
-        return super().run_all(source, target, client, debug_mode)
-
-    @override
-    def run_single(self, item, source, target, client):
-        return super().run_single(item, source, target, client)
-
-    @override
-    def batch_items(self):
-        return super().batch_items()

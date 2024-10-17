@@ -43,7 +43,7 @@ class MapInfo(BaseModel):
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
     bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
-    index_values: Optional[List[Any]] = Field(
+    index_values: Optional[Sequence[Any]] = Field(
         default=None,
         description="Index values to include in maps. If None, the last index value only is included.",
     )
@@ -108,15 +108,19 @@ class HazardResource(BaseModel):
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
     license: Optional[str] = Field(
-        default=None,
+        default="",
         description="The license under which the indicator or dataset is distributed. This defines how the data can be used, shared, or modified.",
     )
     source: Optional[str] = Field(
-        default=None,
+        default="",
         description="The origin or provenance of the indicator or dataset, such as the organization, research project, or publication responsible for its creation.",
     )
+    attribution: Optional[str] = Field(
+        default="",
+        description="Identifies the source, author, or entity responsible for the content or item in the inventory, allowing for proper credit or origin tracking.",
+    )
     version: Optional[str] = Field(
-        default=None, description="The version identifier of the indicator or dataset."
+        default="", description="The version identifier of the indicator or dataset."
     )
     map: Optional[MapInfo] = Field(
         description="Optional information used for display of the indicator in a map."
@@ -250,3 +254,18 @@ def inventory_json(models: Iterable[HazardResource]) -> str:
     """
     response = HazardInventory(models=models)  # type: ignore
     return json.dumps(response.dict())
+
+
+def paths_for_resources(resources: List[HazardResource], include_maps: bool = True):
+    """List all the paths (to arrays or DataSets) for the HazardResources listed."""
+    paths = []
+    for resource in resources:
+        for scenario in resource.scenarios:
+            for year in scenario.years:
+                path = resource.path.format(scenario=scenario.id, year=year)
+                paths.append(path)
+                if include_maps:
+                    assert resource.map is not None
+                    map_path = resource.map.path.format(scenario=scenario.id, year=year)
+                    paths.append(map_path)
+    return paths

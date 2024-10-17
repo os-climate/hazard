@@ -247,6 +247,9 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
                 display_name="Standard of protection (FLOPROS)",
                 description=description,
                 group_id="",
+                source="https://nhess.copernicus.org/articles/16/1049/2016/",
+                version="",
+                license="Creative Commons Attribution 3.0 License",
                 display_groups=[],
                 map=MapInfo(
                     bbox=[],
