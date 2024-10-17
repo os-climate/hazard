@@ -1,6 +1,9 @@
+"""Manage tiles."""
+
 import logging
 import math
 import os
+from pathlib import PurePosixPath
 import posixpath
 from typing import Any, Optional, Sequence, Tuple
 
@@ -32,8 +35,7 @@ def create_tiles_for_resource(
     nodata_as_zero_coarsening=False,
     check_fill=False,
 ):
-    """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
-    Slippy Map standard.
+    """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the Slippy Map standard.
 
     Args:
         source (OscZarr): OSCZarr source or arrays. Arrays are (z, y, x) where x and y are
@@ -49,6 +51,7 @@ def create_tiles_for_resource(
             the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
             Defaults to False.
         check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
+
     """
     if resource.map is None or resource.map.source != "map_array_pyramid":
         raise ValueError("resource does not specify 'map_array_pyramid' map source.")
@@ -58,6 +61,8 @@ def create_tiles_for_resource(
         for scenario in resource.scenarios:
             for year in scenario.years:
                 path = resource.path.format(scenario=scenario.id, year=year)
+                if resource.store_netcdf_coords:
+                    path = str(PurePosixPath(path) / "indicator")
                 assert resource.map is not None
                 map_path = resource.map.path.format(scenario=scenario.id, year=year)
                 if resource.map.index_values is not None:
@@ -84,10 +89,24 @@ def create_image_set(
     source_path: str,
     target: OscZarr,
     target_path: str,
-    index_slice=slice(-1, None),
+    index_slice=None,
     reprojection_threads=8,
     nodata=None,
 ):
+    """Create an image set by reading data from a source `OscZarr` object, processing it, and writing it to a target `OscZarr` object.
+
+    Args:
+        source: The source `OscZarr` object from which the data is read.
+        source_path: The path to the source data within the `OscZarr` object.
+        target: The target `OscZarr` object where the image set will be written.
+        target_path: The path to the target location within the `OscZarr` object.
+        index_slice: A slice to apply to the index dimension when processing the data. Defaults to `slice(-1, None)`, which selects the last element.
+        reprojection_threads: The number of threads to use for reprojection during the creation of the image set. Defaults to `8`.
+        nodata:  The value to assign to no-data pixels in the image set. Defaults to `None`.
+
+    """
+    if index_slice is None:
+        index_slice = slice(-1, None)
     da = xarray_utilities.normalize_array(source.read(source_path))
     _create_image_set(
         da,
@@ -103,7 +122,7 @@ def _create_image_set(
     source: xr.DataArray,
     target: OscZarr,
     target_path: str,
-    index_slice=slice(-1, None),
+    index_slice=None,
     reprojection_threads=8,
     nodata=None,
 ):
@@ -173,8 +192,7 @@ def create_tile_set(
     nodata_as_zero_coarsening: bool = False,
     check_fill: bool = False,
 ):
-    """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
-    Slippy Map standard.
+    """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the Slippy Map standard.
 
     Args:
         source (OscZarr): OSCZarr source or arrays. Arrays are (z, y, x) where x and y are
@@ -199,6 +217,7 @@ def create_tile_set(
             the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
             Defaults to False.
         check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
+
     """
     if not target_path.endswith("map"):
         # for safety; should end with 'map' to avoid clash
@@ -416,6 +435,16 @@ def _write_zoom_level(
 
 
 def get_tile_bounds(left: float, bottom: float, right: float, top: float, zoom: int):
+    """Calculate the tile bounds for a given geographic extent at a specified zoom level.
+
+    Args:
+        left (float): The longitude of the left boundary of the bounding box.
+        bottom (float): The latitude of the bottom boundary of the bounding box.
+        right (float): The longitude of the right boundary of the bounding box.
+        top (float): The latitude of the top boundary of the bounding box.
+        zoom (int): The zoom level to calculate the tile bounds at.
+
+    """
     ul = mercantile.tile(left, min(top, 89.9999), zoom)
     lr = mercantile.tile(right, max(bottom, -89.9999), zoom)
     return ul.x, lr.x, ul.y, lr.y
@@ -494,6 +523,19 @@ def _coarsen(
 
 
 def trim_array(da_index: xr.DataArray, crs, left, bottom, right, top):
+    """Trim a xarray DataArray to a specified bounding box and adds a 2-pixel buffer around it.
+
+    Args:
+        da_index: The input xarray DataArray to be trimmed. The array must have spatial coordinates
+            and be associated with a valid CRS.
+        crs: The coordinate reference system of the bounding box (e.g., `"EPSG:4326"`).
+            It is used to transform the bounding box coordinates to match the CRS of `da_index`.
+        left: The left (western) boundary of the bounding box in the given CRS.
+        bottom: The bottom (southern) boundary of the bounding box in the given CRS.
+        right: The right (eastern) boundary of the bounding box in the given CRS.
+        top: The top (northern) boundary of the bounding box in the given CRS.
+
+    """
     y_dim, x_dim = da_index.dims
     da_left, da_bottom, da_right, da_top = rasterio.warp.transform_bounds(
         crs, da_index.rio.crs, left, bottom, right, top

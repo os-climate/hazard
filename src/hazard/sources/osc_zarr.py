@@ -1,63 +1,90 @@
 import logging
-import os
-from pathlib import PurePosixPath
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import s3fs  # type: ignore
+import s3fs
 import xarray as xr
-import zarr  # type: ignore
+import zarr
 import zarr.core
-from affine import Affine  # type: ignore
+from affine import Affine
 
 import hazard.utilities.xarray_utilities as xarray_utilities
 from hazard.protocols import ReadWriteDataArray
+from hazard.utilities.s3_utilities import get_store
 
-default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
 logger = logging.getLogger(__name__)
 
 
 class OscZarr(ReadWriteDataArray):
-    __access_key = "OSC_S3_ACCESS_KEY_DEV"
-    __secret_key = "OSC_S3_SECRET_KEY_DEV"
-    __token = "OSC_S3_TOKEN_DEV"
+    """A class for reading and writing to OSC Climate Zarr storage.
+
+    This class facilitates the interaction with Zarr storage in an S3 bucket, allowing
+    for the creation, reading, and writing of multi-dimensional data arrays according to
+    the OS-Climate conventions. It provides methods to handle both empty arrays and filled
+    datasets, ensuring compatibility with xarray.
+
+    """
 
     def __init__(
         self,
-        bucket: str = default_dev_bucket,
-        prefix: str = "hazard",
-        s3: Optional[s3fs.S3File] = None,
+        s3: Optional[s3fs.S3FileSystem] = None,
         store: Optional[Any] = None,
         store_netcdf_coords: Optional[bool] = False,
+        bucket: Optional[str] = None,
+        group_path_suffix: str = "hazard/hazard.zarr",
+        extra_s3fs_kwargs: Optional[dict] = None,
     ):
-        """For reading and writing to OSC Climate Zarr storage.
-        If store is provided this is used, otherwise if S3File is provided, this is used.
-        Otherwise, store is created using credentials in environment variables.
+        """Class for reading and writing to OSC Climate Zarr storage.
+
+        This class manages interactions with Zarr storage located in an S3 bucket.
+        It can utilize an existing `store` directly if provided. If an `S3File` is
+        given, it will be used unless a `store` is also provided. If neither is
+        available, a new store will be created using credentials from environment
+        variables.
 
         Args:
-            bucket: Name of S3 bucket.
-            prefix: S3 bucket item prefix
-            s3: S3File to use if present and if store not provided.
-            store: If provided, Zarr will use this store.
-            store_netcdf_coords: If true, an xarray compatible zarr
-             will be created alongside the default zarr output
+            s3: Optional[s3fs.S3FileSystem], optional
+                An S3FileSystem instance to use. If provided and `store` is not
+                specified, this instance will be used for storage operations.
+            store: Optional[zarr.storage.Store], optional
+                A Zarr store to be used for reading and writing. If provided, it
+                overrides the creation of a new store.
+            write_xarray_compatible_zarr: bool, optional
+                If set to True, an xarray-compatible Zarr store will be created alongside
+                the default Zarr output.
+            bucket: Optional[str] = None
+                bucket to use. If not provided, the value from the envvar
+                (OSC_S3_BUCKET or OSC_S3_BUCKET_DEV) will be used.
+            group_path_suffix: str = "hazard/hazard.zarr"
+                The root zarr group is by convention `${bucket}/hazard/hazard.zarr`.
+                This argument allows changing the `hazard/hazard.zarr` part.
+            extra_s3fs_kwargs: Dict = {}
+                A dictionary with the necessary environment variables to build the s3 file system
+
+        Example:
+            reader = OscZarr()
+
         """
+        if extra_s3fs_kwargs is None:
+            extra_s3fs_kwargs = {}
+
         if store is None:
             if s3 is None:
-                # zarr_utilities.load_dotenv() # to load environment variables
-                access_key = os.environ.get(self.__access_key, None)
-                secret_key = os.environ.get(self.__secret_key, None)
-                token = os.environ.get(self.__token, None)
-                if token:
-                    s3 = s3fs.S3FileSystem(
-                        key=access_key, secret=secret_key, token=token
-                    )
-                else:
-                    s3 = s3fs.S3FileSystem(key=access_key, secret=secret_key)
-
-            group_path = str(PurePosixPath(bucket, prefix, "hazard.zarr"))
-            store = s3fs.S3Map(root=group_path, s3=s3, check=False)
+                store = get_store(
+                    use_dev=True,
+                    bucket=bucket,
+                    group_path_suffix=group_path_suffix,
+                    extra_s3fs_kwargs=extra_s3fs_kwargs,
+                )
+            else:
+                store = get_store(
+                    use_dev=True,
+                    s3=s3,
+                    bucket=bucket,
+                    group_path_suffix=group_path_suffix,
+                    extra_s3fs_kwargs=extra_s3fs_kwargs,
+                )
 
         self.root = zarr.group(store=store)
 
@@ -72,9 +99,12 @@ class OscZarr(ReadWriteDataArray):
         crs: str,
         overwrite=False,
         index_name: Optional[str] = "index",
-        index_values: Any = [0],
+        index_values: Any = None,
         chunks=None,
     ):
+        """Create an empty Zarr array with specified dimensions and geospatial properties."""
+        if index_values is None:
+            index_values = [0]
         return self._zarr_create(
             path,
             (len(index_values), height, width),
@@ -87,29 +117,56 @@ class OscZarr(ReadWriteDataArray):
         )
 
     def remove(self, path: str):
-        try:
-            self.root.pop(path)
-        except Exception:
-            pass  # if it already exists, remove it
+        """Remove an item from the Zarr store at the specified path."""
+        if path in self.root:
+            try:
+                self.root.pop(path)
+            except KeyError:
+                pass  # If the key doesn't exist, ignore it.
 
     def read(self, path: str) -> xr.DataArray:
-        """Read an OS-Climate array as an xarray DataArray. Coordinates are inferred from the
-        coordinate reference system (CRS) and affine transform stored as zarr attributes.
+        """Read an OS-Climate array as an xarray DataArray.
+
+        Coordinates are inferred from the coordinate reference system (CRS) and the
+        affine transform stored as Zarr attributes.
 
         Args:
-            path (str): relative path to zarr array.
+            path (str):
+                Relative path to the Zarr array.
 
         Returns:
-            xr.DataArray: xarray DataArray.
+            xr.DataArray:
+                The data as an xarray DataArray.
+
         """
         z = self.root[path]
         return xarray_utilities.data_array_from_zarr(z)
 
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
+        """Read a dataset from the Zarr store as an xarray DataArray."""
         da = xr.open_zarr(store=self.root.store, group=path)
         return da
 
     def read_floored(self, path, longitudes, latitudes):
+        """Read data from the Zarr store using floored coordinates.
+
+        This method retrieves data from a specified path in the Zarr store,
+        using provided longitude and latitude values. The coordinates are
+        floored and transformed to indices to access the data array.
+
+        Args:
+            path (str):
+                The relative path to the Zarr dataset.
+            longitudes (array-like):
+                Array of longitude values for data retrieval.
+            latitudes (array-like):
+                Array of latitude values for data retrieval.
+
+        Returns:
+            np.ndarray:
+                The retrieved data corresponding to the floored coordinates.
+
+        """
         z = self.root[path]
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
@@ -128,9 +185,24 @@ class OscZarr(ReadWriteDataArray):
         return data
 
     def read_numpy(self, path: str, index=0) -> Tuple[np.ndarray, Affine, str]:
-        """Read index as two dimensional numpy array and affine transform.
-        This is intended for small datasets, otherwise recommended to
-        use xarray.open_zarr."""
+        """Read a Zarr array at a given index as a two-dimensional NumPy array along with its affine transform and CRS.
+
+        This method is intended for small datasets. For larger datasets, it is recommended
+        to use `xarray.open_zarr` for better performance and handling.
+
+        Args:
+            path (str):
+                Relative path to the Zarr array.
+            index (int, optional):
+                Index of the array to read. Defaults to 0.
+
+        Returns:
+            Tuple[np.ndarray, Affine, str]:
+                - NumPy array of the data at the specified index.
+                - Affine transform of the data.
+                - Coordinate reference system (CRS) as a string.
+
+        """
         z = self.root[path]
         t = z.attrs["transform_mat3x3"]  # type: ignore
         crs: str = z.attrs["crs"]  # type: ignore
@@ -138,9 +210,11 @@ class OscZarr(ReadWriteDataArray):
         return z[index, :, :], transform, crs
 
     def read_zarr(self, path):
+        """Read a Zarr array from the specified path."""
         return self.root[path]
 
     def if_exists_remove(self, path):
+        """Remove a path from the Zarr store if it exists."""
         if path in self.root:
             self.root.pop(path)
 
@@ -148,24 +222,37 @@ class OscZarr(ReadWriteDataArray):
         self,
         path: str,
         da: xr.DataArray,
-        chunks: Optional[List[int]] = None,
+        chunks: Optional[Sequence[int]] = None,
         spatial_coords: Optional[bool] = True,
     ):
+        """Write a DataArray to the Zarr store at the specified path.
+
+        This method saves the given xarray DataArray to the Zarr store.
+        If specified, it can also write a compatible xarray format.
+        """
         if self.store_netcdf_coords and spatial_coords:
             # In this mode, the xarray is written to path including NetCDF-style co-ordinates.
             # The Zarr array containing the hazard indicator will be in path/indicator.
-            self.write_data_array(path, da)
+            self.write_data_array(path, da, chunks)
         else:
             self.write_zarr(path, da, chunks)
 
     def write_zarr(
-        self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None
+        self, path: str, da: xr.DataArray, chunks: Optional[Sequence[int]] = None
     ):
         """Write DataArray according to the standard OS-Climate conventions.
 
         Args:
-            path (str): Relative path.
-            da (xr.DataArray): The DataArray.
+            path (str):
+                The relative path where the DataArray will be stored in the
+                Zarr store.
+            da (xr.DataArray):
+                The xarray DataArray to be written. It is normalized before
+                being stored to ensure proper formatting and compatibility.
+            chunks (Sequence[int]], optional):
+                The desired chunk sizes for the DataArray. If provided,
+                this allows for optimized storage and retrieval of data.
+
         """
         if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
             raise ValueError("longitude or x dimension not found.")
@@ -191,6 +278,7 @@ class OscZarr(ReadWriteDataArray):
     def write_slice(
         self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray
     ):
+        """Write a 3D slice of data to a specified path in the Zarr store."""
         z = self.root[path]
         z[z_slice, y_slice, x_slice] = np.expand_dims(da, 0)
 
@@ -203,6 +291,7 @@ class OscZarr(ReadWriteDataArray):
 
         Returns:
             xr.DataArray: New array.
+
         """
         _, transform, crs = xarray_utilities.get_array_components(da)
         z = self._zarr_create(
@@ -217,16 +306,29 @@ class OscZarr(ReadWriteDataArray):
         )
         return self._data_array_from_zarr(z)
 
-    def write_data_array(self, path: str, da: xr.DataArray):
-        """[You should probably rather use the 'write'method] Write DataArray to provided relative path.
-        The array is saved as a dataset in the xarray native manner (xarray's to_zarr),
-        with coordinates as separate arrays,
-        but with extra attributes providing the coordinate reference system and affine transform.
-        These extra attributes serve to make use of co-ordinate arrays optional.
+    def write_data_array(
+        self, path: str, da: xr.DataArray, chunks: Optional[Sequence[int]] = None
+    ):
+        """Write an xarray DataArray to the provided relative path.
+
+        The DataArray is saved as a Zarr dataset in the native xarray format using
+        `xarray.to_zarr`, with coordinates saved as separate arrays. Additional
+        attributes are included to store the coordinate reference system (CRS)
+        and affine transform, making coordinate arrays optional.
+
+        Note:
+            It's recommended to use the `write` method instead for general use.
 
         Args:
-            path (str): Relative path.
-            da (xr.DataArray): The DataArray.
+            path (str):
+                Relative path to store the DataArray.
+            da (xr.DataArray):
+                The xarray DataArray to write.
+
+        Raises:
+            ValueError:
+                If the DataArray lacks "latitude" or "longitude" dimensions.
+
         """
         if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
             raise ValueError("longitude or x dimension not found.")
@@ -263,7 +365,7 @@ class OscZarr(ReadWriteDataArray):
         frac_image_coords = mat @ coords
         return frac_image_coords
 
-    def _data_array_from_zarr(self, z: zarr.core.Array) -> xr.DataArray:
+    def _data_array_from_zarr(self, z: zarr.array) -> xr.DataArray:
         return xarray_utilities.data_array_from_zarr(z)
 
     def _zarr_create(
@@ -277,13 +379,12 @@ class OscZarr(ReadWriteDataArray):
         index_values: Any = None,
         chunks=None,
     ):
-        """
-        Create Zarr array with given shape and affine transform.
-        """
-        try:
-            self.root.pop(path)
-        except Exception:
-            pass  # if it already exists, remove it
+        """Create Zarr array with given shape and affine transform."""
+        if path in self.root:
+            try:
+                self.root.pop(path)
+            except KeyError:
+                pass  # If the key doesn't exist, ignore it.
         if len(shape) == 3:
             zarr_shape = shape
         elif len(shape) == 2:
@@ -355,4 +456,5 @@ class OscZarr(ReadWriteDataArray):
 
     @staticmethod
     def normalize_dims(da: xr.DataArray) -> xr.DataArray:
+        """Normalize the dimensions of an xarray DataArray."""
         return xarray_utilities.normalize_array(da)
