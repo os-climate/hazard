@@ -257,7 +257,15 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         Create map images.
         """
         ...
-        create_tiles_for_resource(source, target, self._depth_resource, max_zoom=10)
+        # for TUDelft data, zero risk of flooding seems to be NaN
+        # this presents a problem when creating lower resolution images where we might want to see an
+        create_tiles_for_resource(
+            source,
+            target,
+            self._depth_resource,
+            max_zoom=10,
+            nodata_as_zero_coarsening=True,
+        )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
