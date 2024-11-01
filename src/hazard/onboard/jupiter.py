@@ -349,7 +349,7 @@ across multiple Global Climate Models (GCMs).
                 display_name="Max 1 minute sustained wind speed (Jupiter)",
                 description=self._jupiter_description
                 + """
-This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a
+This wind speed model computes the maximum 1-minute sustained wind speed (in m/s) experienced over a
 100 year return period based on mean wind speed distributions
 from multiple Global Climate Models (GCMs).
                 """,  # noqa:W503
@@ -370,13 +370,13 @@ from multiple Global Climate Models (GCMs).
                         min_value=0.0,
                         max_index=255,
                         max_value=120.0,
-                        units="km/hour",
+                        units="m/s",
                     ),
                     index_values=None,
                     path="max_1min_{scenario}_{year}_map",
                     source="map_array",
                 ),
-                units="km/hour",
+                units="m/s",
                 scenarios=[
                     Scenario(id="ssp126", years=[2020, 2030, 2040, 2050, 2075, 2100]),
                     Scenario(id="ssp585", years=[2020, 2030, 2040, 2050, 2075, 2100]),
