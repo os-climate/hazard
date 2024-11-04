@@ -344,4 +344,3 @@ def test_rain_european_storm(test_output_dir):
     model = RAINEuropeanWinterStorm(working_dir)
     model.prepare(working_dir)
     model.run_all(target)
-
