@@ -9,6 +9,7 @@ import s3fs
 import zarr
 import zarr.convenience
 from hazard.docs_store import DocStore
+from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
@@ -333,3 +334,14 @@ def test_csm_subsidence(test_output_dir):
     model = DavydzenkaEtAlLandSubsidence(working_dir)
     model.run_all(None, target)
     model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_rain_european_storm(test_output_dir):
+    working_dir = os.path.join(test_output_dir, "rain_european_storm")
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    model = RAINEuropeanWinterStorm(working_dir)
+    model.prepare(working_dir)
+    model.run_all(target)
+
