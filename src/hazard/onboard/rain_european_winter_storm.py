@@ -254,9 +254,9 @@ class RAINEuropeanWinterStorm:
 
         converted_datasets = [ds5_abs, ds10_abs, ds20_abs, ds50_abs]
         return converted_datasets
-                 
+
     def gev_fit(self, p, mu, xi, sigma):
-        x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p))**(-xi))
+        x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p)) ** (-xi))
         return x_p
 
     def extrapolate(self, datasets, gev_params: List[List[Tuple[float, float, float]]]):
