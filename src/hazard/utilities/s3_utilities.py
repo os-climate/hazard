@@ -305,6 +305,9 @@ def sync_buckets(
     missing = set(key for key in source_etags if key not in target_etags)
     different = set(key for key in all_diffs if key not in missing)
     logger.info(
+        f"Checked {len(source_etags)} files from {source_bucket_name} against {target_bucket_name}"  # noqa:W503
+    )
+    logger.info(
         f"Copying {len(missing)} missing files from {source_bucket_name} to {target_bucket_name}: "
         + _first_5_last_5(list(missing))  # noqa:W503
     )

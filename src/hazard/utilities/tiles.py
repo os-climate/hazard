@@ -27,7 +27,29 @@ def create_tiles_for_resource(
     target: OscZarr,
     resource: HazardResource,
     max_zoom: Optional[int] = None,
+    nodata=None,
+    nodata_as_zero=False,
+    nodata_as_zero_coarsening=False,
+    check_fill=False,
 ):
+    """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
+    Slippy Map standard.
+
+    Args:
+        source (OscZarr): OSCZarr source or arrays. Arrays are (z, y, x) where x and y are
+            spatial coordinates and z is index coordinate (often return period).
+        target (OscZarr): OSCZarr array target.
+        resource (HazardResource): Resource for which map tiles should be calculated.
+        max_zoom (Optional[int], optional): Maximum zoom level; inferred if not specified. Defaults to None.
+        nodata (Optional[float], optional): If specified, set the nodata value. Defaults to None in which case
+            this is inferred from array.
+        nodata_as_zero (bool, optional): If True, nodata is set to zero for purposes of reprojection to highest zoom
+            level image. Defaults to False.
+        nodata_as_zero_coarsening (bool, optional): If True, nodata is set to zero for generating coarser tiles from
+            the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
+            Defaults to False.
+        check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
+    """
     if resource.map is None or resource.map.source != "map_array_pyramid":
         raise ValueError("resource does not specify 'map_array_pyramid' map source.")
     indices = None
@@ -43,7 +65,16 @@ def create_tiles_for_resource(
                     indexes = list(da["index"].values)
                     indices = [indexes.index(v) for v in resource.map.index_values]
                 create_tile_set(
-                    source, path, target, map_path, indices=indices, max_zoom=max_zoom
+                    source,
+                    path,
+                    target,
+                    map_path,
+                    indices=indices,
+                    max_zoom=max_zoom,
+                    nodata=nodata,
+                    nodata_as_zero=nodata_as_zero,
+                    nodata_as_zero_coarsening=nodata_as_zero_coarsening,
+                    check_fill=check_fill,
                 )
 
 
@@ -133,30 +164,40 @@ def create_tile_set(
     target: OscZarr,
     target_path: str,
     indices: Optional[Sequence[int]] = None,
-    max_tile_batch_size=32,
-    reprojection_threads=8,
+    max_tile_batch_size: int = 32,
+    reprojection_threads: int = 8,
     max_zoom: Optional[int] = None,
-    nodata=None,
-    nodata_as_zero=False,
-    check_fill=False,
+    nodata: Optional[float] = None,
+    nodata_as_zero: bool = False,
+    nodata_as_zero_coarsening: bool = False,
+    check_fill: bool = False,
 ):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the
     Slippy Map standard.
 
     Args:
-        source (OscZarr): OSC Zarr array source. Array is (z, y, x) where x and y are
-        spatial coordinates and z is index coordinate (often return period).
-        source_path (str): OSC Zarr source path.
-        target (OscZarr): OSC Zarr array target.
-        target_path (str): OSC Zarr target path. Arrays are stored in {target_path}/{level},
-        e.g. my_hazard_indicator/2 for level 2.
+        source (OscZarr): OSCZarr source or arrays. Arrays are (z, y, x) where x and y are
+            spatial coordinates and z is index coordinate (often return period).
+        source_path (str): Path to the array accessed via the OSCZarr instance.
+        target (OscZarr): OSCZarr array target.
+        target_path (str): OSCZarr target path. Arrays are stored in {target_path}/{level},
+            e.g. my_hazard_indicator/2 for level 2.
         indices (Sequence[int], optional): Indices for which map should be generated.
         max_tile_batch_size (int, optional): Maximum number of tiles in x and y direction
         that can be processed simultaneously.
-        Defaults to 64 i.e. max image size is 256 * 64 x 256 * 64 pixels.
+            Defaults to 64 i.e. max image size is 256 * 64 x 256 * 64 pixels.
         reprojection_threads (int, optional): Number of threads to use to perform reprojection
         to EPSG:3857.
-        Defaults to 8.
+            Defaults to 8.
+        max_zoom (Optional[int], optional): Maximum zoom level; inferred if not specified. Defaults to None.
+        nodata (Optional[float], optional): If specified, set the nodata value. Defaults to None in which case
+            this is inferred from array.
+        nodata_as_zero (bool, optional): If True, nodata is set to zero for purposes of reprojection to highest zoom
+            level image. Defaults to False.
+        nodata_as_zero_coarsening (bool, optional): If True, nodata is set to zero for generating coarser tiles from
+            the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
+            Defaults to False.
+        check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
     """
     if not target_path.endswith("map"):
         # for safety; should end with 'map' to avoid clash
@@ -219,7 +260,14 @@ def create_tile_set(
     )
 
     # and then progressively coarsen each level and write until we reach level 0"
-    _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
+    _coarsen(
+        target,
+        target_path,
+        max_zoom,
+        (left, bottom, right, top),
+        indices,
+        nodata_as_zero_coarsening=nodata_as_zero_coarsening,
+    )
 
 
 def _create_empty_tile_pyramid(
@@ -375,6 +423,7 @@ def _coarsen(
     bounds: Tuple[float, float, float, float],
     indices: Optional[Sequence[int]],
     max_tile_batch_size: int = 16,
+    nodata_as_zero_coarsening: bool = False,
 ):
     pixels_per_tile = 256
     bbox = rasterio.coords.BoundingBox(*bounds)
@@ -414,6 +463,10 @@ def _coarsen(
 
                     # use Zarr array directly, as opposed to e.g.:
                     # da_slice = da_slice.coarsen(x=2, y=2).mean()  # type:ignore
+                    if nodata_as_zero_coarsening:
+                        if not np.all(np.isnan(zslice)):
+                            zslice[np.isnan(zslice)] = 0
+
                     zslice = (
                         zslice[::2, ::2]
                         + zslice[1::2, ::2]
