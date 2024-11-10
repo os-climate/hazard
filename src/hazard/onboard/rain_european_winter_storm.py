@@ -242,10 +242,10 @@ class RAINEuropeanWinterStorm:
                 ds20_p_change_value = exceed_datasets[2][0][i, j].data
                 ds50_p_change_value = exceed_datasets[3][0][i, j].data
 
-                x_5 = self.GEV_fit(0.2 + ds5_p_change_value, mu, xi, sigma)
-                x_10 = self.GEV_fit(0.1 + ds10_p_change_value, mu, xi, sigma)
-                x_20 = self.GEV_fit(0.05 + ds20_p_change_value, mu, xi, sigma)
-                x_50 = self.GEV_fit(0.02 + ds50_p_change_value, mu, xi, sigma)
+                x_5 = self.gev_fit(0.2 + ds5_p_change_value, mu, xi, sigma)
+                x_10 = self.gev_fit(0.1 + ds10_p_change_value, mu, xi, sigma)
+                x_20 = self.gev_fit(0.05 + ds20_p_change_value, mu, xi, sigma)
+                x_50 = self.gev_fit(0.02 + ds50_p_change_value, mu, xi, sigma)
 
                 ds5_abs[0][i, j] = x_5
                 ds10_abs[0][i, j] = x_10
@@ -254,9 +254,9 @@ class RAINEuropeanWinterStorm:
 
         converted_datasets = [ds5_abs, ds10_abs, ds20_abs, ds50_abs]
         return converted_datasets
-
-    def GEV_fit(self, p, mu, xi, sigma):
-        x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p)) ** (-xi))
+                 
+    def gev_fit(self, p, mu, xi, sigma):
+        x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p))**(-xi))
         return x_p
 
     def extrapolate(self, datasets, gev_params: List[List[Tuple[float, float, float]]]):
@@ -282,8 +282,8 @@ class RAINEuropeanWinterStorm:
             for j in range(datasets[0].x.size):
                 [mu, xi, sigma] = gev_params[i][j]
 
-                x_100 = self.GEV_fit(1 / 100, mu, xi, sigma)
-                x_200 = self.GEV_fit(1 / 200, mu, xi, sigma)
+                x_100 = self.gev_fit(1 / 100, mu, xi, sigma)
+                x_200 = self.gev_fit(1 / 200, mu, xi, sigma)
                 # x_500 = self.GEV_fit(1/500, mu, xi, sigma)
 
                 ds100[0][i, j] = x_100
@@ -304,7 +304,7 @@ class RAINEuropeanWinterStorm:
                 ds20_value = datasets[2][0][i, j].data
                 ds50_value = datasets[3][0][i, j].data
                 return_levels = [ds5_value, ds10_value, ds20_value, ds50_value]
-                params = curve_fit(self.GEV_fit, self.p, return_levels)
+                params = curve_fit(self.gev_fit, self.p, return_levels)
                 gev_params[i][j] = params[0]
         return gev_params
 
