@@ -144,7 +144,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
         resource = HazardResource(
             hazard_type="Wind",
             indicator_id="max_speed",
-            indicator_model_id=None,
+            indicator_model_id="iris",
             indicator_model_gcm="combined",
             path="wind/iris/v1/max_speed_{scenario}_{year}",
             params={},
@@ -165,7 +165,7 @@ class IRISIndicator(IndicatorModel[BatchItem]):
                     units="m/s",
                 ),
                 index_values=None,
-                path="wind/iris/v1/max_speed_{scenario}_{year}_map",
+                path="maps/wind/iris/v1/max_speed_{scenario}_{year}_map",
                 source="map_array_pyramid",
             ),
             units="m/s",

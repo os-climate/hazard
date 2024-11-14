@@ -299,10 +299,9 @@ class JRCSubsidence(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Drought",
+                hazard_type="Subsidence",
                 indicator_id="subsidence_susceptability",
                 indicator_model_id=None,
                 indicator_model_gcm="historical",
@@ -316,7 +315,7 @@ class JRCSubsidence(IndicatorModel[BatchItem]):
                 content, Depth available to roots, Clay content, Silt content, Sand content, Organic
                 carbon, Bulk Density, Coarse fragments.
                 """,
-                group_id="",
+                group_id="subsidence_jrc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -326,7 +325,7 @@ class JRCSubsidence(IndicatorModel[BatchItem]):
                         nodata_index=0,
                         name="flare",
                         min_value=0.0,
-                        max_value=5.0,
+                        max_value=4.0,
                         units="index",
                     ),
                     path="maps/drought/subsidence_jrc/v1/susceptability_{scenario}_{year}_map",

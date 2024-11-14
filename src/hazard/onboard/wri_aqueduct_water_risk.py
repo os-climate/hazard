@@ -585,7 +585,7 @@ class WRIAqueductWaterRisk(IndicatorModel[BatchItem]):
                     group_id="",
                     map=MapInfo(
                         colormap=Colormap(
-                            name="heating",
+                            name="Blues",
                             min_value=resource_map[key]["min_value"],  # type:ignore
                             max_value=resource_map[key]["max_value"],  # type:ignore
                             min_index=1,

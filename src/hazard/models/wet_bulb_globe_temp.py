@@ -177,7 +177,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=52,
                     max_index=255,
                     units="days/year",
                 ),

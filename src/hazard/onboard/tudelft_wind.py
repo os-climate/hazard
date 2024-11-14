@@ -208,10 +208,9 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="severe_windstorm_probability",
                 indicator_model_id=None,
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
@@ -223,7 +222,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 windstorms (wind gusts > 25 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                group_id="wind_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -247,7 +246,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 ],
             ),
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="extreme_windstorm_probability",
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
                 path="convective_windstorm/conv_wind_tudelft/v2/extremely_severe_gust_speed_{scenario}_{year}",
@@ -258,7 +257,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 windstorms (wind gusts > 32 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                group_id="wind_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

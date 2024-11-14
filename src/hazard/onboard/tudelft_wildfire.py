@@ -206,7 +206,6 @@ class TUDelftFire(IndicatorModel[BatchItem]):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
                 hazard_type="Fire",
@@ -223,7 +222,7 @@ class TUDelftFire(IndicatorModel[BatchItem]):
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050
                 and 2071-2100).
                 """,
-                group_id="",
+                group_id="fire_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -261,7 +260,7 @@ class TUDelftFire(IndicatorModel[BatchItem]):
                 climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050
                 and 2071-2100).
                 """,
-                group_id="",
+                group_id="fire_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
