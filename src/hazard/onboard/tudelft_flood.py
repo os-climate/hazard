@@ -386,7 +386,7 @@ class TUDelftRiverFlood(Onboarder):
                         max_index=255,
                         min_index=1,
                         nodata_index=0,
-                        name="flare",
+                        name="viridis",
                         min_value=0.0,
                         max_value=1500.0,
                         units="years",
@@ -609,7 +609,7 @@ class TUDelftCoastalFlood(Onboarder):
                 Based upon CLMcom-CCLM4-8-17-EC-EARTH regional
                 climate simulation (EURO-CORDEX).
                 """,
-                group_id="",
+                group_id="coastal_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

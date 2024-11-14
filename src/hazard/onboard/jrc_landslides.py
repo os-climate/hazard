@@ -212,14 +212,13 @@ class JRCLandslides(Onboarder):
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Drought",
+                hazard_type="Landslide",
                 indicator_id="landslide_susceptability",
                 indicator_model_id=None,
                 indicator_model_gcm="historical",
-                path="drought/landslide_jrc/v1/susceptability_{scenario}_{year}",
+                path="landslide/landslide_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
                 display_name="Landslide Susceptability (JRC)",
                 description="""
@@ -229,7 +228,7 @@ class JRCLandslides(Onboarder):
                 addition to Albania, Andorra, Bosnia and Herzegovina, Croatia, FYR Macedonia, Iceland,
                 Kosovo, Liechtenstein, Montenegro, Norway, San Marino, Serbia, and Switzerland.
                 """,
-                group_id="",
+                group_id="landslide_jrc",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -237,17 +236,17 @@ class JRCLandslides(Onboarder):
                         max_index=255,
                         min_index=1,
                         nodata_index=0,
-                        name="flare",
+                        name="Oranges",
                         min_value=0.0,
                         max_value=5.0,
                         units="index",
                     ),
-                    path="maps/drought/landslide_jrc/v1/susceptability_{scenario}_{year}_map",
+                    path="maps/landslide/landslide_jrc/v1/susceptability_{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
                 units="index",
                 scenarios=[
-                    Scenario(id="historical", years=[1980]),
+                    Scenario(id="historical", years=[2018]),
                 ],
             )
         ]
