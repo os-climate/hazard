@@ -324,7 +324,7 @@ def _write_zoom_level(
     zoom_level_path = posixpath.join(target_path, f"{zoom}")
     ntiles_in_level = 2**zoom
     ntiles = max(xmax - xmin + 1, ymax - ymin + 1)
-    num_batches = max(1, ntiles // max_tile_batch_size)
+    num_batches = max(1, math.ceil(ntiles / max_tile_batch_size))
     tile_batch_size = min(ntiles, max_tile_batch_size)
     for index in indices if indices is not None else [0]:
         logger.info(f"Starting index {index}.")
@@ -440,7 +440,7 @@ def _coarsen(
             xmax, ymax = xmax * 2 + 1, ymax * 2 + 1
             ntiles_in_level = 2**zoom
             ntiles = max(xmax - xmin + 1, ymax - ymin + 1)
-            num_batches = max(1, ntiles // max_tile_batch_size)
+            num_batches = max(1, math.ceil(ntiles / max_tile_batch_size))
             tile_batch_size = min(ntiles, max_tile_batch_size)
             # in this case we can process the batches in parallel: consider multi-threading this part?
             for batch_x in range(0, num_batches):
