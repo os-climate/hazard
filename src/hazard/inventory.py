@@ -1,10 +1,13 @@
 import datetime
 import itertools
 import json
+from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pystac
+import shapely
 from pydantic import BaseModel, Field
+
 
 # region HazardModel
 
@@ -186,7 +189,12 @@ class HazardResource(BaseModel):
             rel="collection", media_type="application/json", target="./collection.json"
         )
 
-        coordinates = self.map.bounds if self.map else None
+        coordinates = deepcopy(self.map.bounds) if self.map else None
+
+        # GeoJSON requires the coordinates of a LineRing to have the same beginning and end
+        if coordinates:
+            coordinates.append(coordinates[0])
+
         bbox = self.map.bbox if self.map else None
         stac_item = pystac.Item(
             id=item_id,
@@ -203,6 +211,12 @@ class HazardResource(BaseModel):
         stac_item.add_link(link)
 
         stac_item.validate()
+
+        is_valid_response = shapely.is_valid_reason(
+            shapely.from_geojson(json.dumps(stac_item.to_dict()))
+        )
+        if is_valid_response != "Valid Geometry":
+            raise Exception(f"STAC Item is not valid: {is_valid_response}")
 
         templated_out_item = self._expand_template_values_for_stac_record(
             combined_parameters, stac_item
