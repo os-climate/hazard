@@ -13,7 +13,6 @@ import dask.array as da
 import numpy as np  # type: ignore
 import s3fs  # type: ignore
 import xarray as xr
-import xclim.indices  # type: ignore
 import zarr  # type: ignore
 import zarr.hierarchy
 from pydantic import BaseModel
@@ -485,6 +484,13 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
     def _calculate_spei_for_slice(
         self, lat_min, lat_max, lon_min, lon_max, *, gcm, scenario, num_workers=2
     ):
+        # delay import because these take a bit to load.
+        from xclim.indices import (
+            potential_evapotranspiration as xclim_potential_evapotranspiration,
+            water_budget as xclim_water_budget,
+            standardized_precipitation_evapotranspiration_index as xclim_std_prec_evap_indx,
+        )
+
         ds_tas = (
             self.read_quantity_from_s3_store(
                 gcm, scenario, "tas", lat_min, lat_max, lon_min, lon_max
@@ -502,11 +508,11 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         ds_tas = ds_tas.drop_duplicates(dim=..., keep="last").sortby("time")
         ds_pr = ds_pr.drop_duplicates(dim=..., keep="last").sortby("time")
         ds_pet = (
-            xclim.indices.potential_evapotranspiration(tas=ds_tas["tas"], method="MB05")
+            xclim_potential_evapotranspiration(tas=ds_tas["tas"], method="MB05")
             .astype("float32")
             .to_dataset(name="pet")
         )
-        da_wb = xclim.indices.water_budget(pr=ds_pr["pr"], evspsblpot=ds_pet["pet"])
+        da_wb = xclim_water_budget(pr=ds_pr["pr"], evspsblpot=ds_pet["pet"])
         with xr.set_options(keep_attrs=True):
             da_wb = da_wb - 1.01 * da_wb.min()
         da_wb_calib = da_wb.sel(
@@ -521,7 +527,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             )
         )
         ds_spei = (
-            xclim.indices.standardized_precipitation_evapotranspiration_index(
+            xclim_std_prec_evap_indx(
                 da_wb_calc,
                 da_wb_calib,
                 freq=self.freq,
@@ -623,9 +629,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         return []
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self.resource)
 
