@@ -6,7 +6,6 @@ store: "./indicator"  # default value of type 'string'.
 source_dataset_kwargs: "{}"  # default value of type 'string'.
 source_dataset: a_string  # type 'string'
 scenario_list: a_string  # type 'string'
-inventory_format: "osc"  # default value of type 'string'.
 indicator: "days_tas_above_indicator"  # default value of type 'string'.
 gcm_list: a_string  # type 'string'
 dask_cluster_kwargs: "{'n_workers': 1, 'threads_per_worker': 1}"  # default value of type 'string'.
