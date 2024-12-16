@@ -5,7 +5,6 @@ from dask.distributed import Client, LocalCluster  # noqa: E402
 from fsspec.implementations.local import LocalFileSystem
 
 from hazard.docs_store import DocStore  # type: ignore # noqa: E402
-from hazard.indicator_model import IndicatorModel
 from hazard.models.days_tas_above import DaysTasAboveIndicator  # noqa: E402
 from hazard.models.degree_days import DegreeDays  # noqa: E402
 from hazard.sources import SourceDataset, get_source_dataset_instance
@@ -30,7 +29,6 @@ def days_tas_above_indicator(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
-    inventory_format: Optional[str] = "osc",
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
@@ -60,7 +58,7 @@ def days_tas_above_indicator(
         source_dataset=source_dataset,
     )
 
-    _write_inventory_files(docs_store, inventory_format, model)
+    docs_store.update_inventory(model.inventory())
 
     model.run_all(source, target, client=client)
 
@@ -78,7 +76,6 @@ def degree_days_indicator(
     prefix: Optional[str] = None,
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
-    inventory_format: Optional[str] = "osc",
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
@@ -108,21 +105,9 @@ def degree_days_indicator(
         source_dataset=source_dataset,
     )
 
-    _write_inventory_files(docs_store, inventory_format, model)
+    docs_store.update_inventory(model.inventory())
 
     model.run_all(source, target, client=client)
-
-
-def _write_inventory_files(
-    docs_store: DocStore, inventory_format: Optional[str], model: IndicatorModel
-):
-    if inventory_format == "stac":
-        docs_store.write_inventory_stac(model.inventory())
-    elif inventory_format == "osc":
-        docs_store.update_inventory(model.inventory())
-    elif inventory_format == "all":
-        docs_store.write_inventory_stac(model.inventory())
-        docs_store.update_inventory(model.inventory())
 
 
 def setup(

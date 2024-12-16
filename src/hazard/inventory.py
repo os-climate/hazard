@@ -1,10 +1,8 @@
-import datetime
-import itertools
 import json
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-import pystac
 from pydantic import BaseModel, Field
+
 
 # region HazardModel
 
@@ -122,123 +120,9 @@ class HazardResource(BaseModel):
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
 
-    def to_stac_items(
-        self, path_root: str, items_as_dicts: bool = False
-    ) -> List[Union[pystac.Item, Dict]]:
-        """
-        converts a hazard resource to a list of STAC items. One unique set of parameter values and scenarios results
-        in a single STAC item in the list.
-        """
-        keys, values = zip(*self.params.items())
-        params_permutations = list(itertools.product(*values))
-        params_permutations_dicts = [dict(zip(keys, p)) for p in params_permutations]
-
-        scenarios_permutations = []
-        for s in self.scenarios:
-            for y in s.years:
-                scenarios_permutations.append({"scenario": s.id, "year": y})
-
-        permutations = [
-            dict(**param, **scenario)
-            for param, scenario in itertools.product(
-                params_permutations_dicts, scenarios_permutations
-            )
-        ]
-
-        items = []
-
-        for p in permutations:
-            items.append(
-                self.to_stac_item(
-                    path_root=path_root,
-                    combined_parameters=p,
-                    item_as_dict=items_as_dicts,
-                )
-            )
-
-        return items
-
-    def to_stac_item(
-        self,
-        path_root: str,
-        combined_parameters: Dict[Any, str],
-        item_as_dict: bool = False,
-    ) -> Union[pystac.Item, Dict]:
-        """
-        converts a hazard resource along with combined parameters (params and scenarios) to a single STAC item.
-        """
-        data_asset_path = self.path.format(**combined_parameters)
-        item_id = data_asset_path.replace("/", "_")
-        osc_properties = self.model_dump()
-        osc_properties = {
-            f"osc-hazard:{k}": osc_properties[k] for k in osc_properties.keys()
-        }
-
-        asset = pystac.Asset(
-            href=f"{path_root}/{data_asset_path}",
-            title="zarr directory",
-            description="directory containing indicators data as zarr arrays",
-            media_type=pystac.MediaType.ZARR,
-            roles=["data"],
-        )
-
-        link = pystac.Link(
-            rel="collection", media_type="application/json", target="./collection.json"
-        )
-
-        coordinates = self.map.bounds if self.map else None
-        bbox = self.map.bbox if self.map else None
-        stac_item = pystac.Item(
-            id=item_id,
-            geometry={"type": "Polygon", "coordinates": [coordinates]},
-            bbox=bbox,
-            datetime=None,
-            start_datetime=datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
-            end_datetime=datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc),
-            properties=osc_properties,
-            collection="osc-hazard-indicators",
-            assets={"data": asset},
-        )
-
-        stac_item.add_link(link)
-
-        stac_item.validate()
-
-        templated_out_item = self._expand_template_values_for_stac_record(
-            combined_parameters, stac_item
-        )
-
-        if item_as_dict:
-            return templated_out_item.to_dict()
-        else:
-            return templated_out_item
-
-    def _expand_template_values_for_stac_record(
-        self, combined_parameters: Dict[Any, str], stac_item: pystac.Item
-    ):
-        item_string = json.dumps(stac_item.to_dict())
-        for k, v in combined_parameters.items():
-            item_string = item_string.replace(f"{{{k}}}", str(v))
-        templated_out_item = stac_item.from_dict(json.loads(item_string))
-        templated_out_item.validate()
-        return templated_out_item
-
 
 class HazardResources(BaseModel):
     resources: List[HazardResource]
-
-    def to_stac_items(
-        self, path_root: str, items_as_dicts: bool = False
-    ) -> List[Union[pystac.Item, Dict]]:
-        """
-        converts hazard resources to a list of STAC items.
-        """
-        stac_items_lists = [
-            resource.to_stac_items(path_root=path_root, items_as_dicts=items_as_dicts)
-            for resource in self.resources
-        ]
-        stac_items_flat = list(itertools.chain(*stac_items_lists))
-        return stac_items_flat
 
 
 def expand(item: str, key: str, param: str):
