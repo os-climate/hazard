@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 import xarray as xr
 
@@ -23,7 +23,7 @@ class BatchItem:
 
 
 class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: str):
+    def __init__(self, source_dir: Optional[str]):
         """
         Define every attribute of the onboarding class for the land subsidence dataset.
 
