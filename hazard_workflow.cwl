@@ -46,9 +46,6 @@ $graph:
       store:
         type: string
         default: "./indicator"
-      inventory_format:
-        type: string
-        default: "osc"
       write_xarray_compatible_zarr:
         type: boolean
         default: false
@@ -80,7 +77,6 @@ $graph:
           window_years: window_years
           indicator: indicator
           store: store
-          inventory_format: inventory_format
           write_xarray_compatible_zarr: write_xarray_compatible_zarr
           dask_cluster_kwargs: dask_cluster_kwargs
         out:
@@ -92,7 +88,7 @@ $graph:
 
     hints:
       DockerRequirement:
-        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:cb86f35
+        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:14edea7
 
     requirements:
       ResourceRequirement:
@@ -135,8 +131,6 @@ $graph:
         type: string
       store:
         type: string
-      inventory_format:
-        type: string
       write_xarray_compatible_zarr:
         type: boolean
       dask_cluster_kwargs:
@@ -172,8 +166,6 @@ $graph:
         valueFrom: $(inputs.central_year_historical)
       - prefix: --window_years
         valueFrom: $(inputs.window_years)
-      - prefix: --inventory_format
-        valueFrom: $(inputs.inventory_format)
       - prefix: --write_xarray_compatible_zarr
         valueFrom: $(inputs.write_xarray_compatible_zarr)
       - prefix: --dask_cluster_kwargs
