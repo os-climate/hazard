@@ -2920,7 +2920,12 @@
             "indicator_model_gcm": "{gcm}",
             "params": {
                 "gcm": [
-                    "MIROC6"
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
                 ]
             },
             "display_name": "Drought SPEI index",
@@ -2938,7 +2943,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
