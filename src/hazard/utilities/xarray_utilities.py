@@ -245,7 +245,7 @@ def data_array(
     data: np.ndarray,
     transform: Affine,
     crs: str = "EPSG:4326",
-    index_values: List[float] = [0],
+    index_values: List[Any] = [0],
 ):
     n_indices, height, width = data.shape
     assert len(index_values) == n_indices
@@ -255,7 +255,7 @@ def data_array(
         ("latitude", "longitude") if crs.upper() == "EPSG:4326" else ("y", "x")
     )
     coords = affine_to_coords(transform, width, height, x_dim=x_dim, y_dim=y_dim)
-    coords[z_dim] = np.array(index_values, dtype=float)
+    coords[z_dim] = np.array(index_values)
     da = xr.DataArray(data=data, coords=coords, dims=[z_dim, y_dim, x_dim])
     return da
 
@@ -265,7 +265,7 @@ def empty_data_array(
     height: int,
     transform: Affine,
     crs: str = "EPSG:4326",
-    index_values: List[float] = [0],
+    index_values: List[Any] = [0],
 ):
     data = dask.array.empty(shape=[len(index_values), height, width])
     return data_array(data, transform, crs, index_values)

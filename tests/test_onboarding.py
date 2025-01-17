@@ -9,6 +9,7 @@ import s3fs
 import zarr
 import zarr.convenience
 from hazard.docs_store import DocStore
+from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection, FLOPROSFloodStandardOfProtectionSource
 from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
@@ -316,6 +317,17 @@ def test_onboard_coastalflood_tudelft(test_output_dir):
 
     # model.create_maps(target, target)
 
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_flopros(test_output_dir):
+    source_path = os.path.join(test_output_dir, "flopros")
+    source = FLOPROSFloodStandardOfProtectionSource(source_path) 
+    model = FLOPROSFloodStandardOfProtection()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
+    model.run_all(source, target)
+    model.create_maps(target, target)
+    
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_litpop(test_output_dir):

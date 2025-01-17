@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import re
 import zipfile
 from typing import Optional
@@ -16,7 +17,9 @@ def download_file(url: str, directory: str, filename: Optional[str] = None):
                     "filename not provided and cannot infer from content-disposition"
                 )
         r.raise_for_status()
-        with open(os.path.join(directory, filename), "wb") as f:
+        dir = Path(directory)
+        dir.mkdir(exist_ok=True, parents=True)
+        with open(dir / filename, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
     return filename
