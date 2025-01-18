@@ -3096,51 +3096,29 @@
             "units": "years"
         },
         {
-            "hazard_type": "Subsidence",
+            "hazard_type": "RiverineInundation",
             "group_id": "",
-            "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
-            "indicator_id": "land_subsidence_rate",
-            "indicator_model_id": null,
-            "indicator_model_gcm": "historical",
+            "path": "inundation/flopros_riverine/v1/flood_sop/flood_sop",
+            "indicator_id": "flood_sop",
+            "indicator_model_id": "flopros",
+            "indicator_model_gcm": "",
             "params": {},
-            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_name": "Standard of protection (FLOPROS)",
             "display_groups": [],
-            "description": "# Global map of land subsidence rates (Davydzenka et al. (2024))\n\nLand subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
+            "description": "Global data set of protection levels for riverine and coastal flood, based on the [FLOPROS database] (https://nhess.copernicus.org/articles/16/1049/2016/). For each of coastal and riverine inundation, the dataset provides for every location a minimum (\"min\") and maximum (\"max\") protection, specified as a return period in years; the min and max reflects in uncertainty in the protection level. The return period indicates that the location is protected against flood events with that return period (e.g. 100 years indicates that the location is protected against 1-in-100 year flood events). Finding the equivalent flood depth protection level additionally requires a flood depth indicator data set.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
-                    "name": "heating",
+                    "max_value": 1500.0,
+                    "name": "flare",
                     "nodata_index": 0,
-                    "units": "millimetres/year"
+                    "units": "years"
                 },
-                "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
-                "bounds": [
-                    [
-                        -180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        -60.0
-                    ],
-                    [
-                        -180.0,
-                        -60.0
-                    ]
-                ],
-                "bbox": [
-                    -180.0,
-                    -60.0,
-                    180.0,
-                    85.0
-                ],
+                "path": "maps/inundation/flopros_riverine/v1/flood_sop_map",
+                "bounds": [],
+                "bbox": [],
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
@@ -3148,11 +3126,48 @@
                 {
                     "id": "historical",
                     "years": [
-                        2021
+                        1985
                     ]
                 }
             ],
-            "units": "millimetres/year"
+            "units": "years"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "",
+            "path": "inundation/flopros_coastal/v1/flood_sop/flood_sop",
+            "indicator_id": "flood_sop",
+            "indicator_model_id": "flopros",
+            "indicator_model_gcm": "",
+            "params": {},
+            "display_name": "Standard of protection (FLOPROS)",
+            "display_groups": [],
+            "description": "Global data set of protection levels for riverine and coastal flood, based on the [FLOPROS database] (https://nhess.copernicus.org/articles/16/1049/2016/). For each of coastal and riverine inundation, the dataset provides for every location a minimum (\"min\") and maximum (\"max\") protection, specified as a return period in years; the min and max reflects in uncertainty in the protection level. The return period indicates that the location is protected against flood events with that return period (e.g. 100 years indicates that the location is protected against 1-in-100 year flood events). Finding the equivalent flood depth protection level additionally requires a flood depth indicator data set.\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1500.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "years"
+                },
+                "path": "maps/inundation/flopros_coastal/v1/flood_sop_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1985
+                    ]
+                }
+            ],
+            "units": "years"
         }
     ]
 }

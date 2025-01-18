@@ -67,6 +67,18 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
     ) -> xr.Dataset:
+        """_summary_
+
+        Args:
+            gcm (str): Ignored.
+            scenario (str): Ignored.
+            quantity (str): 'RiverineInundation' or 'CoastalInundation'.
+            year (int): Ignored.
+            chunks (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            xr.Dataset: Data set named 'indicator' with 'max' and 'min' coordinate labels in the index coordinate.
+        """
         hazard_type = quantity
 
         def get_merged_rp(row, min_max: str, flood_type: str):
@@ -131,16 +143,6 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
         da = empty_data_array(
             width, height, transform, str(crs), index_values=["min", "max"]
         )
-        # alternative by XArray preferred
-        # z_sop = target.create_empty(
-        #     resource.path,
-        #     width,
-        #     height,
-        #     transform,
-        #     str(crs),
-        #     index_name="standard of protection (years)",
-        #     indexes=["min", "max"],
-        # )
         for min_max in ["min", "max"]:
             logger.info(
                 f"Creating raster at {(360 * 60) / width} arcmin resolution for {min_max} protection"
@@ -155,7 +157,6 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
             )
             index = 0 if min_max == "min" else 1
             da[index, :, :] = rasterized[:, :]
-            # z_sop[index, :, :] = rasterized[:, :]
         return da.to_dataset(name="sop")
 
 
@@ -200,7 +201,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
         for resource in self.inventory():
-            create_tiles_for_resource(source, target, resource)
+            create_tiles_for_resource(source, target, resource, nodata_as_zero=True, nodata_as_zero_coarsening=True)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
