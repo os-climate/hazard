@@ -190,7 +190,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                     da_sop.rio.transform(),
                     str(da_sop.crs),
                     index_name="standard of protection (years)",
-                    indexes=["min", "max"],
+                    index_values=["min", "max"],
                 )
                 values_max_sop = np.array(da_sop.data, dtype="float32")
                 sop_no_data = da_sop.attrs["nodatavals"]
@@ -215,7 +215,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                         shape[0],
                         da_depth.rio.transform(),
                         str(da_depth.crs),
-                        indexes=self.return_periods,
+                        index_values=self.return_periods,
                     )
                 if da_depth.shape[1] == 38375:
                     da_depth = da_depth[:, 0:38374]
@@ -305,7 +305,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                     path="maps/inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
-                units="metres",
+                units="metres",              
                 scenarios=[
                     Scenario(id="historical", years=[1985]),
                     Scenario(id="rcp4p5", years=[2035, 2085]),
@@ -464,7 +464,7 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                         shape[0],
                         da.rio.transform(),
                         str(da.crs),
-                        indexes=self.return_periods,
+                        index_values=self.return_periods,
                     )
                 values = da.data
                 no_data = da.attrs["nodatavals"]

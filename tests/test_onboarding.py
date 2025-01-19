@@ -327,7 +327,7 @@ def test_onboard_flopros(test_output_dir):
     source = FLOPROSFloodStandardOfProtectionSource(source_path)
     model = FLOPROSFloodStandardOfProtection()
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
-    target = OscZarr(store=store)
+    target = OscZarr(store=store, write_xarray_compatible_zarr=True)
     model.run_all(source, target)
     model.create_maps(target, target)
 

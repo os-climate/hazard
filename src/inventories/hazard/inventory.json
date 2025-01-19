@@ -49,6 +49,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -110,6 +111,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -181,6 +183,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -252,6 +255,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -323,6 +327,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -394,6 +399,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -465,6 +471,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -526,6 +533,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -597,6 +605,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -668,6 +677,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -739,6 +749,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -800,6 +811,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -871,6 +883,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -942,6 +955,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -1022,6 +1036,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1105,6 +1120,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1180,6 +1196,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1255,6 +1272,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1330,6 +1348,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1405,6 +1424,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1480,6 +1500,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1555,6 +1576,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1646,6 +1668,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1749,6 +1772,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1832,6 +1856,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1924,6 +1949,7 @@
                 ],
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2022,6 +2048,7 @@
                 ],
                 "source": "map_array"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2131,6 +2158,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2260,6 +2288,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2343,6 +2372,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2452,6 +2482,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2537,6 +2568,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2622,6 +2654,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2707,6 +2740,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2792,6 +2826,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2877,6 +2912,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2979,6 +3015,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp585",
@@ -3020,6 +3057,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3071,6 +3109,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3098,7 +3137,7 @@
         {
             "hazard_type": "RiverineInundation",
             "group_id": "",
-            "path": "inundation/flopros_riverine/v1/flood_sop/flood_sop",
+            "path": "inundation/flopros_riverine/v1/flood_sop/sop",
             "indicator_id": "flood_sop",
             "indicator_model_id": "flopros",
             "indicator_model_gcm": "",
@@ -3122,6 +3161,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3135,7 +3175,7 @@
         {
             "hazard_type": "CoastalInundation",
             "group_id": "",
-            "path": "inundation/flopros_coastal/v1/flood_sop/flood_sop",
+            "path": "inundation/flopros_coastal/v1/flood_sop/sop",
             "indicator_id": "flood_sop",
             "indicator_model_id": "flopros",
             "indicator_model_gcm": "",
@@ -3159,6 +3199,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "save_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "historical",

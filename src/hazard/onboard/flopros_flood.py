@@ -141,7 +141,12 @@ class FLOPROSFloodStandardOfProtectionSource(OpenDataset):
         crs, transform = global_crs_transform(width, height)
         logger.info("Creating empty array")
         da = empty_data_array(
-            width, height, transform, str(crs), index_values=["min", "max"]
+            width,
+            height,
+            transform,
+            str(crs),
+            index_name="min_max",
+            index_values=["min", "max"],
         )
         for min_max in ["min", "max"]:
             logger.info(
@@ -195,13 +200,24 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
         logger.info("Writing rasters")
         for hazard_type, resource in self._resources().items():
             ds = source.open_dataset_year("", "", hazard_type, -1)
-            assert ds
-            target.write(resource.path, ds["sop"].compute(), spatial_coords=False)
+            array_name = "sop"
+            # note that the co-ordinates will be written into the parent of resource.path
+            target.write(
+                resource.path,
+                ds[array_name].compute(),
+                spatial_coords=resource.save_netcdf_coords,
+            )
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
         for resource in self.inventory():
-            create_tiles_for_resource(source, target, resource, nodata_as_zero=True, nodata_as_zero_coarsening=True)
+            create_tiles_for_resource(
+                source,
+                target,
+                resource,
+                nodata_as_zero=True,
+                nodata_as_zero_coarsening=True,
+            )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
@@ -225,7 +241,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                 indicator_model_gcm="",
                 path="inundation/flopros_"
                 + path_component(k)
-                + "/v1/flood_sop/flood_sop",
+                + "/v1/flood_sop/sop",  # the double path allows an XArray-readable data array to be written
                 params={},
                 display_name="Standard of protection (FLOPROS)",
                 description=description,
@@ -248,6 +264,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                     source="map_array_pyramid",
                 ),
                 units="years",
+                save_netcdf_coords=True,
                 scenarios=[Scenario(id="historical", years=[1985])],
             )
             for k in ["RiverineInundation", "CoastalInundation"]
