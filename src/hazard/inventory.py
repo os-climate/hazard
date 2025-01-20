@@ -107,9 +107,9 @@ class HazardResource(BaseModel):
     )
     save_netcdf_coords: bool = Field(
         False,
-        description="If True, then NetCDF-style coordinates are also stored, making this natively XArray-readable. \
-            In this case, path still points to the array and the coordinates are stored in the parent \
-                (one level up).",
+        description="If True, NetCDF-style coordinates are also stored, which allows XArray to read the array \
+            natively. In this case, path still points to the array; the coordinates are stored in an array group \
+                in the parent folder. That is, path should be in the form path_to_array_group/array_group/array",
     )
     scenarios: List[Scenario] = Field(
         description="Climate change scenarios for which the indicator is available."
