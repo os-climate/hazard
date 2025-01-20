@@ -500,6 +500,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 source="map_array_pyramid",
             ),
             units="months/year",
+            save_netcdf_coords=False,
             scenarios=[
                 # Scenario(
                 #     id="historical",
