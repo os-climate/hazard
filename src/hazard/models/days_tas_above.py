@@ -136,7 +136,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 source="map_array",
             ),
             units="days/year",
-            save_netcdf_coords = False,
+            save_netcdf_coords=False,
             scenarios=scenarios,
         )
         return resource
