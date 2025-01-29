@@ -152,7 +152,7 @@ class OscZarr(ReadWriteDataArray):
             pp = PurePosixPath(path)
             if da.name != pp.name:
                 raise ValueError(
-                    "when writing NetCDF style coordinates, final element of path (here {pp.name}) must be \
+                    f"when writing NetCDF style coordinates, final element of path (here {pp.name}) must be \
                                  the same as the array name (here {da.name})"
                 )
             parent_path = pp.parent
