@@ -254,7 +254,7 @@ class OscZarr(ReadWriteDataArray):
             compute=True,
             group=path,
             mode="w",
-            # consolidated=True,
+            consolidated=False,
             encoding={da_norm.name: options},
         )
 
