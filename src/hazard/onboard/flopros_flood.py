@@ -239,9 +239,11 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                 indicator_id="flood_sop",
                 indicator_model_id="flopros",
                 indicator_model_gcm="",
-                path="inundation/flopros_"
-                + path_component(k)
-                + "/v1/flood_sop/sop",  # the double path allows an XArray-readable data array to be written
+                path=(
+                    "inundation/flopros_"
+                    + path_component(k)
+                    + "/v1/flood_sop/sop"
+                ),  # the double path allows an XArray-readable data array to be written
                 params={},
                 display_name="Standard of protection (FLOPROS)",
                 description=description,
