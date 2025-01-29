@@ -234,7 +234,7 @@ class OscZarr(ReadWriteDataArray):
         if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
             raise ValueError("longitude or x dimension not found.")
         if "lat" not in da.dims and "latitude" not in da.dims and "y" not in da.dims:
-            raise ValueError("latitude dimension not found.")
+            raise ValueError("latitude or y dimension not found.")
         da_norm = xarray_utilities.normalize_array(da)
         _, transform, crs = xarray_utilities.get_array_components(
             da_norm, assume_normalized=True
