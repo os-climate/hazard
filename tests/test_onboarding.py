@@ -28,6 +28,7 @@ from hazard.onboard.jupiter import (
 from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
 from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
+from hazard.onboard.wisc_european_winter_storm import WISCWinterStormEventSource
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRisk,
@@ -316,6 +317,11 @@ def test_onboard_coastalflood_tudelft(test_output_dir):
     # model.create_maps(target, target)
 
 
+#def test_promote(s3_credentials):
+#    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
+#    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
+
+
 @pytest.mark.skip(reason="on-boarding script")
 def test_onboard_flopros(test_output_dir):
     source_path = os.path.join(test_output_dir, "flopros")
@@ -354,3 +360,10 @@ def test_rain_european_storm(test_output_dir):
     model = RAINEuropeanWinterStorm(working_dir)
     model.prepare(working_dir)
     model.run_all(target)
+
+
+def test_wisc_european_storm(test_output_dir):
+    source_dir = os.path.join(test_output_dir, "wisc")
+    working_dir = source_dir
+    source = WISCWinterStormEventSource(source_dir)
+    source.rechunk_events(working_dir)

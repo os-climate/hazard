@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import dask  # type: ignore
 import dask.array
@@ -270,15 +270,16 @@ def empty_data_array(
     index_name: str = "index",
     index_units: str = "",
     index_values: List[Any] = [0],
+    chunks: Optional[List[int]] = None,
 ):
-    data = dask.array.empty(shape=[len(index_values), height, width])
+    data = dask.array.empty(shape=[len(index_values), height, width], chunks=chunks)
     return data_array(
         data,
         transform,
         crs,
         index_name=index_name,
         index_units=index_units,
-        index_values=index_values,
+        index_values=index_values
     )
 
 
