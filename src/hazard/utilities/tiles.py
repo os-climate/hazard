@@ -207,11 +207,8 @@ def create_tile_set(
     da = source.read(source_path)  # .to_dataset()
     index_values = da[da.dims[0]].data
 
-    _, _, src_width = (
-        da.sizes[da.dims[0]],
-        da.sizes["latitude"] if "latitude" in da.sizes else da.sizes["y"],
-        da.sizes["longitude"] if "longitude" in da.sizes else da.sizes["x"],
-    )
+    src_width = da.sizes["longitude"] if "longitude" in da.sizes else da.sizes["x"]
+
     chunk_size: int = 512
     pixels_per_tile = 256
     os.environ["CHECK_WITH_INVERT_PROJ"] = "YES"

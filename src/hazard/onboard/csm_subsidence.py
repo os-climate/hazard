@@ -130,7 +130,7 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
                     source="map_array_pyramid",
                 ),
                 units="millimetres/year",
-                save_netcdf_coords=False,
+                store_netcdf_coords=False,
                 scenarios=[Scenario(id="historical", years=[2021])],
             )
         ]

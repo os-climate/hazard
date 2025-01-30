@@ -49,7 +49,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -111,7 +111,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -183,7 +183,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -255,7 +255,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -327,7 +327,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -399,7 +399,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -471,7 +471,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -533,7 +533,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -605,7 +605,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -677,7 +677,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -749,7 +749,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -811,7 +811,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -883,7 +883,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -955,7 +955,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -1036,7 +1036,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1120,7 +1120,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1196,7 +1196,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1272,7 +1272,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1348,7 +1348,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1424,7 +1424,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1500,7 +1500,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1576,7 +1576,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1668,7 +1668,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1772,7 +1772,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1856,7 +1856,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1949,7 +1949,7 @@
                 ],
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2048,7 +2048,7 @@
                 ],
                 "source": "map_array"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2158,7 +2158,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2288,7 +2288,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2372,7 +2372,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2482,7 +2482,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2568,7 +2568,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2654,7 +2654,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2740,7 +2740,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2826,7 +2826,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2912,7 +2912,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3015,7 +3015,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp585",
@@ -3057,7 +3057,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3109,7 +3109,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3161,7 +3161,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": true,
+            "store_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3199,7 +3199,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": true,
+            "store_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3259,7 +3259,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
-            "save_netcdf_coords": false,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",

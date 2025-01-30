@@ -306,7 +306,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                     source="map_array_pyramid",
                 ),
                 units="metres",
-                save_netcdf_coords=False,
+                store_netcdf_coords=False,
                 scenarios=[
                     Scenario(id="historical", years=[1985]),
                     Scenario(id="rcp4p5", years=[2035, 2085]),
@@ -341,7 +341,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                     source="map_array_pyramid",
                 ),
                 units="years",
-                save_netcdf_coords=False,
+                store_netcdf_coords=False,
                 scenarios=[
                     Scenario(id="historical", years=[1985]),
                     Scenario(id="rcp4p5", years=[2035, 2085]),
@@ -514,7 +514,7 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                     source="map_array_pyramid",
                 ),
                 units="metres",
-                save_netcdf_coords=False,
+                store_netcdf_coords=False,
                 scenarios=[
                     Scenario(id="historical", years=[1971]),
                     Scenario(id="rcp4p5", years=[2035, 2085]),

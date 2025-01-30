@@ -205,7 +205,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
             target.write(
                 resource.path,
                 ds[array_name].compute(),
-                spatial_coords=resource.save_netcdf_coords,
+                spatial_coords=resource.store_netcdf_coords,
             )
 
     def create_maps(self, source: OscZarr, target: OscZarr):
@@ -264,7 +264,7 @@ class FLOPROSFloodStandardOfProtection(IndicatorModel[str]):
                     source="map_array_pyramid",
                 ),
                 units="years",
-                save_netcdf_coords=True,
+                store_netcdf_coords=True,
                 scenarios=[Scenario(id="historical", years=[1985])],
             )
             for k in ["RiverineInundation", "CoastalInundation"]

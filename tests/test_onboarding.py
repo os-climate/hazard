@@ -258,7 +258,6 @@ def test_onboard_landslides_jrc(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -272,7 +271,6 @@ def test_onboard_subsidence_jrc(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -287,7 +285,6 @@ def test_onboard_fire_tudelft(test_output_dir):
     for batch_item in batch_items:
         model.prepare(batch_item)
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -302,7 +299,6 @@ def test_onboard_conv_wind_tudelft(test_output_dir):
     for batch_item in batch_items:
         model.prepare(batch_item)
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -317,7 +313,6 @@ def test_onboard_coastalflood_tudelft(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
