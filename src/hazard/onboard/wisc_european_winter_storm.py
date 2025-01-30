@@ -114,7 +114,7 @@ class WISCWinterStormEventSource(OpenDataset):
                     logger.info(f"Event {i} of year {year}")
                 with xr.open_dataset(f) as ds:
                     if not np.array_equal(ds.lat, first.lat) or not np.array_equal(ds.lon, first.lon): 
-                        raise ValueError("spatial diemsions not aligned")
+                        raise ValueError("spatial dimensions not aligned")
                     for i, speed in enumerate(wind_speeds):
                         count = xr.where(ds.wind_speed_of_gust > speed, 1.0, 0.0)
                         exceedance_count[i, :, :] += count
@@ -205,8 +205,9 @@ class WISCWinterStormEventSource(OpenDataset):
                     # we calculate parameters using the occurrence exceedance probability and associated wind speed
                     # Note it is 1-prob as our probs range from 0 -> 0.05 but in a CDF probs increase always therefore we need 0.95 -> 100 
                     try:
-                        cdf_params = curve_fit(self._gev_cdf, wind_speed[condition], 1 - set_exceed_prob[condition], 
-                                               maxfev=800) # p0 = [40, 2, 0.0001]
+                        cdf_params = curve_fit(self._gev_icdf, set_exceed_prob[condition], wind_speed[condition])
+                        #cdf_params = curve_fit(self._gev_cdf, wind_speed[condition], 1 - set_exceed_prob[condition], 
+                        #                       maxfev=800) # p0 = [40, 2, 0.0001]
                         [mu, xi, sigma] = cdf_params[0]
                         fitted_speeds[:, j, i] = self._gev_icdf(prob_in_set, mu, xi, sigma)
                     except Exception as e:
