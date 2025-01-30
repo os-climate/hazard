@@ -2,7 +2,7 @@ import logging
 import math
 import os
 import posixpath
-from typing import Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 import mercantile
 import numpy as np  # type: ignore
@@ -62,7 +62,8 @@ def create_tiles_for_resource(
                 map_path = resource.map.path.format(scenario=scenario.id, year=year)
                 if resource.map.index_values is not None:
                     da = source.read(path)
-                    indexes = list(da["index"].values)
+                    index_dim = da.dims[0]  # should be the index dimension
+                    indexes = list(da[index_dim].values)
                     indices = [indexes.index(v) for v in resource.map.index_values]
                 create_tile_set(
                     source,
@@ -141,7 +142,7 @@ def _create_image_set(
         dst_height,
         dst_transform,
         dst_crs,
-        indexes=return_periods,
+        index_values=return_periods,
         chunks=(1, 4000, 4000),
     )
 
@@ -204,13 +205,10 @@ def create_tile_set(
         raise ValueError("invalid target path {target_path}")
 
     da = source.read(source_path)  # .to_dataset()
-    return_periods = da.index.data
+    index_values = da[da.dims[0]].data
 
-    _, _, src_width = (
-        da.sizes["index"],
-        da.sizes["latitude"] if "latitude" in da.sizes else da.sizes["y"],
-        da.sizes["longitude"] if "longitude" in da.sizes else da.sizes["x"],
-    )
+    src_width = da.sizes["longitude"] if "longitude" in da.sizes else da.sizes["x"]
+
     chunk_size: int = 512
     pixels_per_tile = 256
     os.environ["CHECK_WITH_INVERT_PROJ"] = "YES"
@@ -233,7 +231,7 @@ def create_tile_set(
 
     if indices is None:
         index_slice = slice(-1, None)
-        indices = range(len(return_periods))[index_slice]
+        indices = range(len(index_values))[index_slice]
     logger.info(f"Starting map tiles generation for array {source_path}.")
     logger.info(f"Source array size is {da.shape} (z, y, x).")
     logger.info(f"Indices (z) subset to be processed: {indices}.")
@@ -242,7 +240,12 @@ def create_tile_set(
     # _coarsen(target, target_path, max_zoom, (left, bottom, right, top), indices)
     target.remove(target_path)
     _create_empty_tile_pyramid(
-        target, target_path, max_zoom, chunk_size, return_periods
+        target,
+        target_path,
+        max_zoom,
+        chunk_size,
+        index_name=str(da.dims[0]),
+        index_values=index_values,
     )
 
     # here we reproject and write the maximum zoom level
@@ -275,7 +278,8 @@ def _create_empty_tile_pyramid(
     target_path: str,
     max_zoom: int,
     chunk_size: int,
-    return_periods: Sequence[float],
+    index_name: str = "index",
+    index_values: Sequence[Any] = [0],
 ):
     pixels_per_tile: int = 256
     ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=0, y=0, z=0)))
@@ -297,7 +301,8 @@ def _create_empty_tile_pyramid(
             dst_dim,
             whole_map_transform,
             dst_crs,
-            indexes=return_periods,
+            index_name=index_name,
+            index_values=index_values,
             chunks=(1, chunk_size, chunk_size),
         )
 

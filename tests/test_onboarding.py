@@ -9,6 +9,10 @@ import s3fs
 import zarr
 import zarr.convenience
 from hazard.docs_store import DocStore
+from hazard.onboard.flopros_flood import (
+    FLOPROSFloodStandardOfProtection,
+    FLOPROSFloodStandardOfProtectionSource,
+)
 from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
@@ -254,7 +258,6 @@ def test_onboard_landslides_jrc(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -268,7 +271,6 @@ def test_onboard_subsidence_jrc(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -283,7 +285,6 @@ def test_onboard_fire_tudelft(test_output_dir):
     for batch_item in batch_items:
         model.prepare(batch_item)
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -298,7 +299,6 @@ def test_onboard_conv_wind_tudelft(test_output_dir):
     for batch_item in batch_items:
         model.prepare(batch_item)
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
 
 
@@ -313,8 +313,18 @@ def test_onboard_coastalflood_tudelft(test_output_dir):
     target = OscZarr(store=store)
     for batch_item in batch_items:
         model.run_single(batch_item, None, target, None)
-
     # model.create_maps(target, target)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_flopros(test_output_dir):
+    source_path = os.path.join(test_output_dir, "flopros")
+    source = FLOPROSFloodStandardOfProtectionSource(source_path)
+    model = FLOPROSFloodStandardOfProtection()
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store, write_xarray_compatible_zarr=True)
+    model.run_all(source, target)
+    model.create_maps(target, target)
 
 
 @pytest.mark.skip(reason="on-boarding script")

@@ -353,6 +353,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             group_id=self.resource.group_id,
             map=map,
             units=self.resource.units,
+            store_netcdf_coords=False,
             scenarios=[
                 Scenario(id="historical", years=[self.central_year_historical]),
             ],

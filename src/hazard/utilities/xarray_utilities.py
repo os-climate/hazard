@@ -126,8 +126,8 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
     t = z.attrs["transform_mat3x3"]  # type: ignore
     crs: str = z.attrs.get("crs", "EPSG:4326")  # type: ignore
     transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-    index_values = z.attrs.get("index_values", [0])
-    # index_name = z.attrs.get("index_name", [0])
+    index_name = z.attrs.get("dimensions", ["index"])[0]
+    index_values = z.attrs.get(index_name + "_values", [0])
     if index_values is None:
         index_values = [0]
     coords = affine_to_coords(
@@ -139,10 +139,10 @@ def data_array_from_zarr(z: zarr.core.Array) -> xr.DataArray:
     )
     if "EPSG:4326" in crs.upper():
         da.rio.write_crs(4326, inplace=True)
-        da = da.rename({"dim_0": "index", "dim_1": "latitude", "dim_2": "longitude"})
+        da = da.rename({"dim_0": index_name, "dim_1": "latitude", "dim_2": "longitude"})
     else:
         da.rio.write_crs(crs, inplace=True)
-        da = da.rename({"dim_0": "index", "dim_1": "y", "dim_2": "x"})
+        da = da.rename({"dim_0": index_name, "dim_1": "y", "dim_2": "x"})
     return da
 
 
@@ -178,7 +178,7 @@ def get_array_components(
     crs = da.rio.crs
     if crs is None:
         # assumed default
-        crs = rasterio.CRS.from_epsg(4326)
+        crs = da.attrs.get("crs", rasterio.CRS.from_epsg(4326))
     return (data, transform, crs)
 
 
@@ -216,8 +216,8 @@ def normalize_array(da: xr.DataArray) -> xr.DataArray:  # noqa: C901
     if len(da.dims) == 3:
         if len(index_dim) != 1:
             raise Exception(f"unexpected dims {da.dims}")
-        da_norm.set_index({"index": index_dim[0]})
-        da_norm = da_norm.transpose("index", dim_y, dim_x)
+        # keep the name the same name, but this has to be the first dimension
+        da_norm = da_norm.transpose(index_dim[0], dim_y, dim_x)
     elif len(da.dims) == 2:
         da_norm = da_norm.expand_dims(dim={"index": 1}, axis=0)
         da_norm = da_norm.transpose("index", dim_y, dim_x)
@@ -228,9 +228,6 @@ def normalize_array(da: xr.DataArray) -> xr.DataArray:  # noqa: C901
         da_norm = da_norm.reindex(latitude=da_norm.latitude[::-1])
     elif "y" in da_norm.dims and da_norm.y[-1] > da_norm.y[0]:
         da_norm = da_norm.reindex(y=da_norm.y[::-1])
-
-    if not da_norm.rio.crs:
-        da_norm.rio.write_crs(4326, inplace=True)
 
     if "longitude" in da_norm.dims and np.any(da_norm.longitude > 180):
         longitude = da_norm.longitude
@@ -245,18 +242,23 @@ def data_array(
     data: np.ndarray,
     transform: Affine,
     crs: str = "EPSG:4326",
-    index_values: List[float] = [0],
+    name: str = "data",
+    index_name: str = "index",
+    index_units: str = "",
+    index_values: List[Any] = [0],
 ):
     n_indices, height, width = data.shape
     assert len(index_values) == n_indices
 
-    z_dim = "index"
+    z_dim = index_name
     y_dim, x_dim = (
         ("latitude", "longitude") if crs.upper() == "EPSG:4326" else ("y", "x")
     )
     coords = affine_to_coords(transform, width, height, x_dim=x_dim, y_dim=y_dim)
-    coords[z_dim] = np.array(index_values, dtype=float)
-    da = xr.DataArray(data=data, coords=coords, dims=[z_dim, y_dim, x_dim])
+    coords[z_dim] = np.array(index_values)
+    da = xr.DataArray(data=data, coords=coords, dims=[z_dim, y_dim, x_dim], name=name)
+    if index_units != "":
+        da.attrs[z_dim + "_units"] = index_units
     return da
 
 
@@ -265,10 +267,19 @@ def empty_data_array(
     height: int,
     transform: Affine,
     crs: str = "EPSG:4326",
-    index_values: List[float] = [0],
+    index_name: str = "index",
+    index_units: str = "",
+    index_values: List[Any] = [0],
 ):
     data = dask.array.empty(shape=[len(index_values), height, width])
-    return data_array(data, transform, crs, index_values)
+    return data_array(
+        data,
+        transform,
+        crs,
+        index_name=index_name,
+        index_units=index_units,
+        index_values=index_values,
+    )
 
 
 def write_array(array: xr.DataArray, path: str):

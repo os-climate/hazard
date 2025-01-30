@@ -568,7 +568,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                             da.transform[5],
                         ),
                         str(da.crs),
-                        indexes=self.return_periods,
+                        index_values=self.return_periods,
                     )
                 # ('band', 'y', 'x')
                 values = da[

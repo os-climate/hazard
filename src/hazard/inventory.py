@@ -105,6 +105,12 @@ class HazardResource(BaseModel):
     map: Optional[MapInfo] = Field(
         description="Optional information used for display of the indicator in a map."
     )
+    store_netcdf_coords: bool = Field(
+        False,
+        description="If True, NetCDF-style coordinates are also stored, which allows XArray to read the array \
+            natively. In this case, path still points to the array; the coordinates are stored in an array group \
+                in the parent folder. That is, path should be in the form path_to_array_group/array_group/array",
+    )
     scenarios: List[Scenario] = Field(
         description="Climate change scenarios for which the indicator is available."
     )

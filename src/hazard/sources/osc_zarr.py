@@ -68,18 +68,18 @@ class OscZarr(ReadWriteDataArray):
         transform: Affine,
         crs: str,
         overwrite=False,
-        index_name: Optional[str] = None,
-        indexes=[0],
+        index_name: Optional[str] = "index",
+        index_values: Any = [0],
         chunks=None,
     ):
         return self._zarr_create(
             path,
-            (len(indexes), height, width),
+            (len(index_values), height, width),
             transform,
             str(crs),
             overwrite,
             index_name=index_name,
-            indexes=indexes,
+            index_values=index_values,
             chunks=chunks,
         )
 
@@ -149,9 +149,16 @@ class OscZarr(ReadWriteDataArray):
         spatial_coords: Optional[bool] = True,
     ):
         if self.write_xarray_compatible_zarr and spatial_coords:
-            self.write_data_array(f"{path}_xarray", da)
-
-        self.write_zarr(path, da, chunks)
+            pp = PurePosixPath(path)
+            if da.name != pp.name:
+                raise ValueError(
+                    f"when writing NetCDF style coordinates, final element of path (here {pp.name}) must be \
+                                 the same as the array name (here {da.name})"
+                )
+            parent_path = pp.parent
+            self.write_data_array(str(parent_path), da)
+        else:
+            self.write_zarr(path, da, chunks)
 
     def write_zarr(
         self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None
@@ -162,6 +169,10 @@ class OscZarr(ReadWriteDataArray):
             path (str): Relative path.
             da (xr.DataArray): The DataArray.
         """
+        if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
+            raise ValueError("longitude or x dimension not found.")
+        if "lat" not in da.dims and "latitude" not in da.dims and "y" not in da.dims:
+            raise ValueError("latitude dimension not found.")
         da_norm = xarray_utilities.normalize_array(da)
         data, transform, crs = xarray_utilities.get_array_components(
             da_norm, assume_normalized=True
@@ -170,8 +181,11 @@ class OscZarr(ReadWriteDataArray):
             path,
             da_norm.shape,
             transform,
-            crs.to_string(),
-            indexes=da_norm.index.data,
+            str(crs),
+            index_name=str(da_norm.dims[0]),
+            index_values=da_norm[
+                da_norm.dims[0]
+            ].data,  # the index dimension; allow to have name other than 'index'
             chunks=chunks,
         )
         z[:, :, :] = data[:, :, :]
@@ -197,9 +211,11 @@ class OscZarr(ReadWriteDataArray):
             path,
             da.shape,
             transform,
-            crs.to_string(),
+            str(crs),
             overwrite=True,
-            indexes=da.coords["index"].data,
+            index_values=da[
+                da.dims[0]
+            ].data,  # the index dimension; alow to have name other than 'index'
         )
         return self._data_array_from_zarr(z)
 
@@ -215,19 +231,31 @@ class OscZarr(ReadWriteDataArray):
             da (xr.DataArray): The DataArray.
         """
         # we expect the data to be called 'data'
-        if "lon" not in da.dims and "longitude" not in da.dims:
-            raise ValueError("longitude dimension not found.")
-        if "lat" not in da.dims and "latitude" not in da.dims:
-            raise ValueError("latitude dimension not found.")
-        try:
-            renamed = da.rename({"lat": "latitude", "lon": "longitude"})
-        except Exception:
-            renamed = da
-        renamed.name = "data"
-        _, transform, crs = xarray_utilities.get_array_components(renamed)
-        self._add_attributes(renamed.attrs, transform, crs.to_string())
-        renamed.to_dataset().to_zarr(
-            self.root.store, compute=True, group=path, mode="w", consolidated=True
+        if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
+            raise ValueError("longitude or x dimension not found.")
+        if "lat" not in da.dims and "latitude" not in da.dims and "y" not in da.dims:
+            raise ValueError("latitude or y dimension not found.")
+        da_norm = xarray_utilities.normalize_array(da)
+        _, transform, crs = xarray_utilities.get_array_components(
+            da_norm, assume_normalized=True
+        )
+        self._add_attributes(
+            da_norm.attrs,
+            transform,
+            str(crs),
+            index_name=str(da_norm.dims[0]),
+            index_values=da_norm[da_norm.dims[0]].data,
+        )
+        options = {"write_empty_chunks": False}
+        if da.chunks is None:
+            options["chunks"] = self._chunks(da_norm[da_norm.dims[0]].data)
+        da_norm.to_dataset().to_zarr(
+            self.root.store,
+            compute=True,
+            group=path,
+            mode="w",
+            consolidated=False,
+            encoding={da_norm.name: options},
         )
 
     @staticmethod
@@ -249,7 +277,7 @@ class OscZarr(ReadWriteDataArray):
         crs: str,
         overwrite=False,
         index_name: Optional[str] = None,
-        indexes=None,
+        index_values: Any = None,
         chunks=None,
     ):
         """
@@ -262,12 +290,15 @@ class OscZarr(ReadWriteDataArray):
         if len(shape) == 3:
             zarr_shape = shape
         elif len(shape) == 2:
-            zarr_shape = (1 if indexes is None else len(indexes), shape[0], shape[1])
+            zarr_shape = (
+                1 if index_values is None else len(index_values),
+                shape[0],
+                shape[1],
+            )
         else:
             raise ValueError("shape of DataArray must have length of 2 or 3.")
         if chunks is None:
-            chunk_dim = 1000 if len(indexes) < 10 else 500
-            chunks = (1 if indexes is None else len(indexes), chunk_dim, chunk_dim)
+            chunks = self._chunks(index_values)
         z = self.root.create_dataset(
             path,
             shape=zarr_shape,
@@ -277,14 +308,14 @@ class OscZarr(ReadWriteDataArray):
             write_empty_chunks=False,
             fill_value=float("nan"),
         )  # array_path interpreted as path within group
-        if isinstance(indexes, np.ndarray) and indexes.dtype in [
+        if isinstance(index_values, np.ndarray) and index_values.dtype in [
             "int16",
             "int32",
             "int64",
         ]:
-            indexes = [int(i) for i in indexes]
+            index_values = [int(i) for i in index_values]
         self._add_attributes(
-            z.attrs, transform, crs, index_name=index_name, indexes=indexes
+            z.attrs, transform, crs, index_name=index_name, index_values=index_values
         )
         return z
 
@@ -294,7 +325,8 @@ class OscZarr(ReadWriteDataArray):
         transform: Affine,
         crs: str,
         index_name: Optional[str] = None,
-        indexes=None,
+        index_values: Any = None,
+        index_units: str = "",
     ):
         trans_members = [
             transform.a,
@@ -309,13 +341,20 @@ class OscZarr(ReadWriteDataArray):
         use_xy = crs.upper() != "EPSG:4326"
         attrs["transform_mat3x3"] = mat3x3
         attrs["dimensions"] = (
-            ["index", "y", "x"] if use_xy else ["index", "latitude", "longitude"]
+            [index_name, "y", "x"] if use_xy else [index_name, "latitude", "longitude"]
         )
-        if indexes is not None:
-            attrs["index_values"] = list(indexes)
-            attrs["index_name"] = (
-                index_name if index_name is not None else "return period (years)"
-            )
+        if index_values is not None:
+            attrs[f"{index_name}_values"] = list(index_values)
+            attrs[f"{index_name}_units"] = index_units
+
+    def _chunks(self, index_values: List[Any]):
+        chunk_dim = 1000 if len(index_values) < 10 else 500
+        chunks = (
+            1 if index_values is None else len(index_values),
+            chunk_dim,
+            chunk_dim,
+        )
+        return chunks
 
     @staticmethod
     def normalize_dims(da: xr.DataArray) -> xr.DataArray:
