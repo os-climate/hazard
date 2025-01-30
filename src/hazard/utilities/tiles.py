@@ -62,9 +62,8 @@ def create_tiles_for_resource(
                 map_path = resource.map.path.format(scenario=scenario.id, year=year)
                 if resource.map.index_values is not None:
                     da = source.read(path)
-                    indexes = list(
-                        da[da.dims[0]].values
-                    )  # should be the index dimension
+                    index_dim = da.dims[0]  # should be the index dimension
+                    indexes = list(da[index_dim].values)
                     indices = [indexes.index(v) for v in resource.map.index_values]
                 create_tile_set(
                     source,
