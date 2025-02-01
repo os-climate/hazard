@@ -366,4 +366,4 @@ def test_wisc_european_storm(test_output_dir):
     source_dir = os.path.join(test_output_dir, "wisc")
     working_dir = source_dir
     source = WISCWinterStormEventSource(source_dir)
-    source.rechunk_events(working_dir)
+    source.peak_annual_gust_speed(working_dir)

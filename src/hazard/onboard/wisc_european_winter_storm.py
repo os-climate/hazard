@@ -95,7 +95,7 @@ class WISCWinterStormEventSource(OpenDataset):
         ...
 
     def occurrence_exceedance_count(self):
-        wind_speeds = np.concatenate([np.arange(10, 29, 1), np.arange(28.5, 40, 0.5), np.arange(40, 45), np.arange(45, 70, 5)])
+        wind_speeds = np.concatenate([np.arange(5, 29, 1), np.arange(28.5, 40, 0.5), np.arange(40, 50), np.arange(50, 105, 5)])
         
         first_file = self._file_list(self.years[0])[0]
         first = xr.open_dataset(first_file)
@@ -120,55 +120,57 @@ class WISCWinterStormEventSource(OpenDataset):
                         exceedance_count[i, :, :] += count
         return exceedance_count    
     
-    # def rechunk_events(self, working_dir: Path):
-    #     first_file = self._file_list(self.years[0])[0]
-    #     all_files = [f for y in self.years for f in self._file_list(y)]
-    #     first = xr.open_dataset(first_file)
-    #     n_events = len(all_files)
-    #     transform = first.rio.transform()
-    #     target = empty_data_array(first.lon.size, first.lat.size,
-    #                               transform=transform,
-    #                               crs=str(first.attrs.get("crs", "EPSG:4326")),
-    #                               index_name="event_index",
-    #                               index_values=list(np.arange(n_events)),
-    #                               chunks=[n_events, 100, 100])
-    #     store = zarr.DirectoryStore(Path(working_dir) / "temp")
-    #     partial = empty_data_array(first.lon.size, first.lat.size,
-    #                               transform=transform,
-    #                               crs=str(first.attrs.get("crs", "EPSG:4326")),
-    #                               index_name="event_index",
-    #                               index_values=[0],
-    #                               chunks=[1, first.lat.size, first.lon.size]).to_dataset(name="event_wind_speed")
-    #     #https://docs.xarray.dev/en/stable/user-guide/io.html
-    #     # distributed writes
-    #     ds = target.to_dataset(name="event_wind_speed")
-    #     ds.to_zarr(store=store,
-    #                group="event_wind_speed",
-    #                compute=False,
-    #                mode="w",
-    #                encoding={"event_wind_speed" : {
-    #                     "chunks" : (1, 100, 100), # n_events
-    #                     "write_empty_chunks": False,
-    #                 }
-    #             })
-    #     i = 0
-    #     for file in all_files:
-    #         if i % 50 == 0:
-    #             logger.info(f"Event {i} of {len(all_files)}")
-    #         with xr.open_dataset(file) as eds:
-    #             #eds = eds.expand_dims("event_index", axis=0)
-    #             #eds = eds.rename({"lon": "longitude", "lat": "latitude", "wind_speed_of_gust": "event_wind_speed"})
-    #             #eds = eds.rename_dims({"lon": "longitude", "lat": "latitude"})
-    #             #target[i, :, :] = eds[:, :]
-    #             partial.event_wind_speed[0, :, :] = eds.wind_speed_of_gust[:, :]
-    #             partial.compute()
-    #             #partial.to_zarr(store=store, 
-    #             #    group="event_wind_speed",
-    #             #    region = { "event_index": slice(i, i + 1), 
-    #             #            "latitude": slice(0, partial.latitude.size),
-    #             #            "longitude": slice(0, partial.longitude.size)  }
-    #             #)
-    #         i = i + 1
+    def peak_annual_gust_speed(self, working_dir: Path):
+        first_file = self._file_list(self.years[0])[0]
+        all_files = [f for y in self.years for f in self._file_list(y)]
+        first = xr.open_dataset(first_file)
+        transform = first.rio.transform()
+
+        n_years = 5 * 26
+        target = empty_data_array(first.lon.size, first.lat.size,
+                                  transform=transform,
+                                  crs=str(first.attrs.get("crs", "EPSG:4326")),
+                                  index_name="year",
+                                  index_values=list(np.arange(n_years)),
+                                  chunks=[n_years, 100, 100])
+
+        events_per_ensemble = np.zeros(5)
+        for f in all_files:
+            ensemble_index = int(Path(all_files[0]).name.split("_")[6][-1]) - 1
+            events_per_ensemble[ensemble_index] = events_per_ensemble[ensemble_index] + 1
+
+        for year_set_index, y in enumerate(self.years):
+            for f in self._file_list(y):
+                ensemble_index = int(Path(all_files[0]).name.split("_")[6][-1]) - 1
+                year_index = year_set_index * 5 + ensemble_index
+                with xr.open_dataset(f) as eds:
+                    target[year_index, :, :] = np.maximum(target[year_index, :, :], eds[:, :])
+
+        # store = zarr.DirectoryStore(Path(working_dir) / "temp")
+
+        # #https://docs.xarray.dev/en/stable/user-guide/io.html
+        # # distributed writes
+        # ds = target.to_dataset(name="event_wind_speed")
+        # ds.to_zarr(store=store,
+        #            group="event_wind_speed",
+        #            compute=False,
+        #            mode="w",
+        #            encoding={"event_wind_speed" : {
+        #                 "chunks" : (1, 100, 100), # n_events
+        #                 "write_empty_chunks": False,
+        #             }
+        #         })
+        # i = 0
+        # for file in all_files:
+        #     if i % 50 == 0:
+        #         logger.info(f"Event {i} of {len(all_files)}")
+
+                #partial.to_zarr(store=store, 
+                #    group="event_wind_speed",
+                #    region = { "event_index": slice(i, i + 1), 
+                #            "latitude": slice(0, partial.latitude.size),
+                #            "longitude": slice(0, partial.longitude.size)  }
+                #)
 
     def _gev_cdf(self, x, mu, xi, sigma):
         exponent = -(1 + xi * ((x - mu) / sigma))**(-1 / xi)
@@ -178,7 +180,7 @@ class WISCWinterStormEventSource(OpenDataset):
         x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p))**(-xi))
         return x_p
 
-    def fit(self, exceedance_count: xr.DataArray, p_tail: float = 0.0025):
+    def fit(self, exceedance_count: xr.DataArray, p_tail: float = 1/5):
         return_periods = np.array([5, 10, 20, 50, 100, 200, 500])     
         data = np.zeros((len(return_periods), exceedance_count.lat.size, exceedance_count.lon.size))
         fitted_speeds = xr.DataArray(data=data, coords={"return_period": return_periods, 
@@ -188,8 +190,9 @@ class WISCWinterStormEventSource(OpenDataset):
         fitted_speeds[:, :, :] = float('nan')
         
         n_events = 7660
+        n_years = 26 * 5
         wind_speed = exceedance_count.wind_speed.data
-        prob_in_set = (1 / return_periods) * 5 * 26 / 7660
+        probs = (1 / return_periods)
         # 1-in-10 year events should happen on average 0.1 * 26 * 5 = 13 times with 5 ensembles of 26 years each.
         # 13 events represents the top 13/7660 = 0.17% of the event set; this gives an idea where the 'tail' starts.
         with warnings.catch_warnings():
@@ -200,16 +203,19 @@ class WISCWinterStormEventSource(OpenDataset):
                     logger.info(f"{percent}% complete")
             
                 for i in range(exceedance_count.lon.size):
-                    set_exceed_prob = exceedance_count[:, j, i].data / n_events
-                    condition = (set_exceed_prob > 0) & (set_exceed_prob <= p_tail)
+                    #set_exceed_prob = exceedance_count[:, j, i].data / n_events
+
+                    exceed_prob = exceedance_count[:, j, i].data / n_years
+
+                    condition = (exceed_prob > 0) & (exceed_prob <= p_tail)
                     # we calculate parameters using the occurrence exceedance probability and associated wind speed
                     # Note it is 1-prob as our probs range from 0 -> 0.05 but in a CDF probs increase always therefore we need 0.95 -> 100 
                     try:
-                        cdf_params = curve_fit(self._gev_icdf, set_exceed_prob[condition], wind_speed[condition])
+                        cdf_params = curve_fit(self._gev_icdf, exceed_prob[condition], wind_speed[condition])
                         #cdf_params = curve_fit(self._gev_cdf, wind_speed[condition], 1 - set_exceed_prob[condition], 
                         #                       maxfev=800) # p0 = [40, 2, 0.0001]
                         [mu, xi, sigma] = cdf_params[0]
-                        fitted_speeds[:, j, i] = self._gev_icdf(prob_in_set, mu, xi, sigma)
+                        fitted_speeds[:, j, i] = self._gev_icdf(probs, mu, xi, sigma)
                     except Exception as e:
                         fitted_speeds[:, j, i] = float("nan")
         return fitted_speeds
