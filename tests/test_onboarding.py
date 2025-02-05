@@ -28,7 +28,7 @@ from hazard.onboard.jupiter import (
 from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
 from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
-from hazard.onboard.wisc_european_winter_storm import WISCWinterStormEventSource
+from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm, WISCWinterStormEventSource
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRisk,
@@ -365,5 +365,9 @@ def test_rain_european_storm(test_output_dir):
 def test_wisc_european_storm(test_output_dir):
     source_dir = os.path.join(test_output_dir, "wisc")
     working_dir = source_dir
+    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
+    target = OscZarr(store=store)
     source = WISCWinterStormEventSource(source_dir)
-    source.peak_annual_gust_speed(working_dir)
+    model = WISCEuropeanWinterStorm()
+    #model.run_all(source, target)
+    model.create_maps(target, target)
