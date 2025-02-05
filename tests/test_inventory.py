@@ -52,7 +52,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
         TUDelftRiverFlood(None),
         FLOPROSFloodStandardOfProtection(),
         DavydzenkaEtAlLandSubsidence(None),
-        WISCEuropeanWinterStorm()
+        WISCEuropeanWinterStorm(),
     ]
 
     docs_store.write_new_empty_inventory()

@@ -279,7 +279,7 @@ def empty_data_array(
         crs,
         index_name=index_name,
         index_units=index_units,
-        index_values=index_values
+        index_values=index_values,
     )
 
 

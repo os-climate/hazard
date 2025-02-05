@@ -7,4 +7,4 @@ The WISC dataset contains a set of synthetic windstorm events consisting of 22,9
 storm footprints over Europe. These are a physically realistic set of plausible windstorm
 events based on the modelled climatic conditions, calculated using the Met Office HadGEM3 model
 (Global Atmosphere 3 and Global Land 3 configurations).
-Return period maps of peak gust wind speed are inferred from this data. 
+Return period maps of peak gust wind speed are inferred from this data.

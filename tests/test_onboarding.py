@@ -28,7 +28,10 @@ from hazard.onboard.jupiter import (
 from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
 from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
-from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm, WISCWinterStormEventSource
+from hazard.onboard.wisc_european_winter_storm import (
+    WISCEuropeanWinterStorm,
+    WISCWinterStormEventSource,
+)
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRisk,
@@ -317,7 +320,7 @@ def test_onboard_coastalflood_tudelft(test_output_dir):
     # model.create_maps(target, target)
 
 
-#def test_promote(s3_credentials):
+# def test_promote(s3_credentials):
 #    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
 #    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
 
@@ -369,5 +372,5 @@ def test_wisc_european_storm(test_output_dir):
     target = OscZarr(store=store)
     source = WISCWinterStormEventSource(source_dir)
     model = WISCEuropeanWinterStorm()
-    #model.run_all(source, target)
+    # model.run_all(source, target)
     model.create_maps(target, target)
