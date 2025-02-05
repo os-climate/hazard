@@ -19,7 +19,9 @@ hazard_workflow_input.yml
 node_modules
 
 # Credentials / Secrets
-credentials.env
+credentials*.json
+credentials*.env
+credentials*.toml
 config.toml
 
 # Byte-compiled / optimized / DLL files
@@ -183,7 +185,6 @@ docker-compose_aws.yml
 .noseids
 test/.DS_Store
 .DS_Store
-tests/test_output/*
 
 # pytype static type analyzer
 .pytype/

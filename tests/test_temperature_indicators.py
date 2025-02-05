@@ -12,12 +12,11 @@ from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndica
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr  # type: ignore
 
-from .conftest import (  # noqa:F401 - Used as it's a fixture
+from .conftest import (
     TestSource,
     TestTarget,
     _create_test_datasets_hurs,
     _create_test_datasets_tas,
-    test_output_dir,
 )
 
 
@@ -117,7 +116,9 @@ def test_days_tas_above(test_output_dir):  # noqa: F811
     model.run_all(source, target)
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=["tas"]):  # noqa: F811
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=None):  # noqa: F811
+    if indicators is None:
+        indicators = ["tas"]
     store = NexGddpCmip6()
     s3 = s3fs.S3FileSystem(anon=True)
     for year in years:

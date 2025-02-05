@@ -1,12 +1,17 @@
+"""Module for handling the onboarding and processing of ETHZLitpop data."""
+
 import logging
 import os
 from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Any, Dict, Iterable, Optional
+from pathlib import PurePath
+import tarfile
+from typing_extensions import Any, Dict, Iterable, Optional, override
 
 import numpy as np
-import pandas as pd
 import xarray as xr
+import dask
+import dask.array as da
+import dask.dataframe as dd
 from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
@@ -15,7 +20,7 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.download_utilities import download_and_unzip
+from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import affine_to_coords, global_crs_transform
 
@@ -24,19 +29,22 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represents a batch item for hazard processing, including scenario, year, and key."""
+
     scenario: str
     year: int
     key: str
 
 
 class ETHZurichLitPop(IndicatorModel[BatchItem]):
+    """On-board returns data set from ETHZurichLitPop."""
+
     def __init__(
         self,
-        source_dir: str,
+        source_dir_base: str,
         fs: Optional[AbstractFileSystem] = None,
     ):
-        """
-        Define every attribute of the onboarding class for the ETH Zurich LitPop data.
+        """Define every attribute of the onboarding class for the ETH Zurich LitPop data.
 
         METADATA:
         Link: https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/409595/essd-12-817-2020.pdf
@@ -54,70 +62,135 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         (Pop, based on Gridded Population of the World, Version 4.1).
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none,
             a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.zip_url = "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/331316/LitPop_v1_2.tar"
-        self.source_dir = os.path.join(
-            source_dir, self.zip_url.split("/")[-1].split(".")[0]
-        )
-        if not (os.path.exists(self.source_dir)):
-            self.prepare(source_dir)
+        self.dataset_filename = "LitPop_v1_2.tar"
+
+        self.urls = {
+            "LitPop_v1_2.tar": "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/331316/LitPop_v1_2.tar"
+        }
+        self.source_dir = os.path.join(source_dir_base, "ethz_litpop")
+        # if not (os.path.exists(self.source_dir)):
+        #     self.prepare(self.source_dir)
+
         self.resources = self._resources()
 
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+
+        if (
+            not self.fs.exists(PurePath(download_dir, self.dataset_filename))
+            or force_download
+        ):
+            download_file(
+                url=self.urls[self.dataset_filename],
+                directory=download_dir,
+                filename=self.dataset_filename,
+                force_download=force_download,
+            )
+
+        with tarfile.open(
+            os.path.join(download_dir, self.dataset_filename), "r"
+        ) as tar:
+            tar2source = {
+                member.name: PurePath(
+                    self.source_dir, os.path.basename(member.name)
+                ).as_posix()
+                for member in tar.getmembers()
+                if member.isfile()
+            }
+
+            for tname, target_file in tar2source.items():
+                with self.fs.open(target_file, mode="wb") as mifi:
+                    extracted_file = tar.extractfile(tname)
+                    if extracted_file:
+                        mifi.write(extracted_file.read())
+
     def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
         return [
             BatchItem(scenario="historical", year=2014, key=key)
             for key in self.resources
         ]
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3; download to specified working directory,
-            # but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(
-                self.zip_url, working_dir, self.zip_url.split("/")[-1].split(".")[0]
-            )
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
 
     def run_single(
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
     ):
+        """Process a single batch item and writes the data to the Zarr store."""
         assert item.key in self.resources
         assert target is None or isinstance(target, OscZarr)
 
         width, height = 120 * 360, 120 * 180
+        chunks = (1000, 1000)
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
-        data = xr.DataArray(coords=coords, dims=coords.keys())
+        data = xr.DataArray(
+            da.zeros((height, width), chunks=chunks), coords=coords, dims=coords.keys()
+        )
 
         column = "region_id" if item.key == "litpop" else "value"
 
-        for file in os.listdir(self.source_dir):
-            logger.info(f"Loading {file}")
-            df = pd.read_csv(
-                os.path.join(self.source_dir, file),
-                usecols=[column, "latitude", "longitude"],
-            )
-            image_coords = OscZarr._get_coordinates(
-                df["longitude"], df["latitude"], transform
-            )
-            image_coords = np.floor(image_coords).astype(int)
+        @dask.delayed
+        def process_single_file(file_path):
+            try:
+                logger.info(f"Loading {file_path}")
+
+                df = dd.read_csv(
+                    file_path,
+                    usecols=[column, "latitude", "longitude"],
+                )
+                image_coords = OscZarr._get_coordinates(
+                    df["longitude"].compute(), df["latitude"].compute(), transform
+                )
+                image_coords = np.floor(image_coords).astype(int)
+
+                return image_coords, df[column].compute(), file_path
+            except UnicodeDecodeError:
+                logger.warning(f"Error reading {file_path}")
+                return None, None, None
+            except Exception as e:
+                logger.error(f"Failed to process {file_path}: {e}")
+                return None, None, None
+
+        files = [os.path.join(self.source_dir, f) for f in os.listdir(self.source_dir)]
+
+        results = [process_single_file(file) for file in files]
+
+        for image_coords, values, file in dask.compute(*results):
+            if image_coords is None:
+                continue
             for i_lat, i_lon, value in zip(
-                image_coords[1, :], image_coords[0, :], df[column]
+                image_coords[1, :], image_coords[0, :], values
             ):
                 data[i_lat, i_lon] = value
-            logger.info("Loading complete for {file}")
+
+            logger.info(f"Finished writing data to DataArray for {file}")
 
         path = self.resources[item.key].path.format(
             scenario=item.scenario, year=item.year
@@ -127,9 +200,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         logger.info(f"Writing complete for {path}")
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         for key in self.resources:
             create_tiles_for_resource(source, target, self.resources[key])
 
