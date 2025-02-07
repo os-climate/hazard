@@ -20,6 +20,7 @@ def days_tas_above_indicator(
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs,  # To allow for extra parameters to the CLI, due to how CWL will provide all input parameters
 ):
     hazard_services.days_tas_above_indicator(
         source_dataset,
@@ -52,6 +53,7 @@ def degree_days_indicator(
     store: Optional[str] = None,
     write_xarray_compatible_zarr: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs,  # To allow for extra parameters to the CLI, due to how CWL will provide all input parameters
 ):
     hazard_services.degree_days_indicator(
         source_dataset,
