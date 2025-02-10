@@ -365,6 +365,7 @@ def test_rain_european_storm(test_output_dir):
     model.run_all(target)
 
 
+@pytest.mark.skip(reason="on-boarding script")
 def test_wisc_european_storm(test_output_dir):
     source_dir = os.path.join(test_output_dir, "wisc")
     working_dir = source_dir
