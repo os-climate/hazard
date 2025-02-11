@@ -367,11 +367,10 @@ def test_rain_european_storm(test_output_dir):
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_wisc_european_storm(test_output_dir):
-    source_dir = os.path.join(test_output_dir, "wisc")
-    working_dir = source_dir
+    # source_dir = os.path.join(test_output_dir, "wisc")
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    source = WISCWinterStormEventSource(source_dir)
+    # source = WISCWinterStormEventSource(source_dir)
     model = WISCEuropeanWinterStorm()
     # model.run_all(source, target)
     model.create_maps(target, target)
