@@ -15,6 +15,7 @@ from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
 from hazard.onboard.tudelft_flood import TUDelftRiverFlood
+from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.utilities import zarr_utilities  # type: ignore
@@ -51,6 +52,7 @@ def test_create_inventory(test_output_dir):  # noqa: F811
         TUDelftRiverFlood(None),
         FLOPROSFloodStandardOfProtection(),
         DavydzenkaEtAlLandSubsidence(None),
+        WISCEuropeanWinterStorm(),
     ]
 
     docs_store.write_new_empty_inventory()
