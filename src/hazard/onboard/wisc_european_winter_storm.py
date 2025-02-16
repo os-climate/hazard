@@ -6,7 +6,6 @@ from typing import Any, Dict, Iterable, List, Optional
 import warnings
 import zipfile
 
-import cdsapi
 from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
@@ -79,6 +78,7 @@ class WISCWinterStormEventSource(OpenDataset):
 
     def _download_all(self, working_dir: Path):
         try:
+            import cdsapi
             client = cdsapi.Client(sleep_max=5, timeout=240, retry_max=50)
             synth_set = 1.2
             for i, year in enumerate(self.years):
