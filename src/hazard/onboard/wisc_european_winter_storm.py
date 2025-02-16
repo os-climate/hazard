@@ -250,11 +250,11 @@ class WISCWinterStormEventSource(OpenDataset):
                 cond = reduced_variate > 1
                 y = reduced_variate[cond]
                 x = sorted_samples[cond]
-                a = np.vstack([y, np.ones(len(y))]).T
+                am = np.vstack([y, np.ones(len(y))]).T
                 # w = np.ones(len(x)) # diagonal of weight matrix
-                # Aw = A * np.sqrt(w[:,np.newaxis])
+                # Aw = A * np.sqrt(w[:,np.newaxis]) 
                 # wx = x * np.sqrt(w)
-                alpha, beta = np.linalg.lstsq(a, x, rcond=None)[0]
+                alpha, beta = np.linalg.lstsq(am, x, rcond=None)[0]
                 cum_prob = 1 - 1 / return_periods
                 fitted_speeds[:, j, i] = alpha * -np.log(-np.log(cum_prob)) + beta
         return fitted_speeds
