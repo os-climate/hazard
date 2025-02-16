@@ -79,6 +79,7 @@ class WISCWinterStormEventSource(OpenDataset):
     def _download_all(self, working_dir: Path):
         try:
             import cdsapi
+
             client = cdsapi.Client(sleep_max=5, timeout=240, retry_max=50)
             synth_set = 1.2
             for i, year in enumerate(self.years):
