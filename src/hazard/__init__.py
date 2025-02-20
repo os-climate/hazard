@@ -22,6 +22,7 @@ from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
+from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 
 hazard_map = {
     "DavydzenkaEtAlLandSubsidence": DavydzenkaEtAlLandSubsidence,
@@ -42,6 +43,7 @@ hazard_map = {
     "WetBulbGlobeTemperatureAboveIndicator": WetBulbGlobeTemperatureAboveIndicator,
     "WRIAqueductFlood": WRIAqueductFlood,
     "WRIAqueductWaterRisk": WRIAqueductWaterRisk,
+    "WISCEuropeanWinterStorm": WISCEuropeanWinterStorm,
 }
 
 

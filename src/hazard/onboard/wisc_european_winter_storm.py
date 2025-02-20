@@ -1,11 +1,14 @@
 import glob
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from pathlib import Path, PurePath, PurePosixPath
+from threading import local
+from typing_extensions import Any, Dict, Iterable, List, Optional, override
 import warnings
 import zipfile
 
+import toml
+import cdsapi
 from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
@@ -28,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class WISCWinterStormEventSource(OpenDataset):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
         """Source that can create WISC return period wind speed maps from the event set:
         https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
         https://cds.climate.copernicus.eu/how-to-api
@@ -40,7 +43,9 @@ class WISCWinterStormEventSource(OpenDataset):
             If None, a LocalFileSystem is used.
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = (
+            PurePath(source_dir_base, "wisc_european_winter_storm").as_posix() + "/"
+        )
         self.years = [
             1986,
             1987,
@@ -69,49 +74,157 @@ class WISCWinterStormEventSource(OpenDataset):
             2010,
             2011,
         ]
+        self.source_files = [
+            "1986_data_1.2.zip",
+            "1987_data_1.2.zip",
+            "1988_data_1.2.zip",
+            "1989_data_1.2.zip",
+            "1990_data_1.2.zip",
+            "1991_data_1.2.zip",
+            "1992_data_1.2.zip",
+            "1993_data_1.2.zip",
+            "1994_data_1.2.zip",
+            "1995_data_1.2.zip",
+            "1996_data_1.2.zip",
+            "1997_data_1.2.zip",
+            "1998_data_1.2.zip",
+            "1999_data_1.2.zip",
+            "2000_data_1.2.zip",
+            "2001_data_1.2.zip",
+            "2002_data_1.2.zip",
+            "2003_data_1.2.zip",
+            "2004_data_1.2.zip",
+            "2005_data_1.2.zip",
+            "2006_data_1.2.zip",
+            "2007_data_1.2.zip",
+            "2008_data_1.2.zip",
+            "2009_data_1.2.zip",
+            "2010_data_1.2.zip",
+            "2011_data_1.2.zip",
+        ]
         # synth_sets = [1.2, 2.0, 3.0]
         self.synth_set = 1.2
+        self.credentials = toml.load("api_credentials.toml")
 
-    def prepare_source_files(self, working_dir: Path):
-        self._download_all(working_dir)
-        self._extract_all(working_dir)
-
-    def _download_all(self, working_dir: Path):
-        try:
-            import cdsapi
-
-            client = cdsapi.Client(sleep_max=5, timeout=240, retry_max=50)
-            synth_set = 1.2
-            for i, year in enumerate(self.years):
-                logger.info(
-                    f"downloading year {i + 1} / len(years) for synth set {synth_set}"
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        os.makedirs(self.source_dir, exist_ok=True)
+        missing_files = {
+            a
+            for a in self.source_files
+            if not self.fs.exists(PurePosixPath(self.source_dir, a))
+        }
+        if len(missing_files) > 0 or force_download:
+            try:
+                client = cdsapi.Client(
+                    url=self.credentials["cdsapi"]["CDSAPI_URL"],
+                    key=self.credentials["cdsapi"]["CDSAPI_KEY"],
+                    sleep_max=5,
+                    timeout=240,
+                    retry_max=50,
                 )
-                target = working_dir / f"{year}_data_{synth_set}.zip"
-                client.retrieve(
-                    "sis-european-wind-storm-synthetic-events",
-                    {
-                        "format": "zip",
-                        "version_id": "synthetic_set_2_0",
-                        "year": f"{year}",
-                        "month": ["01", "02", "03", "04", "05", "09", "10", "11", "12"],
-                        "variable": "wind_speed_of_gusts",
-                    },
-                    target,
+                synth_set = 1.2
+                for i, year in enumerate(self.years):
+                    logger.info(
+                        f"downloading year {i + 1} / len(years) for synth set {synth_set}"
+                    )
+                    target = Path(self.source_dir) / f"{year}_data_{synth_set}.zip"
+                    client.retrieve(
+                        "sis-european-wind-storm-synthetic-events",
+                        {
+                            "format": "zip",
+                            "version_id": "synthetic_set_2_0",
+                            "year": f"{year}",
+                            "month": [
+                                "01",
+                                "02",
+                                "03",
+                                "04",
+                                "05",
+                                "09",
+                                "10",
+                                "11",
+                                "12",
+                            ],
+                            "variable": "wind_speed_of_gusts",
+                        },
+                        target,
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to download. Check https://cds.climate.copernicus.eu/how-to-api for setting up account and credentials."
                 )
-        except Exception:
-            logger.exception(
-                "Failed to download. Check https://cds.climate.copernicus.eu/how-to-api for setting up account and credentials."
-            )
 
-    def _extract_all(self, working_dir: Path):
         for year in self.years:
             set_name = f"{year}_data_{self.synth_set}"
             with zipfile.ZipFile(
-                str(working_dir / (set_name + ".zip")), "r"
+                str(Path(self.source_dir) / (set_name + ".zip")), "r"
             ) as zip_ref:
                 zip_ref.extractall(
-                    str(working_dir / str(self.synth_set).replace(".", "_") / str(year))
+                    str(
+                        Path(self.source_dir)
+                        / str(self.synth_set).replace(".", "_")
+                        / str(year)
+                    )
                 )
+
+    # def prepare_source_files(self, working_dir: Path):
+    #     self._download_all(working_dir)
+    #     self._extract_all(working_dir)
+
+    # def _download_all(self, working_dir: Path):
+    #     try:
+    #         client = cdsapi.Client(sleep_max=5, timeout=240, retry_max=50)
+    #         synth_set = 1.2
+    #         for i, year in enumerate(self.years):
+    #             logger.info(
+    #                 f"downloading year {i + 1} / len(years) for synth set {synth_set}"
+    #             )
+    #             target = working_dir / f"{year}_data_{synth_set}.zip"
+    #             client.retrieve(
+    #                 "sis-european-wind-storm-synthetic-events",
+    #                 {
+    #                     "format": "zip",
+    #                     "version_id": "synthetic_set_2_0",
+    #                     "year": f"{year}",
+    #                     "month": ["01", "02", "03", "04", "05", "09", "10", "11", "12"],
+    #                     "variable": "wind_speed_of_gusts",
+    #                 },
+    #                 target,
+    #             )
+    #     except:
+    #         logger.exception(
+    #             "Failed to download. Check https://cds.climate.copernicus.eu/how-to-api for setting up account and credentials."
+    #         )
+
+    # def _extract_all(self, working_dir: Path):
+    #     for year in self.years:
+    #         set_name = f"{year}_data_{self.synth_set}"
+    #         with zipfile.ZipFile(
+    #             str(working_dir / (set_name + ".zip")), "r"
+    #         ) as zip_ref:
+    #             zip_ref.extractall(
+    #                 str(working_dir / str(self.synth_set).replace(".", "_") / str(year))
+    #             )
+
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard a single batch of hazard data into the system.
+
+        Args:
+            target: Target system for writing the processed data.
+            download_dir (str): Directory where downloaded files will be stored.
+            force_prepare(bool): Flag to force data preparation. Default is False
+            force_download(bool):Flag to force re-download of data. Default is False
+
+        """
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
 
     def occurrence_exceedance_count(self):
         """Calculate occurrence exceedance count (i.e. number of events). Only used for diagnostic purposes.
@@ -328,7 +441,7 @@ class WISCWinterStormEventSource(OpenDataset):
 
 
 class WISCEuropeanWinterStorm(IndicatorModel[str]):
-    def __init__(self):
+    def __init__(self, source_dir_base: str):
         """
         Peak 3s gust wind speed for different return periods inferred from the WISC event set.
 
@@ -351,20 +464,20 @@ class WISCEuropeanWinterStorm(IndicatorModel[str]):
 
         Special thanks to Annabel Hall; her work on investigating the fitting of the WISC data set is adapted hereunder.
         """
+        self.source_dir = PurePath(source_dir_base).as_posix()
+        self.source = WISCWinterStormEventSource(source_dir_base=self.source_dir)
 
     def batch_items(self):
         """Get a list of all batch items."""
         return ["historical"]
 
-    def run_single(
-        self, item: str, source: Any, target: ReadWriteDataArray, client: Client
-    ):
-        assert isinstance(source, WISCWinterStormEventSource)
+    def run_single(self, item: str, source, target: ReadWriteDataArray, client: Client):
+        # assert isinstance(source, WISCWinterStormEventSource)
         logger.info("Creating data set from events")
         resource = self._resource()
         for scenario in resource.scenarios:
             for year in scenario.years:
-                ds = source.open_dataset_year("", scenario.id, "", year)
+                ds = self.source.open_dataset_year("", scenario.id, "", year)
                 # note that the co-ordinates will be written into the parent of resource.path
                 target.write(
                     resource.path.format(scenario=scenario.id, year=year),
@@ -386,6 +499,27 @@ class WISCEuropeanWinterStorm(IndicatorModel[str]):
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
         return [self._resource()]
+
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.source.prepare(
+            force=force,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+
+    @override
+    def onboard_single(
+        self, target, download_dir=None, force_prepare=False, force_download=False
+    ):
+        """Onboard single-instance water risk data for processing."""
+        self.prepare(
+            force=force_prepare,
+            download_dir=download_dir,
+            force_download=force_download,
+        )
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
+        self.create_maps(target, target)
 
     def _resource(self) -> HazardResource:
         """Create resource."""
