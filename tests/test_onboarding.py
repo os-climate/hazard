@@ -30,7 +30,6 @@ from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wisc_european_winter_storm import (
     WISCEuropeanWinterStorm,
-    WISCWinterStormEventSource,
 )
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
@@ -367,10 +366,11 @@ def test_rain_european_storm(test_output_dir):
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_wisc_european_storm(test_output_dir):
-    # source_dir = os.path.join(test_output_dir, "wisc")
+    source_dir = test_output_dir
+    # working_dir = os.path.join(test_output_dir, "wisc")
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    # source = WISCWinterStormEventSource(source_dir)
-    model = WISCEuropeanWinterStorm()
-    # model.run_all(source, target)
-    model.create_maps(target, target)
+    onboarder = WISCEuropeanWinterStorm(source_dir)
+    # onboarder.prepare(working_dir)
+    onboarder.onboard(target)
+    # model.create_maps(target, target)
