@@ -16,8 +16,10 @@ class Onboarder(ABC):
     or something more complex.
     """
 
-    def __init__(self, source_dir_base: str = "", fs: Optional[AbstractFileSystem] = None):
-        """Create Onboarder instance. The original file set is the starting point on the 
+    def __init__(
+        self, source_dir_base: str = "", fs: Optional[AbstractFileSystem] = None
+    ):
+        """Create Onboarder instance. The original file set is the starting point on the
         onboarding. This is stored in the (abstract) file system specified.
 
         Args:
