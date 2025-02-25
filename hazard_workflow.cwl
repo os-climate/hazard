@@ -10,13 +10,10 @@ $graph:
         ramMax: 4096
 
     inputs:
-      ceda_ftp_username:
+      ceda_username:
         type: string
         default: ""
-      ceda_ftp_password:
-        type: string
-        default: ""
-      ceda_ftp_url:
+      ceda_password:
         type: string
         default: ""
       source_dataset:
@@ -63,9 +60,8 @@ $graph:
       indicator-step:
         run: "#indicator-command"
         in:
-          ceda_ftp_username: ceda_ftp_username
-          ceda_ftp_password: ceda_ftp_password
-          ceda_ftp_url: ceda_ftp_url
+          ceda_username: ceda_username
+          ceda_password: ceda_password
           source_dataset: source_dataset
           source_dataset_kwargs: source_dataset_kwargs
           gcm_list: gcm_list
@@ -88,7 +84,7 @@ $graph:
 
     hints:
       DockerRequirement:
-        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:14edea7
+        dockerPull: public.ecr.aws/c9k5s3u3/os-hazard-indicator:48a77e6
 
     requirements:
       ResourceRequirement:
@@ -98,16 +94,13 @@ $graph:
         networkAccess: true
       EnvVarRequirement:
           envDef:
-            CEDA_FTP_USERNAME: $(inputs.ceda_ftp_username)
-            CEDA_FTP_URL: $(inputs.ceda_ftp_url)
-            CEDA_FTP_PASSWORD: $(inputs.ceda_ftp_password)
+            CEDA_USERNAME: $(inputs.ceda_username)
+            CEDA_PASSWORD: $(inputs.ceda_password)
 
     inputs:
-      ceda_ftp_username:
+      ceda_username:
         type: string
-      ceda_ftp_password:
-        type: string
-      ceda_ftp_url:
+      ceda_password:
         type: string
       source_dataset:
         type: string

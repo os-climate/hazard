@@ -2,14 +2,16 @@ import io
 import logging
 import os
 import re
+from base64 import b64encode
 from contextlib import contextmanager
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Generator, List, Optional, Tuple, Union
 
 import fsspec
 import numpy as np
 import rasterio
 import rasterio.crs
 import rasterio.warp
+import requests
 import xarray as xr
 from rasterio import CRS
 from rioxarray.rioxarray import affine_to_coords
@@ -23,6 +25,12 @@ _RESOLUTION_TO_COLLECTION_MAPPINGS = {
     "5km": "land-cpm",
     "2.2km": "land-cpm",
 }
+_COLLECTION_TO_LATEST_DATA_MAPPINGS = {
+    "land-gcm": "v20181122",
+    "land-rcm": "v20190731",
+    "land-cpm": "v20210615",
+}
+_CEDA_TOKEN_API_URL = "https://services-beta.ceda.ac.uk/api/token/create/"
 
 logger = logging.getLogger(__name__)
 
@@ -32,32 +40,39 @@ class Ukcp18(OpenDataset):
         self,
         dataset_member_id: str = "01",
         dataset_frequency: str = "day",
-        dataset_version: str = "latest",
         domain: str = "uk",
         resolution: str = "12km",
     ):
+        self._token = self.fetch_ceda_token()
+
         self._fs = fsspec.filesystem(
-            "filecache",
-            target_protocol="ftp",
-            target_options={
-                "host": os.environ["CEDA_FTP_URL"],
-                "username": os.environ["CEDA_FTP_USERNAME"],
-                "password": os.environ["CEDA_FTP_PASSWORD"],
-            },
+            protocol="filecache",
+            target_protocol="http",
+            target_options={"headers": {"Authorization": f"Bearer {self._token}"}},
+            timeout=60,
             cache_storage="/tmp/ukcp18cache/",
         )
-        self.quantities: Dict[str, Dict[str, str]] = {
-            "tas": {"name": "Daily average temperature"}
-        }
-
-        # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to # noqa
-        self._dataset_member_id = dataset_member_id
-        self._dataset_frequency = dataset_frequency
-        self._dataset_version = dataset_version
 
         self._collection = _RESOLUTION_TO_COLLECTION_MAPPINGS[resolution]
         self._domain = domain
         self._resolution = resolution
+
+        # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to # noqa
+        self._dataset_member_id = dataset_member_id
+        self._dataset_frequency = dataset_frequency
+        self._dataset_version = _COLLECTION_TO_LATEST_DATA_MAPPINGS[self._collection]
+
+    def fetch_ceda_token(self):
+        ceda_post_token = b64encode(
+            f"{os.environ['CEDA_USERNAME']}:{os.environ['CEDA_PASSWORD']}".encode(
+                "utf-8"
+            )
+        ).decode("ascii")
+        response = requests.post(
+            _CEDA_TOKEN_API_URL, headers={"Authorization": f"Basic {ceda_post_token}"}
+        )
+        response.raise_for_status()
+        return response.json()["access_token"]
 
     def gcms(self) -> List[str]:
         return list("ukcp18")
@@ -109,14 +124,30 @@ class Ukcp18(OpenDataset):
                         crs = crs_mem.open().crs
         return xr.combine_by_coords(datasets, combine_attrs="override"), crs  # type: ignore[return-value]
 
+    def _get_list_of_files_in_json_directory_listing(
+        self, json_directory_listing: str
+    ) -> List[str]:
+        response = requests.get(json_directory_listing)
+        response.raise_for_status()
+        return [
+            item["name"]
+            for item in response.json().get("items", [])
+            if item.get("type") == "file"
+        ]
+
     def _get_files_available_for_quantity_and_year(
         self, gcm: str, scenario: str, quantity: str, year: int
     ) -> List[str]:
-        ftp_url = (
+        data_host = "https://data.ceda.ac.uk"
+        dap_host = "https://dap.ceda.ac.uk"
+        ceda_directory_structure = (
             f"/badc/{gcm}/data/{self._collection}/{self._domain}/{self._resolution}/{scenario}/{self._dataset_member_id}/{quantity}"
-            f"/{self._dataset_frequency}/{self._dataset_version}/"
+            f"/{self._dataset_frequency}/{self._dataset_version}"
         )
-        all_files = self._fs.ls(ftp_url, detail=False)
+        json_directory_listing = f"{data_host}{ceda_directory_structure}?json"
+        all_files = self._get_list_of_files_in_json_directory_listing(
+            json_directory_listing
+        )
         files_that_contain_year = []
         start_end_date_regex = re.compile(r"_(\d{8})-(\d{8})\.nc")
         for file in all_files:
@@ -125,7 +156,9 @@ class Ukcp18(OpenDataset):
                 start_date = int(matches.group(1)[:4])
                 end_date = int(matches.group(2)[:4])
                 if start_date <= year <= end_date:
-                    files_that_contain_year.append(f"{ftp_url}{file}")
+                    files_that_contain_year.append(
+                        f"{dap_host}{ceda_directory_structure}/{file}"
+                    )
         return files_that_contain_year
 
     def _prepare_data_array(
