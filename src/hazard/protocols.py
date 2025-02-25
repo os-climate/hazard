@@ -1,4 +1,3 @@
-import typing
 from typing import Iterable, List, Optional, Protocol
 
 import xarray as xr
@@ -40,20 +39,3 @@ class WriteDataArray(Protocol):
 
 
 class ReadWriteDataArray(ReadDataArray, WriteDataArray): ...  # noqa: E701
-
-
-class WriteDataset(Protocol):
-    """Write DataArray."""
-
-    def write(self, path: str, dataset: xr.Dataset): ...  # noqa:E704
-
-
-T = typing.TypeVar("T")
-
-
-class PTransform(Protocol):
-    def batch_items(self) -> Iterable[T]: ...  # noqa:E704
-
-    def process_item(self, item: T) -> xr.DataArray: ...  # noqa:E704
-
-    def item_path(self, item: T) -> str: ...  # noqa:E704
