@@ -43,9 +43,7 @@ class WISCWinterStormEventSource(OpenDataset):
             If None, a LocalFileSystem is used.
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = (
-            PurePath(source_dir_base, "wisc_european_winter_storm").as_posix() + "/"
-        )
+
         self.years = [
             1986,
             1987,
@@ -464,7 +462,9 @@ class WISCEuropeanWinterStorm(IndicatorModel[str]):
 
         Special thanks to Annabel Hall; her work on investigating the fitting of the WISC data set is adapted hereunder.
         """
-        self.source_dir = PurePath(source_dir_base).as_posix()
+        self.source_dir = (
+            PurePath(source_dir_base, "wisc_european_winter_storm").as_posix() + "/"
+        )
         self.source = WISCWinterStormEventSource(source_dir_base=self.source_dir)
 
     def batch_items(self):
@@ -477,6 +477,7 @@ class WISCEuropeanWinterStorm(IndicatorModel[str]):
         resource = self._resource()
         for scenario in resource.scenarios:
             for year in scenario.years:
+
                 ds = self.source.open_dataset_year("", scenario.id, "", year)
                 # note that the co-ordinates will be written into the parent of resource.path
                 target.write(
