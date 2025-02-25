@@ -44,8 +44,11 @@ class Onboarder(ABC):
         """
         ...
 
+    @abstractmethod
     def prepare(self, working_dir: str):
-        """Create the source files in source_dir_base using abstract file system fs.
+        """Create the source files in source_dir_base using abstract file system fs. Typically
+        this might involve downloading, unzipping and rearranging the input files. The intent is
+        to retain the data lineage.
 
         Args:
             working_dir (str): Path to local working directory for any temporary downloading and unzipping prior to
