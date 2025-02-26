@@ -136,7 +136,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 path="maps/" + path,
-                source="map_array",
+                source="map_array_pyramid",
             ),
             units="degree days",
             scenarios=scenarios,
@@ -396,7 +396,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                     ],
                     index_values=self.threshold_temps_c,
                     path="maps/" + path,
-                    source="map_array",
+                    source="map_array_pyramid",
                 ),
                 units="degree days",
                 scenarios=[
