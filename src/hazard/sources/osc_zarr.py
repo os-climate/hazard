@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import PurePosixPath
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -13,6 +14,8 @@ import hazard.utilities.xarray_utilities as xarray_utilities
 from hazard.protocols import ReadWriteDataArray
 
 default_dev_bucket = "physrisk-hazard-indicators-dev01"
+
+logger = logging.getLogger(__name__)
 
 
 class OscZarr(ReadWriteDataArray):
@@ -150,13 +153,8 @@ class OscZarr(ReadWriteDataArray):
     ):
         if self.write_xarray_compatible_zarr and spatial_coords:
             pp = PurePosixPath(path)
-            if da.name != pp.name:
-                raise ValueError(
-                    f"when writing NetCDF style coordinates, final element of path (here {pp.name}) must be \
-                                 the same as the array name (here {da.name})"
-                )
-            parent_path = pp.parent
-            self.write_data_array(str(parent_path), da)
+            da.name = pp.name
+            self.write_data_array(str(pp.parent), da)
         else:
             self.write_zarr(path, da, chunks)
 
@@ -230,7 +228,6 @@ class OscZarr(ReadWriteDataArray):
             path (str): Relative path.
             da (xr.DataArray): The DataArray.
         """
-        # we expect the data to be called 'data'
         if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
             raise ValueError("longitude or x dimension not found.")
         if "lat" not in da.dims and "latitude" not in da.dims and "y" not in da.dims:
@@ -253,7 +250,7 @@ class OscZarr(ReadWriteDataArray):
             self.root.store,
             compute=True,
             group=path,
-            mode="w",
+            mode="a",
             consolidated=False,
             encoding={da_norm.name: options},
         )
