@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 class WISCEuropeanWinterStorm(Onboarder):
     def __init__(
-        self, source_dir_base: str = "", fs: Optional[AbstractFileSystem] = None
+        self,
+        source_dir_base: PurePath = PurePath(),
+        fs: Optional[AbstractFileSystem] = None,
     ):
         super().__init__(source_dir_base, fs)
         """
@@ -86,12 +88,10 @@ class WISCEuropeanWinterStorm(Onboarder):
         ]
         # synth_sets = [1.2, 2.0, 3.0]
         self.synth_set = 1.2
-        self.source_dir = PurePath(source_dir_base) / "wisc" / "v1"
 
-    def prepare(self, working_dir: str):
-        working_dir_path = Path(working_dir)
-        self._download_all(working_dir_path)
-        self._extract_all(working_dir_path)
+    def prepare(self, working_dir: Path, force_download: bool = False):
+        # self._download_all(working_dir)
+        self._extract_all(working_dir)
 
     def onboard(self, target: WriteDataArray):
         logger.info("Creating data set from events")
@@ -120,6 +120,9 @@ class WISCEuropeanWinterStorm(Onboarder):
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
         return [self._resource()]
+
+    def source_dir_from_base(self, source_dir_base):
+        return source_dir_base / "wisc" / "v1"
 
     def _download_all(self, working_dir: Path):
         try:
