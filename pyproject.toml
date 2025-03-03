@@ -5,7 +5,7 @@ description = "OS-Climate Physical Risk Hazard Indicator Generation"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.9,<3.11"
+requires-python = ">=3.9,<3.12"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["Physical", "Climate", "Risk", "Finance"]
