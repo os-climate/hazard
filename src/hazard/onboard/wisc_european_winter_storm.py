@@ -1,25 +1,19 @@
-import glob
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from pathlib import Path, PurePath
+from typing import Iterable, Optional
 import warnings
 import zipfile
 
-from dask.distributed import Client
-from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 import numpy as np
 import xarray as xr
 
-# import cartopy.crs as ccrs
-# import matplotlib.pyplot as plt
-import glob
 from scipy.optimize import curve_fit
 
-from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import OpenDataset, ReadWriteDataArray
+from hazard.onboarder import Onboarder
+from hazard.protocols import WriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import data_array
@@ -27,9 +21,34 @@ from hazard.utilities.xarray_utilities import data_array
 logger = logging.getLogger(__name__)
 
 
-class WISCWinterStormEventSource(OpenDataset):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """Source that can create WISC return period wind speed maps from the event set:
+class WISCEuropeanWinterStorm(Onboarder):
+    def __init__(
+        self,
+        source_dir_base: PurePath = PurePath(),
+        fs: Optional[AbstractFileSystem] = None,
+    ):
+        super().__init__(source_dir_base, fs)
+        """
+        Peak 3s gust wind speed for different return periods inferred from the WISC event set.
+
+        METADATA:
+        Link: https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
+        Data type: Synthetic European winter storm events.
+        Hazard indicator: Wind
+        Region: Europe
+        Resolution: 2.4 arcmin
+        Scenarios: Historical
+        Time range: Not applicable
+        File type: NetCDF
+
+        DATA DESCRIPTION:
+        The WISC dataset contains a set of synthetic windstorm events consisting of 22,980 individual
+        storm footprints over Europe. These are a physically realistic set of plausible windstorm
+        events based on the modelled climatic conditions, calculated using the Met Office HadGEM3 model
+        (Global Atmosphere 3 and Global Land 3 configurations).
+        Return period maps of peak gust wind speed are inferred from this data.
+
+        Special thanks to Annabel Hall; her work on investigating the fitting of the WISC data set is adapted hereunder.
         https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
         https://cds.climate.copernicus.eu/how-to-api
 
@@ -39,8 +58,6 @@ class WISCWinterStormEventSource(OpenDataset):
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance.
             If None, a LocalFileSystem is used.
         """
-        self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
         self.years = [
             1986,
             1987,
@@ -72,9 +89,40 @@ class WISCWinterStormEventSource(OpenDataset):
         # synth_sets = [1.2, 2.0, 3.0]
         self.synth_set = 1.2
 
-    def prepare_source_files(self, working_dir: Path):
-        self._download_all(working_dir)
+    def prepare(self, working_dir: Path, force_download: bool = False):
+        # self._download_all(working_dir)
         self._extract_all(working_dir)
+
+    def onboard(self, target: WriteDataArray):
+        logger.info("Creating data set from events")
+        resource = self._resource()
+        for scenario in resource.scenarios:
+            for year in scenario.years:
+                ds = self._peak_annual_gust_speed_fit()
+                # note that the co-ordinates will be written into the parent of resource.path
+                target.write(
+                    resource.path.format(scenario=scenario.id, year=year),
+                    ds["wind_speed"].compute(),
+                    spatial_coords=resource.store_netcdf_coords,
+                )
+
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """Create map images."""
+        for resource in self.inventory():
+            create_tiles_for_resource(
+                source,
+                target,
+                resource,
+                nodata_as_zero=True,
+                nodata_as_zero_coarsening=True,
+            )
+
+    def inventory(self) -> Iterable[HazardResource]:
+        """Get the inventory item(s)."""
+        return [self._resource()]
+
+    def source_dir_from_base(self, source_dir_base):
+        return source_dir_base / "wisc" / "v1"
 
     def _download_all(self, working_dir: Path):
         try:
@@ -109,11 +157,17 @@ class WISCWinterStormEventSource(OpenDataset):
             with zipfile.ZipFile(
                 str(working_dir / (set_name + ".zip")), "r"
             ) as zip_ref:
-                zip_ref.extractall(
-                    str(working_dir / str(self.synth_set).replace(".", "_") / str(year))
+                synth_set_year = PurePath(
+                    str(self.synth_set).replace(".", "_"), str(year)
+                )
+                zip_ref.extractall(working_dir / synth_set_year)
+                self.fs.upload(
+                    str(working_dir / synth_set_year),
+                    str(self.source_dir / synth_set_year),
+                    recursive=True,
                 )
 
-    def occurrence_exceedance_count(self):
+    def _occurrence_exceedance_count(self):
         """Calculate occurrence exceedance count (i.e. number of events). Only used for diagnostic purposes.
 
         Returns:
@@ -155,7 +209,7 @@ class WISCWinterStormEventSource(OpenDataset):
                         exceedance_count[i, :, :] += count
         return exceedance_count
 
-    def peak_annual_gust_speed(self):
+    def _peak_annual_gust_speed(self):
         first_file = self._file_list(self.years[0])[0]
         all_files = [f for y in self.years for f in self._file_list(y)]
         first = xr.open_dataset(first_file)
@@ -203,7 +257,7 @@ class WISCWinterStormEventSource(OpenDataset):
         x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p)) ** (-xi))
         return x_p
 
-    def fit_gumbel(self, annual_max_gust_speed: xr.DataArray):
+    def _fit_gumbel(self, annual_max_gust_speed: xr.DataArray):
         """See for example "A review of methods to calculate extreme wind speeds", Palutikof et al. (1999).
         https://rmets.onlinelibrary.wiley.com/doi/pdf/10.1017/S1350482799001103
         we fit to a Type I extreme distribution, where $X_T$ is the 1-in-T year 3s peak gust wind speed:
@@ -260,7 +314,7 @@ class WISCWinterStormEventSource(OpenDataset):
                 fitted_speeds[:, j, i] = alpha * -np.log(-np.log(cum_prob)) + beta
         return fitted_speeds
 
-    def fit_gev(self, exceedance_count: xr.DataArray, p_tail: float = 1 / 5):
+    def _fit_gev(self, exceedance_count: xr.DataArray, p_tail: float = 1 / 5):
         """For reference, but fit_gumbel is preferred."""
         return_periods = np.array([5, 10, 20, 50, 100, 200, 500])
         data = np.zeros(
@@ -307,7 +361,7 @@ class WISCWinterStormEventSource(OpenDataset):
         return fitted_speeds
 
     def _file_list(self, year: int):
-        return glob.glob(
+        return self.fs.glob(
             str(
                 Path(self.source_dir)
                 / str(self.synth_set).replace(".", "_")
@@ -316,76 +370,13 @@ class WISCWinterStormEventSource(OpenDataset):
             )
         )
 
-    def open_dataset_year(
-        self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
-    ) -> xr.Dataset:
+    def _peak_annual_gust_speed_fit(self) -> xr.Dataset:
         logger.info("Computing peak annual 3s gust wind speeds")
-        peak_annual_gust_speed = self.peak_annual_gust_speed()
+        peak_annual_gust_speed = self._peak_annual_gust_speed()
         # any deferred behaviour undesirable here
         peak_annual_gust_speed = peak_annual_gust_speed.compute()
         logger.info("Fitting peak wind speeds")
-        return self.fit_gumbel(peak_annual_gust_speed).to_dataset(name="wind_speed")
-
-
-class WISCEuropeanWinterStorm(IndicatorModel[str]):
-    def __init__(self):
-        """
-        Peak 3s gust wind speed for different return periods inferred from the WISC event set.
-
-        METADATA:
-        Link: https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
-        Data type: Synthetic European winter storm events.
-        Hazard indicator: Wind
-        Region: Europe
-        Resolution: 2.4 arcmin
-        Scenarios: Historical
-        Time range: Not applicable
-        File type: NetCDF
-
-        DATA DESCRIPTION:
-        The WISC dataset contains a set of synthetic windstorm events consisting of 22,980 individual
-        storm footprints over Europe. These are a physically realistic set of plausible windstorm
-        events based on the modelled climatic conditions, calculated using the Met Office HadGEM3 model
-        (Global Atmosphere 3 and Global Land 3 configurations).
-        Return period maps of peak gust wind speed are inferred from this data.
-
-        Special thanks to Annabel Hall; her work on investigating the fitting of the WISC data set is adapted hereunder.
-        """
-
-    def batch_items(self):
-        """Get a list of all batch items."""
-        return ["historical"]
-
-    def run_single(
-        self, item: str, source: Any, target: ReadWriteDataArray, client: Client
-    ):
-        assert isinstance(source, WISCWinterStormEventSource)
-        logger.info("Creating data set from events")
-        resource = self._resource()
-        for scenario in resource.scenarios:
-            for year in scenario.years:
-                ds = source.open_dataset_year("", scenario.id, "", year)
-                # note that the co-ordinates will be written into the parent of resource.path
-                target.write(
-                    resource.path.format(scenario=scenario.id, year=year),
-                    ds["wind_speed"].compute(),
-                    spatial_coords=resource.store_netcdf_coords,
-                )
-
-    def create_maps(self, source: OscZarr, target: OscZarr):
-        """Create map images."""
-        for resource in self.inventory():
-            create_tiles_for_resource(
-                source,
-                target,
-                resource,
-                nodata_as_zero=True,
-                nodata_as_zero_coarsening=True,
-            )
-
-    def inventory(self) -> Iterable[HazardResource]:
-        """Get the inventory item(s)."""
-        return [self._resource()]
+        return self._fit_gumbel(peak_annual_gust_speed).to_dataset(name="wind_speed")
 
     def _resource(self) -> HazardResource:
         """Create resource."""
