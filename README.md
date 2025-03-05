@@ -57,7 +57,7 @@ At the root of the repository you'll find `hazard_workflow.cwl` - This contains 
 
 Structurally, it goes:
 
-```
+```console
 # Define the class (CommandLineTool)
 # Hints (We define the docker image to use)
 # Requirements (Networking access, resource access, and environment variables)
@@ -73,7 +73,7 @@ Copy `hazard_workflow_input_example.yml`, rename to `hazard_workflow_input.yml`,
 
 You can then invoke the CWL with:
 
-```
+```console
 $ cwltool hazard_workflow.cwl#produce-hazard-indicator hazard_workflow_input.yml
 ```
 
