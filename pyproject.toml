@@ -65,9 +65,6 @@ Downloads = "https://github.com/os-climate/hazard/releases"
 Documentation = "https://github.com/os-climate/hazard/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/hazard"
 
-[metadata]
-license-files = ["LICENSE"]
-
 [build-system]
 requires = [
     "setuptools>=42",
