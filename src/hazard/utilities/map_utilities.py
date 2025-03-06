@@ -37,25 +37,6 @@ def epsg4326_to_epsg3857(lon, lat):
     return x, y
 
 
-def generate_map(
-    path: str,
-    map_path: str,
-    bounds: Optional[List[Tuple[float, float]]],
-    target: ReadWriteDataArray,
-):
-    logger.info(f"Generating map projection for file {path}; reading file")
-    da = target.read(path)
-    logger.info("Reprojecting to EPSG:3857")
-    reprojected = transform_epsg4326_to_epsg3857(da)
-    # sanity check bounds:
-    (top, right, bottom, left) = check_map_bounds(reprojected)
-    if top > 85.05 or bottom < -85.05:
-        raise ValueError("invalid range")
-    logger.info(f"Writing map file {map_path}")
-    target.write(map_path, reprojected, spatial_coords=False)
-    return
-
-
 def transform_epsg4326_to_epsg3857(src: xr.DataArray):
     src_crs = CRS.from_epsg(4326)
     dst_crs = CRS.from_epsg(3857)
