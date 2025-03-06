@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from pathlib import PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
 
 import fsspec.implementations.local as local  # type: ignore
 import pytest
@@ -30,7 +30,6 @@ from hazard.onboard.tudelft_wildfire import TUDelftFire
 from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wisc_european_winter_storm import (
     WISCEuropeanWinterStorm,
-    WISCWinterStormEventSource,
 )
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
 from hazard.onboard.wri_aqueduct_water_risk import (
@@ -38,6 +37,7 @@ from hazard.onboard.wri_aqueduct_water_risk import (
     WRIAqueductWaterRiskSource,
     WRIAqueductWaterSupplyDemandBaselineSource,
 )
+from hazard.onboarder import Onboarder
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import s3_utilities, zarr_utilities
@@ -64,6 +64,37 @@ def test_output_dir():
     """Provides directory for (for example) testing (file-based) storage of datasets."""
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_output")
     yield output_dir
+
+
+class TestOnboarder(Onboarder):
+    def onboard(self, target):
+        pass
+
+    def inventory(self):
+        return []
+
+    def prepare(self, working_dir, force_download=False):
+        pass
+
+    def source_dir_from_base(self, source_dir_base: PurePath):
+        return source_dir_base / "test_onboarder"
+
+
+def test_onboarder(test_output_dir):
+    # check TestOnboarder can be instantiated with empty path (e.g. for generating inventory entries only)
+    onboarder_no_path = TestOnboarder()
+    assert onboarder_no_path
+
+    # check TestOnboarder is_source_dir_populated
+    onboarder = TestOnboarder(Path(test_output_dir))
+    test_path = Path(test_output_dir) / "test_onboarder"
+    assert str(onboarder.source_dir) == str(test_path)
+    assert not onboarder.is_source_dir_populated()
+    test_file = test_path / "test.txt"
+    test_file.parent.mkdir(exist_ok=True, parents=True)
+    test_file.write_text("TEST")
+    assert onboarder.is_source_dir_populated()
+    test_file.unlink()
 
 
 @pytest.mark.skip(reason="on-boarding script")
@@ -367,10 +398,11 @@ def test_rain_european_storm(test_output_dir):
 
 @pytest.mark.skip(reason="on-boarding script")
 def test_wisc_european_storm(test_output_dir):
-    # source_dir = os.path.join(test_output_dir, "wisc")
+    source_dir = test_output_dir
+    # working_dir = os.path.join(test_output_dir, "wisc")
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
-    # source = WISCWinterStormEventSource(source_dir)
-    model = WISCEuropeanWinterStorm()
-    # model.run_all(source, target)
-    model.create_maps(target, target)
+    onboarder = WISCEuropeanWinterStorm(source_dir)
+    # onboarder.prepare(working_dir)
+    onboarder.onboard(target)
+    # model.create_maps(target, target)
