@@ -99,7 +99,7 @@ class ETHZurichLitPop(IndicatorModel[BatchItem]):
         width, height = 120 * 360, 120 * 180
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
-        data = xr.DataArray(coords=coords, dims=coords.keys())
+        data = xr.DataArray(coords=coords, dims=list(coords.keys()))
 
         column = "region_id" if item.key == "litpop" else "value"
 
