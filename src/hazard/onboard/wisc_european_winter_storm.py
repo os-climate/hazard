@@ -263,10 +263,10 @@ class WISCEuropeanWinterStorm(Onboarder):
         we fit to a Type I extreme distribution, where $X_T$ is the 1-in-T year 3s peak gust wind speed:
 
         $ X_T = \\beta - \\alpha \\ln \\left[ -\\ln(1 - \\frac{1}{T}) \\right] $
-        
+
         We fit wind speed $x$ to Gumbel reduced yariate, $y$.
         $ x = \\alpha y + \\beta $
-        
+
         Here the fit is a simple unweighted least squares fit.
         Args:
             annual_max_gust_speed (xr.DataArray): Maximum annual peak gust wind speed across all storms.
