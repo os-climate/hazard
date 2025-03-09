@@ -107,7 +107,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             "lat": wbgt.coords["lat"].values,
             "lon": wbgt.coords["lon"].values,
         }
-        output = xr.DataArray(coords=coords, dims=coords.keys())
+        output = xr.DataArray(coords=coords, dims=list(coords.keys()))
         for i, threshold_c in enumerate(self.threshold_temps_c):
             output[i, :, :] = xr.where(wbgt > threshold_c, scale, 0.0).sum(dim=["time"])
         return output
