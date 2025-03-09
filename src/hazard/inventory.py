@@ -80,7 +80,10 @@ class HazardResource(BaseModel):
         "public",
         description="Identifier of the resource group (used for authentication).",
     )
-    path: str = Field(description="Full path to the indicator array.")
+    path: str = Field(
+        description="Full path to the indicator array if store_netcdf_coords is False, \
+                    otherwise to the group containing the indicator array and coordinates."
+    )
     indicator_id: str = Field(
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
     )
@@ -108,8 +111,8 @@ class HazardResource(BaseModel):
     store_netcdf_coords: bool = Field(
         False,
         description="If True, NetCDF-style coordinates are also stored, which allows XArray to read the array \
-            natively. In this case, path still points to the array; the coordinates are stored in an array group \
-                in the parent folder. That is, path should be in the form path_to_array_group/array_group/array",
+            natively. By convention, the hazard indicator data array is named 'indicator' and the path to \
+            the Zarr array is then path/indicator (not path).",
     )
     scenarios: List[Scenario] = Field(
         description="Climate change scenarios for which the indicator is available."

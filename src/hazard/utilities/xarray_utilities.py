@@ -234,7 +234,7 @@ def normalize_array(da: xr.DataArray) -> xr.DataArray:  # noqa: C901
         longitude = np.where(longitude > 180, longitude - 360, longitude)
         da_norm["longitude"] = longitude
         da_norm = da_norm.roll(longitude=-len(da_norm.longitude) // 2, roll_coords=True)
-
+    da_norm.name = "indicator"
     return da_norm
 
 

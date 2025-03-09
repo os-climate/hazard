@@ -17,12 +17,10 @@ from hazard.models.multi_year_average import (
     MultiYearAverageIndicatorBase,
     ThresholdBasedAverageIndicator,
 )
+from hazard.sources.osc_zarr import OscZarr
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
 from hazard.utilities.description_utilities import get_indicator_period_descriptions
-from hazard.utilities.map_utilities import (
-    check_map_bounds,
-    transform_epsg4326_to_epsg3857,
-)
+from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
@@ -111,12 +109,15 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 continue
             scenarios.append(Scenario(id=s, years=list(self.central_years)))
 
+        path = (
+            f"chronic_heat/osc/v2/mean_degree_days_v2_above_{self.threshold_c}c"
+            + "_{gcm}_{scenario}_{year}"
+        )
         resource = HazardResource(
             hazard_type="ChronicHeat",
             indicator_id=f"mean_degree_days/above/{self.threshold_c}c",
             indicator_model_gcm="{gcm}",
-            path=f"chronic_heat/osc/v2/mean_degree_days_v2_above_{self.threshold_c}c"
-            + "_{gcm}_{scenario}_{year}",
+            path=path,
             display_name=f"Mean degree days above {self.threshold_c}°C/" + "{gcm}",
             description=description,
             params={"gcm": list(self.gcms)},
@@ -134,9 +135,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
-                path=f"mean_degree_days_v2_above_{self.threshold_c}c_"
-                + "{gcm}_{scenario}_{year}_map",
-                source="map_array",
+                path="maps/" + path,
+                source="map_array_pyramid",
             ),
             units="degree days",
             scenarios=scenarios,
@@ -178,35 +178,13 @@ class DegreeDays(IndicatorModel[BatchItem]):
         pp = self._item_path(item)
         logger.info(f"Writing array to {str(pp)}")
         target.write(str(pp), average_deg_days)
-        pp = self._item_path(item)
-        pp_map = pp.with_name(pp.name + "_map")
-        self._generate_map(
-            str(pp),
-            str(pp_map),
-            item.resource.map.bounds if item.resource.map is not None else None,
-            target,
-        )
-        return
 
-    def _generate_map(
-        self,
-        path: str,
-        map_path: str,
-        bounds: Optional[List[Tuple[float, float]]],
-        target: ReadWriteDataArray,
-    ):
-        logger.info(f"Generating map projection for file {path}; reading file")
-        da = target.read(path)
-        logger.info("Reprojecting to EPSG:3857")
-        # reprojected = transform_epsg4326_to_epsg3857(average_deg_days.sel(latitude=slice(85, -85)))
-        reprojected = transform_epsg4326_to_epsg3857(da)
-        # sanity check bounds:
-        (top, right, bottom, left) = check_map_bounds(reprojected)
-        if top > 85.05 or bottom < -85.05:
-            raise ValueError("invalid range")
-        logger.info(f"Writing map file {map_path}")
-        target.write(map_path, reprojected, spatial_coords=False)
-        return
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """
+        Create map images.
+        """
+        for resource in self.inventory():
+            create_tiles_for_resource(source, target, resource)
 
     def _average_degree_days(
         self,
@@ -386,16 +364,16 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"
             ) as f:
                 description = f.read()
+            path = (
+                f"chronic_heat/osc/v2/mean_degree_days_{above_below}"
+                + "_index_{gcm}_{scenario}_{year}"
+            )
             resource = HazardResource(
                 hazard_type="ChronicHeat",
                 indicator_id=f"mean_degree_days/{above_below}/index",
                 indicator_model_gcm="{gcm}",
-                path="chronic_heat/osc/v2/mean_degree_days_"
-                + f"{above_below}"
-                + "_index_{gcm}_{scenario}_{year}",
-                display_name="Mean degree days "
-                + f"{above_below}"
-                + " index value/{gcm}",
+                path=path,
+                display_name=f"Mean degree days {above_below}" + " index value/{gcm}",
                 description=description,
                 params={"gcm": list(self.gcms)},
                 group_id="",
@@ -417,10 +395,8 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                         (-180.0, -60.0),
                     ],
                     index_values=self.threshold_temps_c,
-                    path="mean_degree_days_"
-                    + f"{above_below}"
-                    + "_index_{gcm}_{scenario}_{year}_map",
-                    source="map_array",
+                    path="maps/" + path,
+                    source="map_array_pyramid",
                 ),
                 units="degree days",
                 scenarios=[
