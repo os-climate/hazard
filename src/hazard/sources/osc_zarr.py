@@ -152,9 +152,9 @@ class OscZarr(ReadWriteDataArray):
         spatial_coords: Optional[bool] = True,
     ):
         if self.write_xarray_compatible_zarr and spatial_coords:
-            pp = PurePosixPath(path)
-            da.name = pp.name
-            self.write_data_array(str(pp.parent), da)
+            # In this mode, the xarray is written to path including NetCDF-style co-ordinates.
+            # The Zarr array containing the hazard indicator will be in path/indicator.
+            self.write_data_array(path, da)
         else:
             self.write_zarr(path, da, chunks)
 
@@ -250,7 +250,7 @@ class OscZarr(ReadWriteDataArray):
             self.root.store,
             compute=True,
             group=path,
-            mode="a",
+            mode="w",
             consolidated=False,
             encoding={da_norm.name: options},
         )

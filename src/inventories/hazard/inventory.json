@@ -1008,7 +1008,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "path": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                "path": "maps/chronic_heat/osc/v2/mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
                 "bounds": [
                     [
                         -180.0,
@@ -1034,7 +1034,7 @@
                     85.0
                 ],
                 "index_values": null,
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "store_netcdf_coords": false,
             "scenarios": [
@@ -1917,7 +1917,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "path": "mean_degree_days_above_index_{gcm}_{scenario}_{year}_map",
+                "path": "maps/chronic_heat/osc/v2/mean_degree_days_above_index_{gcm}_{scenario}_{year}",
                 "bounds": [
                     [
                         -180.0,
@@ -1947,7 +1947,7 @@
                     20,
                     24
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "store_netcdf_coords": false,
             "scenarios": [
@@ -2016,7 +2016,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "path": "mean_degree_days_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "maps/chronic_heat/osc/v2/mean_degree_days_below_index_{gcm}_{scenario}_{year}",
                 "bounds": [
                     [
                         -180.0,
@@ -2046,7 +2046,7 @@
                     20,
                     24
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "store_netcdf_coords": false,
             "scenarios": [
