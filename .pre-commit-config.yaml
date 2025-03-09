@@ -1,9 +1,9 @@
 ---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 The Linux Foundation
+
 ci:
-  autofix_commit_msg: "Chore: pre-commit autoupdate"
-  skip:
-    # pre-commit.ci cannot install WGET, so tomlint must be disabled
-    - tomllint
+  autofix_commit_msg: "Chore: pre-commit.ci automated update"
 
 exclude: |
   (?x)^(
@@ -12,34 +12,35 @@ exclude: |
   )$
 
 repos:
-
-  - repo: local
-    hooks:
-      - id: tomllint
-        name: "Script: scripts/tomllint.sh"
-        language: script
-        # pass_filenames: false
-        files: \^*.toml
-        types: [file]
-        entry: scripts/tomllint.sh .
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
+      - id: check-ast
+      - id: check-builtin-literals
       - id: check-case-conflict
+      - id: check-docstring-first
       - id: check-executables-have-shebangs
+      - id: check-illegal-windows-names
       - id: check-json
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-toml
-      # - id: detect-aws-credentials
+      - id: check-vcs-permalinks
       - id: check-xml
       - id: check-yaml
       - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      # - id: double-quote-string-fixer
       - id: detect-private-key
       - id: end-of-file-fixer
+      - id: file-contents-sorter
+      - id: fix-byte-order-marker
+      - id: forbid-new-submodules
+      - id: forbid-submodules
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: name-tests-test
@@ -47,21 +48,28 @@ repos:
       - id: no-commit-to-branch
       # - id: pretty-format-json
       - id: requirements-txt-fixer
+      - id: sort-simple-yaml
+        # Without specifying files, the above is inactive
+        # files: ^config/simple/
       - id: trailing-whitespace
 
-# yamllint disable rule:comments-indentation
-  ## Commenting until issue #94 is fixed
-  # - repo: https://github.com/igorshubovych/markdownlint-cli
-  #   rev: v0.41.0
-  #   hooks:
-  #     - id: markdownlint
-  #       args: ["--fix"]
-# yamllint enable rule:comments-indentation
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        args: ["--no-error-on-unmatched-pattern", "--ignore-unknown"]
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint
+        args: ["--fix"]
 
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
     hooks:
       - id: gitlint
+        args: ["-c body-max-line-length=120", "-c title-max-length=120"]
 
   - repo: https://github.com/openstack/bashate
     rev: 2.1.1
@@ -73,9 +81,10 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
+        args: ["-x"] # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.7.1.15
+    rev: v1.7.7.23
     hooks:
       - id: actionlint
 
@@ -83,26 +92,54 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
+        types: [yaml]
         args:
-          ["-d", "{rules: {line-length: {max: 120}},
-          ignore-from-file: [.gitignore],}"]
+          [
+            "-d",
+            "{rules: {line-length: {max: 100}}, ignore-from-file: [.gitignore],}",
+          ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.1
+    rev: v0.9.9
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
       - id: ruff-format
 
+  - repo: local
+    hooks:
+      - id: mypy-cache
+        name: "create mypy cache"
+        language: system
+        pass_filenames: false
+        entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.23
+    hooks:
+      - id: validate-pyproject
+        # Optional extra validations from SchemaStore:
+        additional_dependencies: ["validate-pyproject-schema-store[all]"]
+
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.11.1"
+    rev: "v1.15.0"
     hooks:
       - id: mypy
         verbose: true
         args: ["--show-error-codes", "--install-types", "--non-interactive"]
         additional_dependencies: ["pytest", "types-requests"]
 
-# yamllint disable rule:comments-indentation
+  # - repo: https://github.com/fsfe/reuse-tool
+  #   rev: v5.0.2
+  #   hooks:
+  #     - id: reuse
+
+  # - repo: https://github.com/btford/write-good
+  #   rev: ab66ce10136dfad5146e69e70f82a3efac8842c1 # frozen: v1.0.8
+  #   hooks:
+  #     - id: write-good
+  #       files: "\\.(rst|md|markdown|mdown|mkdn)$"
+
   # Check for misspellings in documentation files
   # - repo: https://github.com/codespell-project/codespell
   #   rev: v2.2.2
@@ -115,4 +152,3 @@ repos:
   #   hooks:
   #     - id: pyupgrade
   #       args: ['--py37-plus']
-# yamllint enable rule:comments-indentation
