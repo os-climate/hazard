@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -28,6 +30,14 @@ def test_output_dir():
     yield output_dir
     # if we want to clean-up (most likely not)
     # shutil.rmtree(output_dir)
+
+
+@pytest.fixture
+def test_dir():
+    """Like test_output_dir but uses a temp directory which is cleaned-up."""
+    test_dir = tempfile.mkdtemp()
+    yield test_dir
+    shutil.rmtree(test_dir)
 
 
 class TestSource(OpenDataset):

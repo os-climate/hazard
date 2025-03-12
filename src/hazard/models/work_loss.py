@@ -1,9 +1,11 @@
+"""Calculate work loss due to chronic heat exposure based on Wet-Bulb Globe Temperature (WBGT) and climate data from multiple Global Circulation Models (GCMs) and climate scenarios."""
+
 import logging
 import os
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Iterable, List
+from typing_extensions import Iterable, List, override
 
 import numpy as np
 import xarray as xr
@@ -17,16 +19,32 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class WorkLossBatchItem:
+    """Represents a batch item for work loss calculations.
+
+    Attributes
+        resource (HazardResource): The associated hazard resource.
+        gcm (str): The global climate model identifier.
+        scenario (str): The climate scenario.
+        central_year (int): The central year for the batch item.
+
+    """
+
     resource: HazardResource
     gcm: str
     scenario: str
     central_year: int
 
     def __str__(self):
+        """Return a string representation of the WorkLossBatchItem."""
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
 
 class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
+    """Represents an indicator for work loss due to chronic heat.
+
+    This class extends tocompute `MultiYearAverageIndicatorBase` work loss based on wet-bulb globe temperature (WBGT) and climate data.
+    """
+
     def __init__(
         self,
         window_years=MultiYearAverageIndicatorBase._default_window_years,
@@ -35,6 +53,16 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         central_year_historical=MultiYearAverageIndicatorBase._default_central_year_historical,
         central_years=MultiYearAverageIndicatorBase._default_central_years,
     ):
+        """Initialize the work loss indicator.
+
+        Args:
+            window_years (Iterable[int], optional): Window years for averaging.
+            gcms (Iterable[str], optional): List of general circulation models (GCMs).
+            scenarios (Iterable[str], optional): List of climate scenarios.
+            central_year_historical (int, optional): Historical reference year.
+            central_years (Iterable[int], optional): Future central years.
+
+        """
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -65,7 +93,25 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     )
 
     def inventory(self) -> Iterable[HazardResource]:
+        """Retrieve the inventory of hazard resources.
+
+        Returns
+            Iterable[HazardResource]: A list containing the hazard resource.
+
+        """
         return [self._resource()]
+
+    @override
+    def prepare(self, force, download_dir, force_download):
+        """Prepare the dataset for processing.
+
+        Args:
+            force (bool): Whether to force processing.
+            download_dir (str): Directory for downloading data.
+            force_download (bool): Whether to force downloading.
+
+        """
+        return super().prepare(force, download_dir, force_download)
 
     def _resource(self) -> HazardResource:
         with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:

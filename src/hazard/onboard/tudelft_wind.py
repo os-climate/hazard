@@ -1,8 +1,10 @@
+"""Module for handling the onboarding and processing of TUDelft fire data."""
+
 import logging
 import os
 from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Any, Iterable, Optional
+from pathlib import PurePath
+from typing_extensions import Any, Iterable, Optional, override
 
 import numpy as np
 import xarray as xr
@@ -10,6 +12,8 @@ from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 
+
+from hazard.onboarder import Onboarder
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.protocols import ReadWriteDataArray
@@ -22,16 +26,22 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BatchItem:
+    """Represent a batch item for hazard processing.
+
+    It includes scenario, central_year and input_dataset_filename.
+
+    """
+
     scenario: str
     central_year: int
     input_dataset_filename: str
 
 
-class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Pan-European data sets of severe and extreme wind probability of occurrence
-        under present and future climate.
+class TUDelftConvectiveWindstorm(Onboarder):
+    """On-board returns data set from TUDelft for wind hazard."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Pan-European data sets of severe and extreme wind probability of occurrence under present and future climate.
 
         METADATA:
         Link: https://data.4tu.nl/datasets/93463344-a63d-4ab2-a16a-f69b989b0e13
@@ -55,13 +65,13 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
         Coordinate system is rotated longitud and latitude. Needs to be transformed.
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
-        """
 
+        """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = PurePath(source_dir_base, "tudelft_wind").as_posix() + "/"
 
         # Download source data
         self._url = "https://opendap.4tu.nl/thredds/fileServer/data2/uuid/9be95957-ca8e-4eb9-aa00-074c55df9032/"
@@ -70,6 +80,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
         self._resource_extreme_severe = list(self.inventory())[1]
 
     def batch_items(self) -> Iterable[BatchItem]:
+        """Get a list of all batch items."""
         return [
             BatchItem(
                 scenario="historical",
@@ -123,25 +134,49 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
             ),
         ]
 
-    def prepare(self, item: BatchItem, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            nc_url = self._url + item.input_dataset_filename
-            assert working_dir is not None
-            download_file(nc_url, working_dir, "tudelft_conv_wind")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            nc_url = self._url + item.input_dataset_filename
-            download_file(nc_url, str(source), item.input_dataset_filename)
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        if (
+            not self.fs.exists(self.source_dir)
+            or len(self.fs.listdir(self.source_dir)) == 0
+            or force_download
+        ):
+            for batch_item in self.batch_items():
+                nc_url = self._url + batch_item.input_dataset_filename
+                download_file(
+                    url=nc_url,
+                    directory=self.source_dir,
+                    filename=os.path.basename(batch_item.input_dataset_filename),
+                    force_download=force_download,
+                )
+
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+
+        if not os.path.exists(self.source_dir) or force or force_download:
+            return False
+        # Listar todos los archivos en el directorio
+        try:
+            files = os.listdir(self.source_dir)
+        except FileNotFoundError:
+            return False
+
+        nc_files = [file for file in files if file.endswith(".nc")]
+
+        # verificar que están los 10 .nc files
+        return len(nc_files) == 10
+
+    def onboard(self, target):
+        self.run_all(source=None, target=target, client=None, debug_mode=False)
 
     def run_single(
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
     ):
-        input = PurePosixPath(self.source_dir, item.input_dataset_filename)
+        """Process a single batch item and writes the data to the Zarr store."""
+        input = os.path.join(
+            self.source_dir, "conv_wind_tudelft", item.input_dataset_filename
+        )
         assert target is None or isinstance(target, OscZarr)
         filename = str(input)
 
@@ -167,19 +202,16 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
         target.write(path_, da)
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self._resource_severe)
         create_tiles_for_resource(source, target, self._resource_extreme_severe)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="severe_windstorm_probability",
                 indicator_model_id=None,
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
@@ -191,7 +223,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 windstorms (wind gusts > 25 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                group_id="wind_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],
@@ -215,7 +247,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 ],
             ),
             HazardResource(
-                hazard_type="Wind",
+                hazard_type="ChronicWind",
                 indicator_id="extreme_windstorm_probability",
                 indicator_model_gcm="CLMcom-CCLM4-8-17-CLM3-5",
                 path="convective_windstorm/conv_wind_tudelft/v2/extremely_severe_gust_speed_{scenario}_{year}",
@@ -226,7 +258,7 @@ class TUDelftConvectiveWindstorm(IndicatorModel[BatchItem]):
                 windstorms (wind gusts > 32 m/s) for present day and the future climate.
                 The fields are multi model means of 15 regional climate model simulations (CORDEX).
                 """,
-                group_id="",
+                group_id="wind_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

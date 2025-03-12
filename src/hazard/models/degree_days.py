@@ -1,9 +1,11 @@
+"""Climate Hazard Indicator: Degree Days Calculation."""
+
 import logging
 import os
 from contextlib import ExitStack
 from enum import Enum
 from pathlib import PosixPath, PurePosixPath
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing_extensions import Dict, Iterable, List, Optional, Tuple, override
 
 import xarray as xr
 from dask.distributed import Client
@@ -18,6 +20,7 @@ from hazard.models.multi_year_average import (
     ThresholdBasedAverageIndicator,
 )
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
+from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.utilities.description_utilities import get_indicator_period_descriptions
 from hazard.utilities.map_utilities import (
     check_map_bounds,
@@ -35,17 +38,10 @@ class DegreeDays(IndicatorModel[BatchItem]):
         self,
         threshold: float = 32,
         window_years: int = 20,
-        gcms: Iterable[str] = [
-            "ACCESS-CM2",
-            "CMCC-ESM2",
-            "CNRM-CM6-1",
-            "MIROC6",
-            "MPI-ESM1-2-LR",
-            "NorESM2-MM",
-        ],
-        scenarios: Iterable[str] = ["historical", "ssp126", "ssp245", "ssp585"],
+        gcms: Optional[Iterable[str]] = None,
+        scenarios: Optional[Iterable[str]] = None,
         central_year_historical: int = 2005,
-        central_years: Iterable[int] = [2030, 2040, 2050],
+        central_years: Optional[Iterable[int]] = None,
         source_dataset: str = "NEX-GDDP-CMIP6",
     ):
         """Construct model to calculate degree days from temperature data sets.
@@ -54,13 +50,30 @@ class DegreeDays(IndicatorModel[BatchItem]):
             threshold (float, optional): Degree days above threshold are calculated. Defaults to 32.
             window_years (int, optional): Number of years for average. Defaults to 20.
             gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
-            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
+                Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
             scenarios (Iterable[str], optional): Scenarios to include in calculation.
-            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+                Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+            central_year_historical (int, optional): Central reference year for historical data.
+                Defaults to 2005.
             central_years (Iterable[int], optional): Central years to include in calculation.
-            Defaults to [2010, 2030, 2040, 2050].
-        """
+                Defaults to [2010, 2030, 2040, 2050].
+            source_dataset (str, optional): Name of the dataset used as the data source.
+                Defaults to "NEX-GDDP-CMIP6".
 
+        """
+        if central_years is None:
+            central_years = [2030, 2040, 2050]
+        if scenarios is None:
+            scenarios = ["historical", "ssp126", "ssp245", "ssp585"]
+        if gcms is None:
+            gcms = [
+                "ACCESS-CM2",
+                "CMCC-ESM2",
+                "CNRM-CM6-1",
+                "MIROC6",
+                "MPI-ESM1-2-LR",
+                "NorESM2-MM",
+            ]
         self.threshold: float = (
             273.15 + threshold
         )  # in Kelvin; degree days above {threshold}C
@@ -173,6 +186,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         target: ReadWriteDataArray,
         client: Client,
     ):
+        """Process a single batch item and write the data to the Zarr store."""
         average_deg_days = self._average_degree_days(client, source, target, item)
         average_deg_days.attrs["crs"] = CRS.from_epsg(4326)
         pp = self._item_path(item)
@@ -187,6 +201,10 @@ class DegreeDays(IndicatorModel[BatchItem]):
             target,
         )
         return
+
+    def _onboard_single(self, target, download_dir):
+        source = NexGddpCmip6()
+        self.run_all(source, target)
 
     def _generate_map(
         self,
@@ -263,16 +281,36 @@ class DegreeDays(IndicatorModel[BatchItem]):
             )
         )
 
+    @override
+    def onboard_single(self, target, force_prepare, download_dir, force_download):
+        return super().onboard_single(
+            target, force_prepare, download_dir, force_download
+        )
+
+    @override
+    def prepare(self, force, download_dir, force_download):
+        return super().prepare(force, download_dir, force_download)
+
 
 class AboveBelow(Enum):
+    """Enumeration for threshold comparison results.
+
+    Attributes
+        BELOW (int): Represents a value below the threshold.
+        ABOVE (int): Represents a value above the threshold.
+
+    """
+
     BELOW = 0
     ABOVE = 1
 
 
 class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
+    """Computes heating and cooling degree days based on temperature thresholds."""
+
     def __init__(
         self,
-        threshold_temps_c: List[float] = [16, 20, 24],
+        threshold_temps_c: Optional[List[float]] = None,
         window_years: int = MultiYearAverageIndicatorBase._default_window_years,
         gcms: Iterable[str] = MultiYearAverageIndicatorBase._default_gcms,
         scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
@@ -295,7 +333,10 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
             Defaults to 2005.
             central_years (Iterable[int], optional): Central years to include in calculation.
             Defaults to [2010, 2030, 2040, 2050].
+
         """
+        if threshold_temps_c is None:
+            threshold_temps_c = [16, 20, 24]
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -348,6 +389,10 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 bounds_below,
             ),
         ]
+
+    @override
+    def prepare(self, force, download_dir, force_download):
+        return super().prepare(force, download_dir, force_download)
 
     def _degree_days_indicator(
         self, tas: xr.DataArray, year: int, above_below: AboveBelow
