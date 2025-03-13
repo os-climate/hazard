@@ -1,4 +1,4 @@
-write_xarray_compatible_zarr: false  # type 'boolean'
+store_netcdf_coords: false  # type 'boolean'
 window_years: 0  # type 'int'
 threshold_temperature: 0.1  # type 'float'
 threshold_list: "[]"  # default value of type 'string'.

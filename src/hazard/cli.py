@@ -18,7 +18,7 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    write_xarray_compatible_zarr: Optional[bool] = False,
+    store_netcdf_coords: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs,  # To allow for extra parameters to the CLI, due to how CWL will provide all input parameters
 ):
@@ -34,7 +34,7 @@ def days_tas_above_indicator(
         bucket,
         prefix,
         store,
-        write_xarray_compatible_zarr,
+        store_netcdf_coords,
         dask_cluster_kwargs,
     )
 
@@ -51,7 +51,7 @@ def degree_days_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    write_xarray_compatible_zarr: Optional[bool] = False,
+    store_netcdf_coords: bool = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs,  # To allow for extra parameters to the CLI, due to how CWL will provide all input parameters
 ):
@@ -67,7 +67,7 @@ def degree_days_indicator(
         bucket,
         prefix,
         store,
-        write_xarray_compatible_zarr,
+        store_netcdf_coords,
         dask_cluster_kwargs,
     )
 

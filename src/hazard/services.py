@@ -28,7 +28,7 @@ def days_tas_above_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    write_xarray_compatible_zarr: Optional[bool] = False,
+    store_netcdf_coords: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
@@ -40,7 +40,7 @@ def days_tas_above_indicator(
     """
 
     docs_store, target, client = setup(
-        bucket, prefix, store, write_xarray_compatible_zarr, dask_cluster_kwargs
+        bucket, prefix, store, store_netcdf_coords, dask_cluster_kwargs
     )
 
     source_dataset_kwargs = (
@@ -75,7 +75,7 @@ def degree_days_indicator(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    write_xarray_compatible_zarr: Optional[bool] = False,
+    store_netcdf_coords: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ):
     """
@@ -87,7 +87,7 @@ def degree_days_indicator(
     """
 
     docs_store, target, client = setup(
-        bucket, prefix, store, write_xarray_compatible_zarr, dask_cluster_kwargs
+        bucket, prefix, store, store_netcdf_coords, dask_cluster_kwargs
     )
 
     source_dataset_kwargs = (
@@ -114,17 +114,16 @@ def setup(
     bucket: Optional[str] = None,
     prefix: Optional[str] = None,
     store: Optional[str] = None,
-    write_xarray_compatible_zarr: Optional[bool] = False,
+    store_netcdf_coords: Optional[bool] = False,
     dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Tuple[DocStore, OscZarr, Client]:
     """
     initialize output store, docs store and local dask client
     """
-
     if store is not None:
         docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
         target = OscZarr(
-            store=store, write_xarray_compatible_zarr=write_xarray_compatible_zarr
+            store=store, store_netcdf_coords=store_netcdf_coords
         )
     else:
         if bucket is None or prefix is None:
@@ -136,7 +135,7 @@ def setup(
             target = OscZarr(
                 bucket=bucket,
                 prefix=prefix,
-                write_xarray_compatible_zarr=write_xarray_compatible_zarr,
+                store_netcdf_coords=store_netcdf_coords,
             )
 
     dask_cluster_kwargs = dask_cluster_kwargs or {}

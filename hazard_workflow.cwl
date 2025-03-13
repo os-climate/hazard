@@ -43,7 +43,7 @@ $graph:
       store:
         type: string
         default: "./indicator"
-      write_xarray_compatible_zarr:
+      store_netcdf_coords:
         type: boolean
         default: false
       dask_cluster_kwargs:
@@ -73,7 +73,7 @@ $graph:
           window_years: window_years
           indicator: indicator
           store: store
-          write_xarray_compatible_zarr: write_xarray_compatible_zarr
+          store_netcdf_coords: store_netcdf_coords
           dask_cluster_kwargs: dask_cluster_kwargs
         out:
           - indicator-results
@@ -124,7 +124,7 @@ $graph:
         type: string
       store:
         type: string
-      write_xarray_compatible_zarr:
+      store_netcdf_coords:
         type: boolean
       dask_cluster_kwargs:
         type: string
@@ -159,7 +159,7 @@ $graph:
         valueFrom: $(inputs.central_year_historical)
       - prefix: --window_years
         valueFrom: $(inputs.window_years)
-      - prefix: --write_xarray_compatible_zarr
-        valueFrom: $(inputs.write_xarray_compatible_zarr)
+      - prefix: --store_netcdf_coords
+        valueFrom: $(inputs.store_netcdf_coords)
       - prefix: --dask_cluster_kwargs
         valueFrom: $(inputs.dask_cluster_kwargs)
