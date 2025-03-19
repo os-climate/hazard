@@ -25,10 +25,10 @@ _RESOLUTION_TO_COLLECTION_MAPPINGS = {
     "5km": "land-cpm",
     "2.2km": "land-cpm",
 }
-_COLLECTION_TO_LATEST_DATA_MAPPINGS = {
-    "land-gcm": "v20181122",
-    "land-rcm": "v20190731",
-    "land-cpm": "v20210615",
+_COLLECTION_AND_DOMAIN_TO_LATEST_DATA_MAPPINGS = {
+    "land-gcm": {"global": "v20180825", "uk": "v20181122"},
+    "land-rcm": {"eur": "v20190731", "uk": "v20190731"},
+    "land-cpm": {"uk": "v20210615"},
 }
 _CEDA_TOKEN_API_URL = "https://services-beta.ceda.ac.uk/api/token/create/"
 
@@ -60,7 +60,9 @@ class Ukcp18(OpenDataset):
         # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to # noqa
         self._dataset_member_id = dataset_member_id
         self._dataset_frequency = dataset_frequency
-        self._dataset_version = _COLLECTION_TO_LATEST_DATA_MAPPINGS[self._collection]
+        self._dataset_version = _COLLECTION_AND_DOMAIN_TO_LATEST_DATA_MAPPINGS[
+            self._collection
+        ][self._domain]
 
     def fetch_ceda_token(self):
         ceda_post_token = b64encode(
