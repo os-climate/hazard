@@ -1,3 +1,5 @@
+"""Hazard Inventory Management Module."""
+
 import json
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -40,9 +42,9 @@ class MapInfo(BaseModel):
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
-    bbox: List[float] = Field([-180.0, -85.0, 180.0, 85.0])
+    bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
     index_values: Optional[List[Any]] = Field(
-        None,
+        default=None,
         description="Index values to include in maps. If None, the last index value only is included.",
     )
     # note that the bounds should be consistent with the array attributes
@@ -65,7 +67,7 @@ class Period(BaseModel):
 
 
 class Scenario(BaseModel):
-    """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
+    """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'."""
 
     id: str
     years: List[int]
@@ -85,7 +87,7 @@ class HazardResource(BaseModel):
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
     )
     indicator_model_id: Optional[str] = Field(
-        None,
+        default=None,
         description="Identifier specifying the type of model used in the derivation of the indicator \
                                     (e.g. whether flood model includes impact of sea-level rise).",
     )
@@ -117,27 +119,64 @@ class HazardResource(BaseModel):
     units: str = Field(description="Units of the hazard indicator.")
 
     def expand(self):
+        """Expand the resource using its parameters.
+
+        Returns
+            List[HazardResource]: A list of expanded hazard resources.
+
+        """
         keys = list(self.params.keys())
         return expand_resource(self, keys, self.params)
 
     def key(self):
-        """Unique key for the resource. array_path should be unique, although indicator_id is typically not.
+        """Use a unique key for the resource. Ensure array_path is unique, although indicator_id typically is not.
+
         Vulnerability models request a hazard indicator by indicator_id from the Hazard Model. The Hazard Model
-        selects based on its own logic (e.g. selects a particular General Circulation Model)."""
+        selects based on its own logic (e.g. selects a particular General Circulation Model).
+        """
         return self.path
 
 
 class HazardResources(BaseModel):
+    """Container for a list of hazard resources.
+
+    Args:
+        resources (List[HazardResource]): A list of hazard resource objects.
+
+    """
+
     resources: List[HazardResource]
 
 
 def expand(item: str, key: str, param: str):
+    """Replace a placeholder in a string with a given parameter.
+
+    Args:
+        item (str): The string containing the placeholder.
+        key (str): The placeholder key to be replaced.
+        param (str): The value to replace the placeholder with.
+
+    Returns:
+        str: The updated string with the placeholder replaced, or the original string if no replacement occurs.
+
+    """
     return item and item.replace("{" + key + "}", param)
 
 
 def expand_resource(
     resource: HazardResource, keys: List[str], params: Dict[str, List[str]]
 ) -> Iterable[HazardResource]:
+    """Recursively expand a resource by replacing placeholders with parameter values.
+
+    Args:
+        resource (HazardResource): The base resource to expand.
+        keys (List[str]): The list of parameter keys to iterate over.
+        params (Dict[str, List[str]]): A dictionary mapping parameter keys to lists of values.
+
+    Returns:
+        HazardResource: A new resource instance for each expanded combination of parameters.
+
+    """
     if len(keys) == 0:
         yield resource.copy(deep=True, update={"params": {}})
     else:
@@ -167,10 +206,27 @@ def expand_resource(
 
 
 class HazardInventory(BaseModel):
+    """Represents an inventory of hazard models and their associated colormaps.
+
+    Args:
+        models (List[HazardResource]): A list of hazard resources.
+        colormaps (dict): A dictionary mapping hazard types to their colormap configurations.
+
+    """
+
     models: List[HazardResource]
     colormaps: dict
 
 
 def inventory_json(models: Iterable[HazardResource]) -> str:
+    """Convert a collection of hazard resources into a JSON string.
+
+    Args:
+        models (Iterable[HazardResource]): An iterable of hazard resource objects.
+
+    Returns:
+        str: A JSON string representation of the hazard inventory.
+
+    """
     response = HazardInventory(models=models)  # type: ignore
     return json.dumps(response.dict())

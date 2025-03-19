@@ -1,3 +1,5 @@
+"""Module for calculating multi-year average indicators for climate hazard models."""
+
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -26,6 +28,8 @@ T = TypeVar("T", bound=Averageable)
 
 @dataclass
 class Indicator:
+    """Representation of a climate hazard indicator with a DataArray, file path, and geographic bounds."""
+
     array: xr.DataArray  # Union[xr.DataArray, Sequence[xr.DataArray]]
     path: PurePosixPath
     bounds: List[Tuple[float, float]]
@@ -33,6 +37,7 @@ class Indicator:
 
 class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     """Indicator which is the average of indicators produced for a number of individual years.
+
     Such calculations can be split by year and run in parallel.
     """
 
@@ -72,8 +77,9 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
                                            Defaults to 2005.
             central_years (Iterable[int], optional): Central years to include in calculation.
                                                      Defaults to [2010, 2030, 2040, 2050].
-        """
+            source_dataset: Source dataset. Defaults to "NEX-GDDP-CMIP6"
 
+        """
         # 1995 to 2014 (2010), 2021 tp 2040 (2030), 2031 to 2050 (2040), 2041 to 2060 (2050)
         self.window_years = window_years
         self.gcms = gcms
@@ -85,6 +91,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     def run_single(
         self, item: T, source: OpenDataset, target: ReadWriteDataArray, client: Client
     ):
+        """Execute the averaging process for a single climate indicator."""
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
@@ -95,6 +102,10 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
                 str(indicator.path), str(path_map), indicator.bounds, target
             )
         return
+
+    def onboard_single(self, target, download_dir):
+        """Onboard single dataset for processing."""
+        self._onboard_single(target, download_dir)
 
     def _generate_map(
         self,
@@ -162,22 +173,29 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         self, source: OpenDataset, item: T, year: int
     ) -> List[Indicator]:
         """Calculate indicators for a single year for a single batch item.
-        If just a single indicator per batch, a list of length one is expected."""
+
+        If just a single indicator per batch, a list of length one is expected.
+        """
         ...
 
 
 @dataclass
 class BatchItem:
+    """Represents a batch item for processing climate data with specific model, scenario, and year parameters."""
+
     resource: HazardResource
     gcm: str
     scenario: str
     central_year: int
 
     def __str__(self):
+        """Return a descriptive string representation of the batch item."""
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
 
 class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
+    """Model for calculating threshold-based multi-year average indicators."""
+
     def batch_items(self) -> Iterable[BatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
         resource = self._resource()
@@ -203,7 +221,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
     def _get_indicators(
         self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
     ) -> List[Indicator]:
-        """Find the
+        """Generate a list of indicators for given thresholds and data arrays.
 
         Args:
             item (BatchItem): _description_
@@ -212,6 +230,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
 
         Returns:
             List[Indicator]: _description_
+
         """
         resource = item.resource
         paths = [
