@@ -81,7 +81,8 @@ include = ["hazard*"]
 [tool.setuptools.package-data]
 hazard = [
   "models/*.md",
-  "onboard/*.md"
+  "onboard/*.md",
+  "sources/*.md"
 ]
 
 [tool.pdm.dev-dependencies]
