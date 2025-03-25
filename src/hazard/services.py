@@ -122,9 +122,7 @@ def setup(
     """
     if store is not None:
         docs_store = DocStore(fs=LocalFileSystem(), local_path=store)
-        target = OscZarr(
-            store=store, store_netcdf_coords=store_netcdf_coords
-        )
+        target = OscZarr(store=store, store_netcdf_coords=store_netcdf_coords)
     else:
         if bucket is None or prefix is None:
             raise ValueError(
