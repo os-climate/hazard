@@ -16,7 +16,8 @@ from hazard.protocols import (
     ReadWriteDataArray,
     WriteDataArray,
 )
-from hazard.utilities.map_utilities import generate_map
+from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
@@ -90,21 +91,13 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
             logger.info(f"Writing array to {str(indicator.path)}")
             target.write(str(indicator.path), indicator.array)
-            path_map = indicator.path.with_name(indicator.path.name + "_map")
-            self._generate_map(
-                str(indicator.path), str(path_map), indicator.bounds, target
-            )
-        return
 
-    def _generate_map(
-        self,
-        path: str,
-        map_path: str,
-        bounds: Optional[List[Tuple[float, float]]],
-        target: ReadWriteDataArray,
-    ):
-        generate_map(path, map_path, bounds, target)
-        return
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """
+        Create map images.
+        """
+        for resource in self.inventory():
+            create_tiles_for_resource(source, target, resource)
 
     def _years(self, _: OpenDataset, item: Averageable):
         return range(

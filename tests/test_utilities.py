@@ -54,10 +54,10 @@ def test_xarray_write_net_cdf_coords(test_output_dir):  # noqa: F811
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     # to write to the dev bucket, use simply
     # target = OscZarr()
-    target = OscZarr(store=store, write_xarray_compatible_zarr=True)
+    target = OscZarr(store=store, store_netcdf_coords=True)
     target.write("test/test_netcdf_coords/sop", da, spatial_coords=True)
 
-    z = target.read_zarr("test/test_netcdf_coords/sop")
+    z = target.read_zarr("test/test_netcdf_coords/sop/indicator")
     assert z.attrs["dimensions"][0] == "min_max"
     assert z.attrs["min_max_values"] == ["min", "max"]
     assert z.attrs["min_max_units"] == ""

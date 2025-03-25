@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import PurePosixPath
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -14,6 +15,8 @@ from hazard.protocols import ReadWriteDataArray
 
 default_dev_bucket = "physrisk-hazard-indicators-dev01"
 
+logger = logging.getLogger(__name__)
+
 
 class OscZarr(ReadWriteDataArray):
     __access_key = "OSC_S3_ACCESS_KEY_DEV"
@@ -26,7 +29,7 @@ class OscZarr(ReadWriteDataArray):
         prefix: str = "hazard",
         s3: Optional[s3fs.S3File] = None,
         store: Optional[Any] = None,
-        write_xarray_compatible_zarr: Optional[bool] = False,
+        store_netcdf_coords: Optional[bool] = False,
     ):
         """For reading and writing to OSC Climate Zarr storage.
         If store is provided this is used, otherwise if S3File is provided, this is used.
@@ -37,7 +40,7 @@ class OscZarr(ReadWriteDataArray):
             prefix: S3 bucket item prefix
             s3: S3File to use if present and if store not provided.
             store: If provided, Zarr will use this store.
-            write_xarray_compatible_zarr: If true, an xarray compatible zarr
+            store_netcdf_coords: If true, an xarray compatible zarr
              will be created alongside the default zarr output
         """
         if store is None:
@@ -58,7 +61,7 @@ class OscZarr(ReadWriteDataArray):
 
         self.root = zarr.group(store=store)
 
-        self.write_xarray_compatible_zarr = write_xarray_compatible_zarr
+        self.store_netcdf_coords = store_netcdf_coords
 
     def create_empty(
         self,
@@ -148,15 +151,10 @@ class OscZarr(ReadWriteDataArray):
         chunks: Optional[List[int]] = None,
         spatial_coords: Optional[bool] = True,
     ):
-        if self.write_xarray_compatible_zarr and spatial_coords:
-            pp = PurePosixPath(path)
-            if da.name != pp.name:
-                raise ValueError(
-                    f"when writing NetCDF style coordinates, final element of path (here {pp.name}) must be \
-                                 the same as the array name (here {da.name})"
-                )
-            parent_path = pp.parent
-            self.write_data_array(str(parent_path), da)
+        if self.store_netcdf_coords and spatial_coords:
+            # In this mode, the xarray is written to path including NetCDF-style co-ordinates.
+            # The Zarr array containing the hazard indicator will be in path/indicator.
+            self.write_data_array(path, da)
         else:
             self.write_zarr(path, da, chunks)
 
@@ -230,7 +228,6 @@ class OscZarr(ReadWriteDataArray):
             path (str): Relative path.
             da (xr.DataArray): The DataArray.
         """
-        # we expect the data to be called 'data'
         if "lon" not in da.dims and "longitude" not in da.dims and "x" not in da.dims:
             raise ValueError("longitude or x dimension not found.")
         if "lat" not in da.dims and "latitude" not in da.dims and "y" not in da.dims:
