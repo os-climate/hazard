@@ -359,7 +359,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
             raise ValueError("unexpected year found")
         # normalize to 365 days
         scale = 365.0 / len(tas["time"])
-        # will raise error if tax not present
+        # will raise error if tas not present
         da = xr.DataArray(
             coords={
                 "index": self.threshold_temps_c,

@@ -319,8 +319,8 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         output = xr.DataArray(coords=coords, dims=list(coords.keys()))
         for i, threshold_c in enumerate(self.threshold_temps_c):
             threshold_k = 273.15 + threshold_c
-            output[i, :, :] = xr.where(input > threshold_k, scale, 0.0).sum(
-                dim=["time"]
+            output[i, :, :] = (
+                xr.where(input > threshold_k, scale, 0.0).sum(dim=["time"]).values
             )
         output = output.rename({"latitude": "lat", "longitude": "lon"})
 
