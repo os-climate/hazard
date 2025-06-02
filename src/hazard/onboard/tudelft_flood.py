@@ -173,13 +173,13 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             return_period=self.return_period_str[return_period]
         )
         with self.fs.open(full_path_depth, "rb") as fd:
-            da_depth = xr.open_rasterio(fd).isel(band=0)
+            da_depth = xr.open_dataarray(fd, engine="rasterio").isel(band=0)
             coords_x, coords_y = np.array(da_depth.x), np.array(da_depth.y)
 
         # only create SoP for historical
         if item.scenario == "historical":
             with self.fs.open(full_path_extent, "rb") as fe:
-                da_sop = xr.open_rasterio(fe).isel(band=0)
+                da_sop = xr.open_dataarray(fe, engine="rasterio").isel(band=0)
                 # bounds = da.rio.bounds()
                 z_sop = target.create_empty(
                     self._sop_resource.path.format(
@@ -205,7 +205,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 return_period=self.return_period_str[return_period]
             )
             with self.fs.open(full_path_depth, "rb") as fd:
-                da_depth = xr.open_rasterio(fd).isel(band=0)
+                da_depth = xr.open_dataarray(fd, engine="rasterio").isel(band=0)
                 if return_period == self.return_periods[0]:
                     z_depth = target.create_empty(
                         self._depth_resource.path.format(
@@ -455,7 +455,7 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                 return_period=self.return_period_str[return_period]
             )
             with self.fs.open(filename, "rb") as f:
-                da = xr.open_rasterio(f).isel(band=0)
+                da = xr.open_dataarray(f, engine="rasterio").isel(band=0)
                 # bounds = da.rio.bounds()
                 if return_period == self.return_periods[0]:
                     z = target.create_empty(

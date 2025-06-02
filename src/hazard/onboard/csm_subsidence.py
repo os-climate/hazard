@@ -69,7 +69,7 @@ class DavydzenkaEtAlLandSubsidence(IndicatorModel[BatchItem]):
         self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Any
     ):
         assert target is None or isinstance(target, OscZarr)
-        da = xr.open_rasterio(self.source).isel(band=0)
+        da = xr.open_dataarray(self.source, engine="rasterio").isel(band=0)
         z = target.create_empty(
             self.resource.path.format(scenario=item.scenario, year=item.year),
             len(da.x),

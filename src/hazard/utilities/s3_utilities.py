@@ -79,10 +79,16 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
     OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
     OSC_S3_ACCESS_KEY_DEV=...
     OSC_S3_SECRET_KEY_DEV=...
-    OSC_S3_BUCKET=physrisk-hazard-indicators
+    OSC_S3_BUCKET=os-climate-physical-risk
     OSC_S3_ACCESS_KEY=...
     OSC_S3_SECRET_KEY=...
     """
+
+    def rename(source_prefix: str):
+        return source_prefix.replace(
+            "hazard/hazard.zarr", "hazard-indicators/hazard.zarr", 1
+        )
+
     s3_source_client = boto3.client(
         "s3",
         aws_access_key_id=os.environ.get("OSC_S3_ACCESS_KEY_DEV", None),
@@ -100,7 +106,7 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
     target_bucket_name = os.environ["OSC_S3_BUCKET"]
     if (
         source_bucket_name != "physrisk-hazard-indicators-dev01"
-        or target_bucket_name != "physrisk-hazard-indicators"
+        or target_bucket_name != "os-climate-physical-risk"
     ):
         # double check on environment variables
         raise ValueError("unexpected bucket")
@@ -112,6 +118,7 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
             target_bucket_name,
             prefix=prefix,
             dry_run=dry_run,
+            rename=rename,
         )
     else:
         keys, size = list_objects(s3_source_client, source_bucket_name, prefix)
@@ -128,6 +135,7 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
                 source_bucket_name,
                 s3_target_client,
                 target_bucket_name,
+                rename=rename,
             )
 
 
@@ -215,7 +223,7 @@ def list_object_etags(client, bucket_name, prefix):
     # get the list of keys with the given prefix
     etags = {}
     for page in pages:
-        for objs in page["Contents"]:
+        for objs in page.get("Contents", []):
             if isinstance(objs, list):
                 for obj in objs:
                     etags[obj["Key"]] = obj["ETag"]
@@ -289,21 +297,32 @@ def sync_buckets(
     source_bucket_name: str,
     s3_target_client,
     target_bucket_name: str,
-    prefix,
+    prefix: str,
     dry_run=True,
+    rename: Optional[Callable[[str], str]] = None,
 ):
+    if rename is None:
+
+        def _rename(s):
+            return s
+
+        rename = _rename
     logger.info(
         f"Syncing target bucket {target_bucket_name} to source {source_bucket_name}."
     )
-
+    prefix_target = rename(prefix) if rename is not None else prefix
     source_etags = list_object_etags(s3_source_client, source_bucket_name, prefix)
-    target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
+    target_etags = list_object_etags(
+        s3_target_client, target_bucket_name, prefix_target
+    )
     # look for objects that are 1) missing in target and 2) different in target
     all_diffs = set(
-        key for key, etag in source_etags.items() if target_etags.get(key, "") != etag
+        key
+        for key, etag in source_etags.items()
+        if target_etags.get(rename(key), "") != etag
     )
-    missing = set(key for key in source_etags if key not in target_etags)
-    different = set(key for key in all_diffs if key not in missing)
+    missing = set(key for key in source_etags if rename(key) not in target_etags)
+    different = set(key for key in all_diffs if rename(key) not in missing)
     logger.info(
         f"Checked {len(source_etags)} files from {source_bucket_name} against {target_bucket_name}"  # noqa:W503
     )
@@ -318,6 +337,7 @@ def sync_buckets(
             source_bucket_name,
             s3_target_client,
             target_bucket_name,
+            rename=rename,
         )
     logger.info(
         f"Copying {len(different)} different files from {source_bucket_name} to {target_bucket_name}: "
@@ -330,6 +350,7 @@ def sync_buckets(
             source_bucket_name,
             s3_target_client,
             target_bucket_name,
+            rename=rename,
         )
 
 
