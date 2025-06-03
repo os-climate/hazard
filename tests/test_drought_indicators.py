@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import xarray as xr
 import zarr  # type: ignore
+from .conftest import test_dir
 
 from hazard.docs_store import DocStore
 from hazard.models.drought_index import (
@@ -112,7 +113,7 @@ def load_test_data_sets(test_inputs: Path):
     return ds_tas, ds_pr
 
 
-def test_batches():
+def test_batches(test_dir):
     # Creamos el filesystem sobre S3 (entorno dev)
     s3 = get_s3_fs(use_dev=True)
     # Montamos el store en el grupo base 'hazard/hazard.zarr'
@@ -121,7 +122,9 @@ def test_batches():
     )
 
     # Instanciamos el modelo usando el working store real de S3
-    model = DroughtIndicator(working_zarr_store=working_store)
+    model = DroughtIndicator(
+        working_zarr_store=working_store, progress_store_path=test_dir
+    )
 
     batches = model.batch_items()
 
@@ -129,17 +132,52 @@ def test_batches():
     assert len(batches) == 18
 
 
-# @pytest.mark.skip(reason="incomplete")
-def test_spei_indicator(test_input_dir, test_output_dir, s3_credentials):
+@pytest.mark.skip(reason="incomplete")
+def test_spei_indicator(test_dir, test_output_dir, s3_credentials):
     gcm = "MIROC6"
     scenario = "ssp585"
-    working_store = S3ZarrWorkingStore()
-    working_store = LocalZarrWorkingStore(test_output_dir)
-    model = DroughtIndicator(working_store)
-    model.calculate_spei(
-        gcm, scenario, progress_store=ProgressStore(test_output_dir, "spei_prog_store")
+
+    # Montamos el store S3 dev
+    s3 = get_s3_fs(use_dev=True)
+    working_store = get_store(
+        s3=s3, use_dev=True, group_path_suffix="hazard/hazard.zarr"
     )
-    # target = TestTarget()
+
+    model = DroughtIndicator(working_zarr_store=working_store)
+
+    test_input_path = Path(test_dir)
+
+    ds_tas, ds_pr = load_test_data_sets(test_input_path)
+    ds_tas.to_zarr(
+        store=working_store,
+        group="tas" + "_" + gcm + "_" + scenario,
+        mode="w",
+    )
+    ds_pr.to_zarr(
+        store=working_store,
+        group="pr" + "_" + gcm + "_" + scenario,
+        mode="w",
+    )
+    # we test for a cut-down set of just one lat/lon
+    lat_min = lat_max = 52.125
+    lon_min = lon_max = 0.125
+
+    ds_slice = model._calculate_spei_for_slice(
+        lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario
+    )
+    path = os.path.join("spei", gcm + "_" + scenario)
+    ds_slice.to_zarr(store=working_store, group=path, mode="w")
+
+    zarr_store = zarr.DirectoryStore(
+        os.path.join(test_output_dir, "drought", "hazard.zarr")
+    )
+    target = OscZarr(store=zarr_store)
+
+    da = model.calculate_annual_average_spei(gcm, scenario, 2005, target=target)
+    np.testing.assert_almost_equal(
+        da.values.reshape([7]), [6.35, 2.6, 1.1, 0.35, 0.0, 0.0, 0.0]
+    )
+
     data_chunks = model.get_datachunks()
     test_chunk = data_chunks["Chunk_0255"]
     lat_min, lat_max = test_chunk["lat_min"], test_chunk["lat_max"]
@@ -212,7 +250,7 @@ def test_progress_store(test_output_dir):
 
 @pytest.mark.skip(reason="example")
 def test_doc_store(test_output_dir, s3_credentials):
-    docs_store = DocStore()
+    docs_store = DocStore(local_path=test_output_dir)
     docs_store.write_new_empty_inventory()
     zarr_store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "drought", "hazard.zarr")
