@@ -8,7 +8,7 @@ from typing import Dict
 from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
-from hazard.onboard.alpha_klima_wildfire_v1_1 import FireRiskIndicators
+from hazard.onboard.probabilistic_european_wildfire import FireRiskIndicators
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.ipcc_drought import IPCCDrought
