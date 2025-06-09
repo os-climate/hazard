@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+from glob import iglob
 import logging
 import os
 import pathlib
@@ -21,7 +22,7 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
 
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
-        array_path (str): The path of the array within the group.
+        array_path (str): The path of the array or data set within the group (i.e. all files that are children are to be copied).
         dry_run (bool, optional): If True, log the action that would
         be taken without actually executing. Defaults to False.
     """
@@ -44,14 +45,18 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     target_bucket_name = os.environ["OSC_S3_BUCKET_DEV"]
     logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
 
-    files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
-    logger.info(f"Copying {len(files)} files in array {array_path}")
+    root_path = pathlib.Path(zarr_dir)
+    relative_file_paths = [pathlib.Path(f).as_posix() for f in iglob(str(pathlib.Path(array_path) / "**"), root_dir=str(root_path), recursive=True) if (root_path / f).is_file()]
 
-    def copy_file(file: pathlib.Path):
-        with open(file, "rb") as f:
+    #files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
+    logger.info(f"Copying {len(relative_file_paths)} files in array {array_path}")
+
+    def copy_file(path: pathlib.Path):
+        # path is the relative path with respect to hazard.zarr
+        with open(root_path / path, "rb") as f:
             data = f.read()
             target_key = str(
-                pathlib.PurePosixPath("hazard", "hazard.zarr", array_path, file.name)
+                pathlib.PurePosixPath("hazard", "hazard.zarr", path)
             )
             s3_target_client.put_object(
                 Body=data, Bucket=target_bucket_name, Key=target_key
@@ -60,13 +65,13 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     async def copy_all():
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
         loop = asyncio.get_running_loop()
-        futures = [loop.run_in_executor(executor, copy_file, file) for file in files]
+        futures = [loop.run_in_executor(executor, copy_file, path) for path in relative_file_paths]
 
         completed = []
         for coro in asyncio.as_completed(futures):
             completed.append(await coro)
             if len(completed) % 100 == 0:
-                logger.info(f"Completed {len(completed)}/{len(files)}")
+                logger.info(f"Completed {len(completed)}/{len(relative_file_paths)}")
 
     if not dry_run:
         loop = asyncio.get_event_loop()
