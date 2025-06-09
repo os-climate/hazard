@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Iterable, List, MutableMapping, Optional, Sequence, Union
 
 import dask.array as da
+from distributed import Client
 import numpy as np  # type: ignore
 import s3fs  # type: ignore
 import xarray as xr
