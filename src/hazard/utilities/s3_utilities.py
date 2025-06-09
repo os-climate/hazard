@@ -46,18 +46,24 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     logger.info(f"Source path {zarr_dir}; target bucket {target_bucket_name}")
 
     root_path = pathlib.Path(zarr_dir)
-    relative_file_paths = [pathlib.Path(f).as_posix() for f in iglob(str(pathlib.Path(array_path) / "**"), root_dir=str(root_path), recursive=True) if (root_path / f).is_file()]
+    relative_file_paths = [
+        pathlib.Path(f).as_posix()
+        for f in iglob(
+            str(pathlib.Path(array_path) / "**"),
+            root_dir=str(root_path),
+            recursive=True,
+        )
+        if (root_path / f).is_file()
+    ]
 
-    #files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
+    # files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
     logger.info(f"Copying {len(relative_file_paths)} files in array {array_path}")
 
     def copy_file(path: pathlib.Path):
         # path is the relative path with respect to hazard.zarr
         with open(root_path / path, "rb") as f:
             data = f.read()
-            target_key = str(
-                pathlib.PurePosixPath("hazard", "hazard.zarr", path)
-            )
+            target_key = str(pathlib.PurePosixPath("hazard", "hazard.zarr", path))
             s3_target_client.put_object(
                 Body=data, Bucket=target_bucket_name, Key=target_key
             )
@@ -65,7 +71,10 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
     async def copy_all():
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=32)
         loop = asyncio.get_running_loop()
-        futures = [loop.run_in_executor(executor, copy_file, path) for path in relative_file_paths]
+        futures = [
+            loop.run_in_executor(executor, copy_file, path)
+            for path in relative_file_paths
+        ]
 
         completed = []
         for coro in asyncio.as_completed(futures):

@@ -54,7 +54,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         "CNRM-CM6-1",
         "EC-Earth3",
         "GFDL-ESM4",
-        "MRI-ESM2-0"        
+        "MRI-ESM2-0",
     ]
     _default_scenarios: Iterable[str] = ["historical", "ssp126", "ssp245", "ssp585"]
     _default_central_year_historical: int = 2005

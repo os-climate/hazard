@@ -179,7 +179,7 @@ def inventory_json(models: Iterable[HazardResource]) -> str:
     return json.dumps(response.dict())
 
 
-def paths_for_resources(resources: List[HazardResource], include_maps: bool=True):
+def paths_for_resources(resources: List[HazardResource], include_maps: bool = True):
     """List all the paths (to arrays or DataSets) for the HazardResources listed."""
     paths = []
     for resource in resources:

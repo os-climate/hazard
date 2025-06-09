@@ -161,27 +161,32 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         for quantity in quantities:
             group = quantity + "_" + item.gcm + "_" + item.scenario
             logger.info(f"processing group {group}.")
+
             def download_year(year: int):
                 ds = download_dataset(quantity, year, item.gcm, item.scenario).chunk(
                     {"time": 365, "lat": lat_chunk_size, "lon": lon_chunk_size}
                 )
                 if year == years[0]:
-                    ds.to_zarr(store=self.working_zarr_store, group=group, mode="w", consolidated=False)
+                    ds.to_zarr(
+                        store=self.working_zarr_store,
+                        group=group,
+                        mode="w",
+                        consolidated=False,
+                    )
                 else:
                     ds.to_zarr(
                         store=self.working_zarr_store,
                         group=group,
                         append_dim="time",
-                        consolidated=False
+                        consolidated=False,
                     )
                 logger.info(f"completed processing: variable={quantity}, year={year}.")
-      
+
             for year in years:
                 download_year(year)
-            #with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             #     futures = [executor.submit(download_year, year) for year in years]
-            #concurrent.futures.wait(futures)
-
+            # concurrent.futures.wait(futures)
 
     def read_quantity_from_s3_store(
         self, gcm, scenario, quantity, lat_min, lat_max, lon_min, lon_max
@@ -195,7 +200,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         ds = xr.open_zarr(
             store=self.working_zarr_store,
             group=quantity + "_" + gcm + "_" + scenario,
-            consolidated=False
+            consolidated=False,
         )
         return ds
 
@@ -301,7 +306,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 .to_dataset(name="spei")
             )
             # compute=False to avoid calculating array
-            ds_spei.to_zarr(store=store, group=path, mode="w", compute=False, consolidated=False)
+            ds_spei.to_zarr(
+                store=store, group=path, mode="w", compute=False, consolidated=False
+            )
             logger.info("created new zarr array.")
             # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
 
@@ -321,7 +328,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 "lon": slice(lon_indexes[0], lon_indexes[-1] + 1),
                 "time": slice(time_indexes[0], time_indexes[-1] + 1),
             },
-            consolidated=False
+            consolidated=False,
         )
         logger.info(f"written chunk {chunk_name} to zarr array.")
         return chunk_name
@@ -397,7 +404,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
 
         def get_spei_full_results(gcm, scenario):
             path = "spei" + "_" + gcm + "_" + scenario
-            ds_spei = xr.open_zarr(self.working_zarr_store, group=path, consolidated=False)
+            ds_spei = xr.open_zarr(
+                self.working_zarr_store, group=path, consolidated=False
+            )
             return ds_spei
 
         period = [
@@ -454,7 +463,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         target: ReadWriteDataArray,
         client,
     ):
-        progress_store = ProgressStore(str(self.progress_store_path), id=item.gcm + "_" + item.scenario)
+        progress_store = ProgressStore(
+            str(self.progress_store_path), id=item.gcm + "_" + item.scenario
+        )
         assert isinstance(target, OscZarr)
         calculate_spei = True
         calculate_average_spei = True
@@ -487,7 +498,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         return [self._resource()]
 
     def _resource(self) -> HazardResource:
-        with open(os.path.join(os.path.dirname(__file__), "drought_index.md"), "r") as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), "drought_index.md"), "r"
+        ) as f:
             description = f.read()
         resource = HazardResource(
             hazard_type="Drought",
@@ -519,7 +532,12 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             units="months/year",
             store_netcdf_coords=True,
             scenarios=[
-                Scenario(id=scen, years=[self.central_years[0]] if scen == "historical" else list(self.central_years))
+                Scenario(
+                    id=scen,
+                    years=[self.central_years[0]]
+                    if scen == "historical"
+                    else list(self.central_years),
+                )
                 for scen in self.scenarios
             ],
         )
