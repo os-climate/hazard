@@ -46,6 +46,8 @@ hazard_map = {
     "WRIAqueductWaterRisk": WRIAqueductWaterRisk,
     "WISCEuropeanWinterStorm": WISCEuropeanWinterStorm,
     "GEMSeismicHazard": GEMSeismicHazard,
+    "JRCRiverflood": JRCRiverFlood,
+    "FireRiskIndicators": FireRiskIndicators,
 }
 
 
