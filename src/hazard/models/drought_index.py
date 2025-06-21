@@ -447,7 +447,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             dims=["threshold", "lat", "lon"],
         )
         path = self.resource.path.format(gcm=gcm, scenario=scenario, year=central_year)
-        chunks=[len(self.spei_threshold), 256, 256]
+        chunks = [len(self.spei_threshold), 256, 256]
         target.write(path, spei_annual_all, chunks=chunks)
         if central_year == self.histo_central_year:
             if scenario == "ssp126" or ("ssp126" not in self.scenarios):
