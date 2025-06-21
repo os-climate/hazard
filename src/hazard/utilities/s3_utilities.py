@@ -55,6 +55,15 @@ def copy_local_to_dev(zarr_dir: str, array_path: str, dry_run=False):
         )
         if (root_path / f).is_file()
     ]
+    relative_file_paths = relative_file_paths + [
+        pathlib.Path(f).as_posix()
+        for f in iglob(
+            str(pathlib.PurePosixPath(array_path) / "**/.*"),
+            root_dir=str(root_path),
+            recursive=True,
+        )
+        if (root_path / f).is_file()
+    ]
 
     # files = [f for f in pathlib.Path(zarr_dir, array_path).iterdir() if f.is_file()]
     logger.info(f"Copying {len(relative_file_paths)} files in array {array_path}")

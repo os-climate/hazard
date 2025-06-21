@@ -154,7 +154,7 @@ class OscZarr(ReadWriteDataArray):
         if self.store_netcdf_coords and spatial_coords:
             # In this mode, the xarray is written to path including NetCDF-style co-ordinates.
             # The Zarr array containing the hazard indicator will be in path/indicator.
-            self.write_data_array(path, da)
+            self.write_data_array(path, da, chunks)
         else:
             self.write_zarr(path, da, chunks)
 
@@ -217,7 +217,9 @@ class OscZarr(ReadWriteDataArray):
         )
         return self._data_array_from_zarr(z)
 
-    def write_data_array(self, path: str, da: xr.DataArray):
+    def write_data_array(
+        self, path: str, da: xr.DataArray, chunks: Optional[List[int]] = None
+    ):
         """[You should probably rather use the 'write'method] Write DataArray to provided relative path.
         The array is saved as a dataset in the xarray native manner (xarray's to_zarr),
         with coordinates as separate arrays,
@@ -243,8 +245,10 @@ class OscZarr(ReadWriteDataArray):
             index_name=str(da_norm.dims[0]),
             index_values=da_norm[da_norm.dims[0]].data,
         )
-        options = {"write_empty_chunks": False}
-        if da.chunks is None:
+        options: Dict[str, Any] = {"write_empty_chunks": False}
+        if chunks is not None:
+            options["chunks"] = chunks
+        elif da.chunks is None:
             options["chunks"] = self._chunks(da_norm[da_norm.dims[0]].data)
         da_norm.to_dataset().to_zarr(
             self.root.store,

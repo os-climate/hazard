@@ -188,6 +188,7 @@ def paths_for_resources(resources: List[HazardResource], include_maps: bool = Tr
                 path = resource.path.format(scenario=scenario.id, year=year)
                 paths.append(path)
                 if include_maps:
+                    assert resource.map is not None
                     map_path = resource.map.path.format(scenario=scenario.id, year=year)
                     paths.append(map_path)
     return paths
