@@ -345,8 +345,10 @@ class OscZarr(ReadWriteDataArray):
             index_name=str(da_norm.dims[0]),
             index_values=da_norm[da_norm.dims[0]].data,
         )
-        options = {"write_empty_chunks": False}
-        if da.chunks is None:
+        options: Dict[str, Any] = {"write_empty_chunks": False}
+        if chunks is not None:
+            options["chunks"] = chunks
+        elif da.chunks is None:
             options["chunks"] = self._chunks(da_norm[da_norm.dims[0]].data)
         da_norm.to_dataset().to_zarr(
             self.root.store,
