@@ -25,7 +25,7 @@ class WRIAqueductSource:  # (OpenDataset):
         f = None
         try:
             f = self.fs.open(str(PurePosixPath(self.prefix, path)) + ".tif", "rb")
-            da = xr.open_rasterio(f)
+            da = xr.open_dataarray(f, engine="rasterio")
             yield da
         finally:
             if da is not None:

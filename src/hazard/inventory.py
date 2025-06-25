@@ -177,3 +177,18 @@ class HazardInventory(BaseModel):
 def inventory_json(models: Iterable[HazardResource]) -> str:
     response = HazardInventory(models=models)  # type: ignore
     return json.dumps(response.dict())
+
+
+def paths_for_resources(resources: List[HazardResource], include_maps: bool = True):
+    """List all the paths (to arrays or DataSets) for the HazardResources listed."""
+    paths = []
+    for resource in resources:
+        for scenario in resource.scenarios:
+            for year in scenario.years:
+                path = resource.path.format(scenario=scenario.id, year=year)
+                paths.append(path)
+                if include_maps:
+                    assert resource.map is not None
+                    map_path = resource.map.path.format(scenario=scenario.id, year=year)
+                    paths.append(map_path)
+    return paths

@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from pathlib import PurePosixPath
 import posixpath
 from typing import Any, Optional, Sequence, Tuple
 
@@ -58,6 +59,8 @@ def create_tiles_for_resource(
         for scenario in resource.scenarios:
             for year in scenario.years:
                 path = resource.path.format(scenario=scenario.id, year=year)
+                if resource.store_netcdf_coords:
+                    path = str(PurePosixPath(path) / "indicator")
                 assert resource.map is not None
                 map_path = resource.map.path.format(scenario=scenario.id, year=year)
                 if resource.map.index_values is not None:
