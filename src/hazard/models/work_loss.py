@@ -1,9 +1,11 @@
+"""Calculate work loss due to chronic heat exposure based on Wet-Bulb Globe Temperature (WBGT) and climate data from multiple Global Circulation Models (GCMs) and climate scenarios."""
+
 import logging
 import os
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Iterable, List
+from typing_extensions import Iterable, List
 
 import numpy as np
 import xarray as xr
@@ -11,22 +13,41 @@ import xarray as xr
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import Indicator, MultiYearAverageIndicatorBase
 from hazard.protocols import OpenDataset
+from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities.tiles import create_tiles_for_resource
+
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class WorkLossBatchItem:
+    """Represents a batch item for work loss calculations.
+
+    Attributes
+        resource (HazardResource): The associated hazard resource.
+        gcm (str): The global climate model identifier.
+        scenario (str): The climate scenario.
+        central_year (int): The central year for the batch item.
+
+    """
+
     resource: HazardResource
     gcm: str
     scenario: str
     central_year: int
 
     def __str__(self):
+        """Return a string representation of the WorkLossBatchItem."""
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
 
 class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
+    """Represents an indicator for work loss due to chronic heat.
+
+    This class extends tocompute `MultiYearAverageIndicatorBase` work loss based on wet-bulb globe temperature (WBGT) and climate data.
+    """
+
     def __init__(
         self,
         window_years=MultiYearAverageIndicatorBase._default_window_years,
@@ -35,6 +56,16 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         central_year_historical=MultiYearAverageIndicatorBase._default_central_year_historical,
         central_years=MultiYearAverageIndicatorBase._default_central_years,
     ):
+        """Initialize the work loss indicator.
+
+        Args:
+            window_years (Iterable[int], optional): Window years for averaging.
+            gcms (Iterable[str], optional): List of general circulation models (GCMs).
+            scenarios (Iterable[str], optional): List of climate scenarios.
+            central_year_historical (int, optional): Historical reference year.
+            central_years (Iterable[int], optional): Future central years.
+
+        """
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -45,6 +76,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
         self.alpha_light = (32.98, 17.81)
         self.alpha_medium = (30.94, 16.64)
         self.alpha_heavy = (24.64, 22.72)
+        self.resource = self._resource()
 
     def batch_items(self) -> Iterable[WorkLossBatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
@@ -65,7 +97,18 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                     )
 
     def inventory(self) -> Iterable[HazardResource]:
+        """Retrieve the inventory of hazard resources.
+
+        Returns
+            Iterable[HazardResource]: A list containing the hazard resource.
+
+        """
         return [self._resource()]
+
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """Create map images."""
+        ...
+        create_tiles_for_resource(source, target, self.resource)
 
     def _resource(self) -> HazardResource:
         with open(os.path.join(os.path.dirname(__file__), "work_loss.md"), "r") as f:
@@ -81,7 +124,11 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             description=description,
             display_groups=["Mean work loss"],  # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
+            license="Creative Commons",
+            source="",
+            version="",
             group_id="",
+            resolution="1800 m",
             map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
@@ -95,8 +142,8 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
-                path="mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
-                source="map_array",
+                path="maps/chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                source="map_array_pyramid",
             ),
             units="fractional loss",
             scenarios=[

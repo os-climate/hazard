@@ -1,39 +1,62 @@
+"""Module with utilities for downloading files."""
+
 import os
-from pathlib import Path
 import re
+import tarfile
 import zipfile
 from typing import Optional
 
 import requests
 
 
-def download_file(url: str, directory: str, filename: Optional[str] = None):
+def download_file(
+    url: str, directory: str, filename: Optional[str] = None, force_download=False
+):
     """Download a file in chunks."""
-    with requests.get(url, stream=True) as r:
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    with requests.get(url, stream=True, verify=False) as r:
         if filename is None:
             filename = get_filename_from_cd(r.headers["content-disposition"])
             if not filename:
                 raise ValueError(
                     "filename not provided and cannot infer from content-disposition"
                 )
+
+        file_path = os.path.join(directory, filename)
+        if os.path.exists(file_path) and not force_download:
+            print(f"The file {filename} already exists.")
+            return filename
+
         r.raise_for_status()
-        dir = Path(directory)
-        dir.mkdir(exist_ok=True, parents=True)
-        with open(dir / filename, "wb") as f:
+        with open(file_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
+
     return filename
 
 
-def download_and_unzip(url: str, dir: str, archive_name: str, overwrite: bool = False):
+def download_and_unzip(
+    url: str,
+    dir: str,
+    archive_name: str,
+    overwrite: bool = False,
+    extension: str = ".zip",
+):
     """Download a file and unzip."""
     unzip_file = os.path.join(dir, archive_name)
     if not overwrite and os.path.exists(unzip_file):
         return
-    download_file(url, dir, filename=archive_name + ".zip")
-    zip_file = os.path.join(dir, archive_name + ".zip")
-    with zipfile.ZipFile(zip_file, "r") as z:
-        z.extractall(unzip_file)
+    file = os.path.join(dir, archive_name + extension)
+    if not os.path.exists(file):
+        download_file(url, dir, filename=archive_name + extension)
+
+    if tarfile.is_tarfile(file):
+        with tarfile.open(file, "r") as t:
+            t.extractall(unzip_file)
+    else:
+        with zipfile.ZipFile(file, "r") as z:
+            z.extractall(unzip_file)
 
 
 def get_filename_from_cd(content_disp):

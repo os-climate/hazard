@@ -1,13 +1,17 @@
+"""Module for calculating indicators of days exceeding wet-bulb globe temperature (WBGT) thresholds."""
+
 import logging
 import os
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Iterable, List
+from typing import Sequence
+from typing_extensions import List
 
 import numpy as np
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+
 from hazard.models.multi_year_average import (
     BatchItem,
     Indicator,
@@ -20,10 +24,30 @@ from hazard.utilities.tiles import create_tiles_for_resource
 logger = logging.getLogger(__name__)
 
 
-class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
+class WetBulbGlobeTemperatureAboveIndicator(
+    ThresholdBasedAverageIndicator,
+):
+    """Calculates days exceeding specified WBGT temperature thresholds based on climate data for various scenarios and years, storing results for global heat risk assessment.
+
+    Attributes
+        threshold_temps_c : List[float]
+            Temperature thresholds in Celsius for calculating exceedance days.
+        window_years : int
+            Number of years over which to average data.
+        gcms : Iterable[str]
+            Climate models to use for data analysis.
+        scenarios : Iterable[str]
+            Emission scenarios to consider for projections.
+        central_year_historical : int
+            Central year for historical scenario calculations.
+        central_years : Iterable[int]
+            Central years for projected scenario calculations.
+
+    """
+
     def __init__(
         self,
-        threshold_temps_c: List[float] = [
+        threshold_temps_c: Sequence[float] = [
             5,
             10,
             15,
@@ -38,7 +62,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             60,
         ],
         window_years: int = 20,
-        gcms: Iterable[str] = [
+        gcms: Sequence[str] = [
             "ACCESS-CM2",
             "CMCC-ESM2",
             "CNRM-CM6-1",
@@ -46,7 +70,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             "MIROC6",
             "NorESM2-MM",
         ],
-        scenarios: Iterable[str] = [
+        scenarios: Sequence[str] = [
             "historical",
             "ssp126",
             "ssp245",
@@ -54,8 +78,25 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             "ssp585",
         ],
         central_year_historical: int = 2005,
-        central_years: Iterable[int] = [2030, 2040, 2050, 2060, 2070, 2080, 2090],
+        central_years: Sequence[int] = [2030, 2040, 2050, 2060, 2070, 2080, 2090],
     ):
+        """Initialize the WBGT indicator with specified thresholds, climate models, and scenarios.
+
+        Args:
+            threshold_temps_c : Sequence[float]
+                Temperature thresholds for exceedance calculations in Celsius.
+            window_years : int
+                Number of years for averaging data.
+            gcms : Sequence[str]
+                Global Climate Models to include.
+            scenarios : Sequence[str]
+                Emission scenarios to evaluate.
+            central_year_historical : int
+                Central year for historical averages.
+            central_years : Sequence[int]
+                Target years for future scenario calculations.
+
+        """
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -113,9 +154,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         return output
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         create_tiles_for_resource(source, target, self._resource())
 
     def _resource(self) -> HazardResource:
@@ -133,6 +172,10 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
             display_name="Days with wet-bulb globe temperature above threshold in °C/{gcm}",
             description=description,
+            resolution="1800 m",
+            license="Creative Commons",
+            source="",
+            version="",
             display_groups=[
                 "Days with wet-bulb globe temperature above threshold in °C"
             ],  # display names of groupings
@@ -143,7 +186,7 @@ class WetBulbGlobeTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=365,
                     max_index=255,
                     units="days/year",
                 ),

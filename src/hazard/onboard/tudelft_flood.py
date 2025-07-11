@@ -1,46 +1,31 @@
+"""Module for handling the onboarding and processing of TUDelft riverine and coastal inundations data."""
+
 import logging
 import os
-from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Any, Iterable, Optional
+from pathlib import PurePath
+from typing_extensions import Iterable, Optional, override
+import zipfile
 
 import numpy as np
 import rioxarray  # noqa: F401
 import xarray as xr
-from dask.distributed import Client
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 
-from hazard.indicator_model import IndicatorModel
+from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.download_utilities import download_and_unzip
+from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class BatchItem:
-    scenario: str
-    central_year: int
-    flood_depth_filename: str
-    extent_protected_filename: str
+class TUDelftRiverFlood(Onboarder):
+    """On-board returns data set from TUDelft for river inundation."""
 
-
-@dataclass
-class BatchItemRiverine:
-    scenario: str
-    central_year: int
-    input_dataset_filename: str
-
-
-class TUDelftRiverFlood(IndicatorModel[BatchItem]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Define every attribute of the onboarding class for the Delft University of Technology
-        river flood data.
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the Delft University of Technology river flood data.
 
         METADATA:
         Link: https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122 # noqa: E501
@@ -63,12 +48,15 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         climate simulation (EURO-CORDEX).
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = (
+            PurePath(source_dir_base, "tudelft_river_flood").as_posix() + "/"
+        )
 
         # Download source data
         self.return_periods = [10, 30, 100, 300, 1000]
@@ -80,6 +68,11 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             1000: "1000y",
         }
         self.zip_url = "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        self.dataset_filename = "data_river_flood.zip"
+
+        self.urls = {
+            "data_river_flood.zip": "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        }
 
         """
         This is a comment on the understanding of the data that underlies the processing herein.
@@ -105,139 +98,174 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
 
         self._depth_resource, self._sop_resource = self.inventory()
 
-    def batch_items(self) -> Iterable[BatchItem]:
-        return [
-            BatchItem(
-                scenario="historical",
-                central_year=1985,
-                flood_depth_filename="River_flood_depth_1971_2000_hist_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_1971_2000_hist_with_protection.tif",
-            ),
-            BatchItem(
-                scenario="rcp4p5",
-                central_year=2035,
-                flood_depth_filename="River_flood_depth_2021_2050_RCP45_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2021_2050_RCP45_with_protection.tif",
-            ),
-            BatchItem(
-                scenario="rcp8p5",
-                central_year=2035,
-                flood_depth_filename="River_flood_depth_2021_2050_RCP85_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2021_2050_RCP85_with_protection.tif",
-            ),
-            BatchItem(
-                scenario="rcp4p5",
-                central_year=2085,
-                flood_depth_filename="River_flood_depth_2071_2100_RCP45_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2071_2100_RCP45_with_protection.tif",
-            ),
-            BatchItem(
-                scenario="rcp8p5",
-                central_year=2085,
-                flood_depth_filename="River_flood_depth_2071_2100_RCP85_{return_period}.tif",
-                extent_protected_filename="River_flood_extent_2071_2100_RCP85_with_protection.tif",
-            ),
-        ]
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, "tudelft_river")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
+        if (
+            not os.path.exists(PurePath(download_dir, self.dataset_filename))
+            or force_download
+        ):
+            download_file(
+                url=self.urls[self.dataset_filename],
+                directory=download_dir,
+                filename=self.dataset_filename,
+                force_download=force_download,
+            )
 
-    def run_single(
-        self, item: BatchItem, source: Any, target: ReadWriteDataArray, client: Client
-    ):
-        assert isinstance(target, OscZarr)
-        full_path_depth_format = PurePosixPath(
-            self.source_dir, item.flood_depth_filename
-        )
-        full_path_extent = PurePosixPath(
-            self.source_dir, item.extent_protected_filename
-        )
-        assert target is None or isinstance(target, OscZarr)
-        shape = [
-            39420,
-            38374,
-        ]  # y, x not all returns have same size (first one smaller at 38371)
-        # not all return periods have the same size. We pick the
-        i, return_period = 1, self.return_periods[1]
-        full_path_depth = str(full_path_depth_format).format(
-            return_period=self.return_period_str[return_period]
-        )
-        with self.fs.open(full_path_depth, "rb") as fd:
-            da_depth = xr.open_rasterio(fd).isel(band=0)
-            coords_x, coords_y = np.array(da_depth.x), np.array(da_depth.y)
+        with zipfile.ZipFile(
+            os.path.join(download_dir, self.dataset_filename), "r"
+        ) as z:
+            zip2source = {
+                name: PurePath(self.source_dir, os.path.basename(name)).as_posix()
+                for name in z.namelist()
+            }
+            for zname, target_file in zip2source.items():
+                with self.fs.open(target_file, mode="wb") as mifi:
+                    mifi.write(z.read(name=zname))
 
-        # only create SoP for historical
-        if item.scenario == "historical":
-            with self.fs.open(full_path_extent, "rb") as fe:
-                da_sop = xr.open_rasterio(fe).isel(band=0)
-                # bounds = da.rio.bounds()
-                z_sop = target.create_empty(
-                    self._sop_resource.path.format(
-                        scenario=item.scenario, year=item.central_year
-                    ),
-                    shape[1],
-                    shape[0],
-                    da_sop.rio.transform(),
-                    str(da_sop.crs),
-                    index_name="standard of protection (years)",
-                    index_values=["min", "max"],
-                )
-                values_max_sop = np.array(da_sop.data, dtype="float32")
-                sop_no_data = da_sop.attrs["nodatavals"]
-                values_max_sop[values_max_sop == sop_no_data] = float("nan")
-                values_min_sop = self._get_mins(values_max_sop)
-                z_sop[0, 0 : len(da_sop.y), 0 : len(da_sop.x)] = values_min_sop[:, :]
-                z_sop[1, 0 : len(da_sop.y), 0 : len(da_sop.x)] = values_max_sop[:, :]
-                del values_min_sop, values_max_sop
+    @override
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        if not os.path.exists(self.source_dir) or force or force_download:
+            return False
 
-        for i, return_period in enumerate(self.return_periods):
+        try:
+            elements = os.listdir(self.source_dir)
+        except PermissionError:
+            return False
+
+        return len(elements) == 124
+
+    @override
+    def onboard(self, target):
+        items = self._get_items_to_process()
+        for item in items:
+            """Process a single item and writes the data to the Zarr store."""
+            assert isinstance(target, OscZarr)
+            full_path_depth_format = os.path.join(
+                self.source_dir, "river_tudelft", item["flood_depth_filename"]
+            )
+            full_path_extent = os.path.join(
+                self.source_dir, "river_tudelft", item["extent_protected_filename"]
+            )
+            assert target is None or isinstance(target, OscZarr)
+            shape = [
+                39420,
+                38374,
+            ]  # y, x not all returns have same size (first one smaller at 38371)
+            # not all return periods have the same size. We pick the
+            i, return_period = 1, self.return_periods[1]
             full_path_depth = str(full_path_depth_format).format(
                 return_period=self.return_period_str[return_period]
             )
             with self.fs.open(full_path_depth, "rb") as fd:
-                da_depth = xr.open_rasterio(fd).isel(band=0)
-                if return_period == self.return_periods[0]:
-                    z_depth = target.create_empty(
-                        self._depth_resource.path.format(
-                            scenario=item.scenario, year=item.central_year
+                da_depth = xr.open_dataarray(fd, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+                coords_x, coords_y = np.array(da_depth.x), np.array(da_depth.y)
+
+            # only create SoP for historical
+            if item["scenario"] == "historical":
+                with self.fs.open(full_path_extent, "rb") as fe:
+                    da_sop = xr.open_dataarray(fe, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+                    # bounds = da.rio.bounds()
+                    z_sop = target.create_empty(
+                        self._sop_resource.path.format(
+                            scenario=item["scenario"], year=item["central_year"]
                         ),
                         shape[1],
                         shape[0],
-                        da_depth.rio.transform(),
-                        str(da_depth.crs),
-                        index_values=self.return_periods,
+                        da_sop.rio.transform(),
+                        str(da_sop.crs),
+                        index_name="standard of protection (years)",
+                        index_values=["min", "max"],
                     )
-                if da_depth.shape[1] == 38375:
-                    da_depth = da_depth[:, 0:38374]
-                # not quite the same coordinates: check if close, within rounding error, and align exactly
-                lenx, leny = (
-                    min(len(da_depth.x), len(coords_x)),
-                    min(len(da_depth.y), len(coords_y)),
+                    values_max_sop = np.array(da_sop.data, dtype="float32")
+                    sop_no_data = da_sop.attrs["nodatavals"]
+                    values_max_sop[values_max_sop == sop_no_data] = float("nan")
+                    values_min_sop = self._get_mins(values_max_sop)
+                    z_sop[0, 0 : len(da_sop.y), 0 : len(da_sop.x)] = values_min_sop[
+                        :, :
+                    ]
+                    z_sop[1, 0 : len(da_sop.y), 0 : len(da_sop.x)] = values_max_sop[
+                        :, :
+                    ]
+                    del values_min_sop, values_max_sop
+
+            for i, return_period in enumerate(self.return_periods):
+                full_path_depth = str(full_path_depth_format).format(
+                    return_period=self.return_period_str[return_period]
                 )
-                assert (
-                    np.abs(np.array(da_depth.x[0:lenx]) - coords_x[0:lenx]).max() < 1e-4
-                )
-                assert (
-                    np.abs(np.array(da_depth.y[0:leny]) - coords_y[0:leny]).max() < 1e-4
-                )
-                # da_depth = da_depth.assign_coords({"x": da_depth.x, "y": da_depth.y})
-                values_depth = da_depth.data
-                depth_no_data = da_depth.attrs["nodatavals"]
-                values_depth[values_depth == depth_no_data] = float("nan")
-                z_depth[i, 0 : len(da_depth.y), 0 : len(da_depth.x)] = values_depth[
-                    :, :
-                ]
-                del values_depth
+                with self.fs.open(full_path_depth, "rb") as fd:
+                    da_depth = xr.open_dataarray(fd, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+                    if return_period == self.return_periods[0]:
+                        z_depth = target.create_empty(
+                            self._depth_resource.path.format(
+                                scenario=item["scenario"], year=item["central_year"]
+                            ),
+                            shape[1],
+                            shape[0],
+                            da_depth.rio.transform(),
+                            str(da_depth.crs),
+                            index_values=self.return_periods,
+                        )
+                    if da_depth.shape[1] == 38375:
+                        da_depth = da_depth[:, 0:38374]
+                    # not quite the same coordinates: check if close, within rounding error, and align exactly
+                    lenx, leny = (
+                        min(len(da_depth.x), len(coords_x)),
+                        min(len(da_depth.y), len(coords_y)),
+                    )
+                    assert (
+                        np.abs(np.array(da_depth.x[0:lenx]) - coords_x[0:lenx]).max()
+                        < 1e-4
+                    )
+                    assert (
+                        np.abs(np.array(da_depth.y[0:leny]) - coords_y[0:leny]).max()
+                        < 1e-4
+                    )
+                    # da_depth = da_depth.assign_coords({"x": da_depth.x, "y": da_depth.y})
+                    values_depth = da_depth.data
+                    depth_no_data = da_depth.attrs["nodatavals"]
+                    values_depth[values_depth == depth_no_data] = float("nan")
+                    z_depth[i, 0 : len(da_depth.y), 0 : len(da_depth.x)] = values_depth[
+                        :, :
+                    ]
+                    del values_depth
+
+    def _get_items_to_process(self):
+        """Get a list of all items to process as dictionaries."""
+        return [
+            {
+                "scenario": "historical",
+                "central_year": 1985,
+                "flood_depth_filename": "River_flood_depth_1971_2000_hist_{return_period}.tif",
+                "extent_protected_filename": "River_flood_extent_1971_2000_hist_with_protection.tif",
+            },
+            {
+                "scenario": "rcp4p5",
+                "central_year": 2035,
+                "flood_depth_filename": "River_flood_depth_2021_2050_RCP45_{return_period}.tif",
+                "extent_protected_filename": "River_flood_extent_2021_2050_RCP45_with_protection.tif",
+            },
+            {
+                "scenario": "rcp8p5",
+                "central_year": 2035,
+                "flood_depth_filename": "River_flood_depth_2021_2050_RCP85_{return_period}.tif",
+                "extent_protected_filename": "River_flood_extent_2021_2050_RCP85_with_protection.tif",
+            },
+            {
+                "scenario": "rcp4p5",
+                "central_year": 2085,
+                "flood_depth_filename": "River_flood_depth_2071_2100_RCP45_{return_period}.tif",
+                "extent_protected_filename": "River_flood_extent_2071_2100_RCP45_with_protection.tif",
+            },
+            {
+                "scenario": "rcp8p5",
+                "central_year": 2085,
+                "flood_depth_filename": "River_flood_depth_2071_2100_RCP85_{return_period}.tif",
+                "extent_protected_filename": "River_flood_extent_2071_2100_RCP85_with_protection.tif",
+            },
+        ]
 
     def _get_mins(self, maxes: np.ndarray):
         mins = np.empty_like(maxes)
@@ -252,10 +280,9 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             mins = np.where(maxes == max, min, mins)
         return mins
 
+    @override
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         # for TUDelft data, zero risk of flooding seems to be NaN
         # this presents a problem when creating lower resolution images where we might want to see an
@@ -263,6 +290,13 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
             source,
             target,
             self._depth_resource,
+            max_zoom=10,
+            nodata_as_zero_coarsening=True,
+        )
+        create_tiles_for_resource(
+            source,
+            target,
+            self._sop_resource,
             max_zoom=10,
             nodata_as_zero_coarsening=True,
         )
@@ -289,6 +323,10 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 description=description,
                 group_id="",
                 display_groups=[],
+                version="",
+                license="General terms of use for 4TU.Centre for Research Data. https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122",
+                source="",
+                resolution="100 m",
                 map=MapInfo(
                     bbox=[],
                     bounds=[],
@@ -318,11 +356,16 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                 indicator_id="flood_sop",
                 indicator_model_id="tudelft",
                 indicator_model_gcm="CLMcom-CCLM4-8-17-EC-EARTH",
+                resolution="1000 m",
                 path="inundation/river_tudelft/v2/flood_sop_{scenario}_{year}",
                 params={},
                 display_name="Standard of protection (TUDelft)",
                 description=description_sop,
                 group_id="",
+                version="",
+                attribution="“This product incorporates FLOPROS data © Authors 2016, licensed under CC BY 3.0.”    , Scussolini, P., Aerts, J. C. J. H., Jongman, B., Bouwer, L. M., Winsemius, H. C., de Moel, H., & Ward, P. J. (2016). FLOPROS: an evolving global database of flood protection standards. Natural Hazards and Earth System Sciences, 16, 1049–1061. https://doi.org/10.5194/nhess-16-1049-2016",
+                license="CC BY 3.0.",
+                source="4TU Research Data: https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122",
                 display_groups=[],
                 map=MapInfo(
                     bbox=[],
@@ -331,7 +374,7 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
                         max_index=255,
                         min_index=1,
                         nodata_index=0,
-                        name="flare",
+                        name="viridis",
                         min_value=0.0,
                         max_value=1500.0,
                         units="years",
@@ -351,11 +394,11 @@ class TUDelftRiverFlood(IndicatorModel[BatchItem]):
         ]
 
 
-class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
-    def __init__(self, source_dir: str, fs: Optional[AbstractFileSystem] = None):
-        """
-        Define every attribute of the onboarding class for the Delft University of Technology
-        coastal flood data.
+class TUDelftCoastalFlood(Onboarder):
+    """On-board returns data set from TUDelft for coastal inundation."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Define every attribute of the onboarding class for the Delft University of Technology coastal flood data.
 
         METADATA:
         Link: https://data.4tu.nl/articles/Pan-European_data_sets_of_coastal_flood_probability_of_occurrence_under_present_and_future_climate/12717446
@@ -378,12 +421,15 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
         regional climate simulation (EURO-CORDEX).
 
         Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
+            source_dir_base (str): directory containing source files. If fs is a S3FileSystem instance
             <bucket name>/<prefix> is expected.
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance. If none, a LocalFileSystem is used.
+
         """
         self.fs = fs if fs else LocalFileSystem()
-        self.source_dir = source_dir
+        self.source_dir = (
+            PurePath(source_dir_base, "tudelft_costal_flood").as_posix() + "/"
+        )
 
         # Download source data
         self.return_periods = [10, 30, 100, 300, 1000]
@@ -396,93 +442,129 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
         }
         self.zip_url = "https://data.4tu.nl/file/57254e09-82ce-4257-8907-87a7be45bb21/f076ed16-066d-4d5a-a2a9-c2ed4b1a0e76"
 
+        self.dataset_filename = "data_coastal_flood.zip"
+
+        self.urls = {
+            "data_coastal_flood.zip": "https://data.4tu.nl/file/df7b63b0-1114-4515-a562-117ca165dc5b/5e6e4334-15b5-4721-a88d-0c8ca34aee17"
+        }
+
         self._resource = list(self.inventory())[0]
 
-    def batch_items(self) -> Iterable[BatchItemRiverine]:
+    def _get_items_to_process(self):
+        """Get a list of all items to process."""
         return [
-            BatchItemRiverine(
-                scenario="historical",
-                central_year=1971,
-                input_dataset_filename="Coastal_flood_depth_1971_2000_hist_{return_period}.tif",
-            ),
-            BatchItemRiverine(
-                scenario="rcp4p5",
-                central_year=2035,
-                input_dataset_filename="Coastal_flood_depth_2021_2050_RCP45_{return_period}.tif",
-            ),
-            BatchItemRiverine(
-                scenario="rcp8p5",
-                central_year=2035,
-                input_dataset_filename="Coastal_flood_depth_2021_2050_RCP85_{return_period}.tif",
-            ),
-            BatchItemRiverine(
-                scenario="rcp4p5",
-                central_year=2085,
-                input_dataset_filename="Coastal_flood_depth_2071_2100_RCP45_{return_period}.tif",
-            ),
-            BatchItemRiverine(
-                scenario="rcp8p5",
-                central_year=2085,
-                input_dataset_filename="Coastal_flood_depth_2071_2100_RCP85_{return_period}.tif",
-            ),
+            {
+                "scenario": "historical",
+                "central_year": 1971,
+                "input_dataset_filename": "Coastal_flood_depth_1971_2000_hist_{return_period}.tif",
+            },
+            {
+                "scenario": "rcp4p5",
+                "central_year": 2035,
+                "input_dataset_filename": "Coastal_flood_depth_2021_2050_RCP45_{return_period}.tif",
+            },
+            {
+                "scenario": "rcp8p5",
+                "central_year": 2035,
+                "input_dataset_filename": "Coastal_flood_depth_2021_2050_RCP85_{return_period}.tif",
+            },
+            {
+                "scenario": "rcp4p5",
+                "central_year": 2085,
+                "input_dataset_filename": "Coastal_flood_depth_2071_2100_RCP45_{return_period}.tif",
+            },
+            {
+                "scenario": "rcp8p5",
+                "central_year": 2085,
+                "input_dataset_filename": "Coastal_flood_depth_2071_2100_RCP85_{return_period}.tif",
+            },
         ]
 
-    def prepare(self, working_dir: Optional[str] = None):
-        if not isinstance(self.fs, LocalFileSystem):
-            # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
-            assert working_dir is not None
-            download_and_unzip(self.zip_url, working_dir, "tudelft_coastal")
-            for file in os.listdir(working_dir):
-                with open(file, "rb") as f:
-                    self.fs.write_bytes(PurePosixPath(self.source_dir, file), f.read())
-        else:
-            # download and unzip directly in location
-            source = PurePosixPath(self.source_dir)
-            download_and_unzip(self.zip_url, str(source.parent), source.parts[-1])
-
-    def run_single(
-        self,
-        item: BatchItemRiverine,
-        source: Any,
-        target: ReadWriteDataArray,
-        client: Client,
-    ):
-        input = PurePosixPath(self.source_dir, "data", item.input_dataset_filename)
-        assert target is None or isinstance(target, OscZarr)
-        shape = [40300, 38897]  # y, x not all returns have same size. Use max shapes
-        for i, return_period in enumerate(self.return_periods):
-            filename = str(input).format(
-                return_period=self.return_period_str[return_period]
+    @override
+    def prepare(self, force=False, download_dir=None, force_download=False):
+        self.fs.makedirs(self.source_dir, exist_ok=True)
+        if (
+            not os.path.exists(PurePath(download_dir, self.dataset_filename))
+            or force_download
+        ):
+            download_file(
+                url=self.urls[self.dataset_filename],
+                directory=download_dir,
+                filename=self.dataset_filename,
+                force_download=force_download,
             )
-            with self.fs.open(filename, "rb") as f:
-                da = xr.open_rasterio(f).isel(band=0)
-                # bounds = da.rio.bounds()
-                if return_period == self.return_periods[0]:
-                    z = target.create_empty(
-                        self._resource.path.format(
-                            scenario=item.scenario, year=item.central_year
-                        ),
-                        shape[1],
-                        shape[0],
-                        da.rio.transform(),
-                        str(da.crs),
-                        index_values=self.return_periods,
-                    )
-                values = da.data
-                no_data = da.attrs["nodatavals"]
-                values[values == no_data] = float("nan")
-                z[i, 0 : len(da.y), 0 : len(da.x)] = values[:, :]
 
+        with zipfile.ZipFile(
+            os.path.join(download_dir, self.dataset_filename), "r"
+        ) as z:
+            zip2source = {
+                name: PurePath(self.source_dir, os.path.basename(name)).as_posix()
+                for name in z.namelist()
+            }
+            for zname, target_file in zip2source.items():
+                with self.fs.open(target_file, mode="wb") as mifi:
+                    mifi.write(z.read(name=zname))
+
+    @override
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        if not os.path.exists(self.source_dir) or force or force_download:
+            return False
+
+        try:
+            elements = os.listdir(self.source_dir)
+        except PermissionError:
+            return False
+
+        return len(elements) == 124
+
+    @override
+    def onboard(self, target):
+        """Process a single item and writes the data to the Zarr store."""
+        items = self._get_items_to_process()
+        for item in items:
+            input = os.path.join(
+                self.source_dir,
+                "coastal_tudelft",
+                "data",
+                item["input_dataset_filename"],
+            )
+            assert target is None or isinstance(target, OscZarr)
+            shape = [
+                40300,
+                38897,
+            ]  # y, x not all returns have same size. Use max shapes
+            for i, return_period in enumerate(self.return_periods):
+                filename = str(input).format(
+                    return_period=self.return_period_str[return_period]
+                )
+                with self.fs.open(filename, "rb") as f:
+                    da = xr.open_dataarray(f, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+                    # bounds = da.rio.bounds()
+                    if return_period == self.return_periods[0]:
+                        z = target.create_empty(
+                            self._resource.path.format(
+                                scenario=item["scenario"], year=item["central_year"]
+                            ),
+                            shape[1],
+                            shape[0],
+                            da.rio.transform(),
+                            str(da.crs),
+                            index_values=self.return_periods,
+                        )
+                    values = da.data
+                    no_data = da.attrs["nodatavals"]
+                    values[values == no_data] = float("nan")
+                    z[i, 0 : len(da.y), 0 : len(da.x)] = values[:, :]
+
+    @override
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         ...
         create_tiles_for_resource(source, target, self._resource)
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
-
         return [
             HazardResource(
                 hazard_type="CoastalInundation",
@@ -497,7 +579,11 @@ class TUDelftCoastalFlood(IndicatorModel[BatchItemRiverine]):
                 Based upon CLMcom-CCLM4-8-17-EC-EARTH regional
                 climate simulation (EURO-CORDEX).
                 """,
-                group_id="",
+                version="",
+                license="CC0 (Creative Commons Zero)",
+                source="4TU Research Data: https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122",
+                resolution="100 m",
+                group_id="coastal_tudelft",
                 display_groups=[],
                 map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                     bounds=[],

@@ -39,6 +39,7 @@ def test_water_temp_above_mocked():
                 dataset[key].rename({"lat": "latitude", "lon": "longitude"})
                 for key in dataset
             ],
+            strict=False,
         )
     )
     source = TestSource(dataset, [gcm])
@@ -52,6 +53,7 @@ def test_water_temp_above_mocked():
         central_years=[year],
     )
     model.run_all(source, target)
+
     result = target.datasets[
         "chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}".format(
             gcm=gcm, scenario=scenario, year=year

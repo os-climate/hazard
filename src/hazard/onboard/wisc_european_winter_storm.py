@@ -1,19 +1,26 @@
+import glob
 import logging
 import os
-from pathlib import Path, PurePath
-from typing import Iterable, Optional
+from pathlib import Path, PurePath, PurePosixPath
+from typing_extensions import Iterable, Optional, override
 import warnings
 import zipfile
 
+
+import cdsapi
+from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 import numpy as np
 import xarray as xr
 
+# import cartopy.crs as ccrs
+# import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+
 from hazard.onboarder import Onboarder
-from hazard.protocols import WriteDataArray
+from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import data_array
@@ -22,14 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 class WISCEuropeanWinterStorm(Onboarder):
-    def __init__(
-        self,
-        source_dir_base: PurePath = PurePath(),
-        fs: Optional[AbstractFileSystem] = None,
-    ):
-        super().__init__(source_dir_base, fs)
-        """
-        Peak 3s gust wind speed for different return periods inferred from the WISC event set.
+    """On-board the Peak 3s gust wind speed for different return periods inferred from the WISC event set."""
+
+    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+        """Peak 3s gust wind speed for different return periods inferred from the WISC event set.
 
         METADATA:
         Link: https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
@@ -49,15 +52,13 @@ class WISCEuropeanWinterStorm(Onboarder):
         Return period maps of peak gust wind speed are inferred from this data.
 
         Special thanks to Annabel Hall; her work on investigating the fitting of the WISC data set is adapted hereunder.
-        https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
-        https://cds.climate.copernicus.eu/how-to-api
-
-        Args:
-            source_dir (str): directory containing source files. If fs is a S3FileSystem instance
-            <bucket name>/<prefix> is expected.
-            fs (Optional[AbstractFileSystem], optional): AbstractFileSystem instance.
-            If None, a LocalFileSystem is used.
         """
+        self.source_dir = PurePath(source_dir_base).as_posix() + "/"
+        self.fs = fs if fs else LocalFileSystem()
+        self.source_dir = (
+            PurePath(source_dir_base, "wisc_european_winter_storm").as_posix() + "/"
+        )
+
         self.years = [
             1986,
             1987,
@@ -86,14 +87,124 @@ class WISCEuropeanWinterStorm(Onboarder):
             2010,
             2011,
         ]
+        self.source_files = [
+            "1986_data_1.2.zip",
+            "1987_data_1.2.zip",
+            "1988_data_1.2.zip",
+            "1989_data_1.2.zip",
+            "1990_data_1.2.zip",
+            "1991_data_1.2.zip",
+            "1992_data_1.2.zip",
+            "1993_data_1.2.zip",
+            "1994_data_1.2.zip",
+            "1995_data_1.2.zip",
+            "1996_data_1.2.zip",
+            "1997_data_1.2.zip",
+            "1998_data_1.2.zip",
+            "1999_data_1.2.zip",
+            "2000_data_1.2.zip",
+            "2001_data_1.2.zip",
+            "2002_data_1.2.zip",
+            "2003_data_1.2.zip",
+            "2004_data_1.2.zip",
+            "2005_data_1.2.zip",
+            "2006_data_1.2.zip",
+            "2007_data_1.2.zip",
+            "2008_data_1.2.zip",
+            "2009_data_1.2.zip",
+            "2010_data_1.2.zip",
+            "2011_data_1.2.zip",
+        ]
         # synth_sets = [1.2, 2.0, 3.0]
         self.synth_set = 1.2
 
-    def prepare(self, working_dir: Path, force_download: bool = False):
-        # self._download_all(working_dir)
-        self._extract_all(working_dir)
+    @override
+    def prepare(self, download_dir=None):
+        os.makedirs(self.source_dir, exist_ok=True)
 
-    def onboard(self, target: WriteDataArray):
+        try:
+            wisc_cdsapi_url = os.getenv("WISC_CDSAPI_URL", None)
+            wisc_cdsapi_key = os.getenv("WISC_CDSAPI_KEY", None)
+
+            if not (wisc_cdsapi_url and wisc_cdsapi_key):
+                raise Exception(
+                    "To Onboard WISC you need WISC_CDSAPI_URL and WISC_CDSAPI_KEY envvars."
+                )
+
+            client = cdsapi.Client(
+                url=wisc_cdsapi_url,
+                key=wisc_cdsapi_key,
+                sleep_max=5,
+                timeout=240,
+                retry_max=50,
+            )
+            synth_set = 1.2
+            for i, year in enumerate(self.years):
+                logger.info(
+                    f"downloading year {i + 1} / len(years) for synth set {synth_set}"
+                )
+                target = Path(self.source_dir) / f"{year}_data_{synth_set}.zip"
+                client.retrieve(
+                    "sis-european-wind-storm-synthetic-events",
+                    {
+                        "format": "zip",
+                        "version_id": "synthetic_set_2_0",
+                        "year": f"{year}",
+                        "month": [
+                            "01",
+                            "02",
+                            "03",
+                            "04",
+                            "05",
+                            "09",
+                            "10",
+                            "11",
+                            "12",
+                        ],
+                        "variable": "wind_speed_of_gusts",
+                    },
+                    target,
+                )
+        except Exception:
+            logger.exception(
+                "Failed to download. Check https://cds.climate.copernicus.eu/how-to-api for setting up account and credentials."
+            )
+
+        for year in self.years:
+            set_name = f"{year}_data_{self.synth_set}"
+            with zipfile.ZipFile(
+                str(Path(self.source_dir) / (set_name + ".zip")), "r"
+            ) as zip_ref:
+                zip_ref.extractall(
+                    str(
+                        Path(self.source_dir)
+                        / str(self.synth_set).replace(".", "_")
+                        / str(year)
+                    )
+                )
+
+    @override
+    def is_prepared(self, force=False, force_download=False) -> bool:
+        """Check if the data is prepared."""
+        # Si el directorio fuente no existe, retornamos False de inmediato
+        if not self.fs.exists(PurePosixPath(self.source_dir)):
+            return False
+
+        file_exist = all(
+            self.fs.exists(PurePosixPath(self.source_dir, a)) for a in self.source_files
+        )
+
+        years = [str(year) for year in range(1986, 2012)]
+
+        decompressed_dirs_exist = all(
+            self.fs.exists(PurePosixPath(self.source_dir, year)) for year in years
+        )
+
+        return file_exist and decompressed_dirs_exist or not force or not force_download
+
+    @override
+    def onboard(self, target: ReadWriteDataArray):
+        # assert isinstance(source, WISCWinterStormEventSource)
         logger.info("Creating data set from events")
         resource = self._resource()
         for scenario in resource.scenarios:
@@ -106,6 +217,7 @@ class WISCEuropeanWinterStorm(Onboarder):
                     spatial_coords=resource.store_netcdf_coords,
                 )
 
+    @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
         for resource in self.inventory():
@@ -121,57 +233,13 @@ class WISCEuropeanWinterStorm(Onboarder):
         """Get the inventory item(s)."""
         return [self._resource()]
 
-    def source_dir_from_base(self, source_dir_base):
-        return source_dir_base / "wisc" / "v1"
-
-    def _download_all(self, working_dir: Path):
-        try:
-            import cdsapi
-
-            client = cdsapi.Client(sleep_max=5, timeout=240, retry_max=50)
-            synth_set = 1.2
-            for i, year in enumerate(self.years):
-                logger.info(
-                    f"downloading year {i + 1} / len(years) for synth set {synth_set}"
-                )
-                target = working_dir / f"{year}_data_{synth_set}.zip"
-                client.retrieve(
-                    "sis-european-wind-storm-synthetic-events",
-                    {
-                        "format": "zip",
-                        "version_id": "synthetic_set_2_0",
-                        "year": f"{year}",
-                        "month": ["01", "02", "03", "04", "05", "09", "10", "11", "12"],
-                        "variable": "wind_speed_of_gusts",
-                    },
-                    target,
-                )
-        except Exception:
-            logger.exception(
-                "Failed to download. Check https://cds.climate.copernicus.eu/how-to-api for setting up account and credentials."
-            )
-
-    def _extract_all(self, working_dir: Path):
-        for year in self.years:
-            set_name = f"{year}_data_{self.synth_set}"
-            with zipfile.ZipFile(
-                str(working_dir / (set_name + ".zip")), "r"
-            ) as zip_ref:
-                synth_set_year = PurePath(
-                    str(self.synth_set).replace(".", "_"), str(year)
-                )
-                zip_ref.extractall(working_dir / synth_set_year)
-                self.fs.upload(
-                    str(working_dir / synth_set_year),
-                    str(self.source_dir / synth_set_year),
-                    recursive=True,
-                )
-
-    def _occurrence_exceedance_count(self):
+    # def prepare_source_files(self, working_dir: Path):
+    def occurrence_exceedance_count(self):
         """Calculate occurrence exceedance count (i.e. number of events). Only used for diagnostic purposes.
 
         Returns:
             DataArray: Occurrence exceedance count.
+
         """
         wind_speeds = np.concatenate(
             [
@@ -209,7 +277,7 @@ class WISCEuropeanWinterStorm(Onboarder):
                         exceedance_count[i, :, :] += count
         return exceedance_count
 
-    def _peak_annual_gust_speed(self):
+    def peak_annual_gust_speed(self):
         first_file = self._file_list(self.years[0])[0]
         all_files = [f for y in self.years for f in self._file_list(y)]
         first = xr.open_dataset(first_file)
@@ -257,22 +325,21 @@ class WISCEuropeanWinterStorm(Onboarder):
         x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p)) ** (-xi))
         return x_p
 
-    def _fit_gumbel(self, annual_max_gust_speed: xr.DataArray):
-        """See for example "A review of methods to calculate extreme wind speeds", Palutikof et al. (1999).
+    def fit_gumbel(self, annual_max_gust_speed: xr.DataArray):
+        r"""See for example "A review of methods to calculate extreme wind speeds", Palutikof et al. (1999).
         https://rmets.onlinelibrary.wiley.com/doi/pdf/10.1017/S1350482799001103
         we fit to a Type I extreme distribution, where $X_T$ is the 1-in-T year 3s peak gust wind speed:
-
-        $ X_T = \\beta - \\alpha \\ln \\left[ -\\ln(1 - \\frac{1}{T}) \\right] $
-
+        $ X_T = \beta - \alpha \ln \left[ -\ln(1 - \frac{1}{T}) \right] $
         We fit wind speed $x$ to Gumbel reduced yariate, $y$.
-        $ x = \\alpha y + \\beta $
-
+        $ x = \alpha y + \beta $
         Here the fit is a simple unweighted least squares fit.
+
         Args:
             annual_max_gust_speed (xr.DataArray): Maximum annual peak gust wind speed across all storms.
 
         Returns:
             DataArray: 1-in-T year 3s peak gust wind speed.
+
         """
         return_periods = np.array([5, 10, 20, 50, 100, 200, 500])
         data = np.zeros(
@@ -317,7 +384,7 @@ class WISCEuropeanWinterStorm(Onboarder):
                 fitted_speeds[:, j, i] = alpha * -np.log(-np.log(cum_prob)) + beta
         return fitted_speeds
 
-    def _fit_gev(self, exceedance_count: xr.DataArray, p_tail: float = 1 / 5):
+    def fit_gev(self, exceedance_count: xr.DataArray, p_tail: float = 1 / 5):
         """For reference, but fit_gumbel is preferred."""
         return_periods = np.array([5, 10, 20, 50, 100, 200, 500])
         data = np.zeros(
@@ -364,7 +431,7 @@ class WISCEuropeanWinterStorm(Onboarder):
         return fitted_speeds
 
     def _file_list(self, year: int):
-        return self.fs.glob(
+        return glob.glob(
             str(
                 Path(self.source_dir)
                 / str(self.synth_set).replace(".", "_")
@@ -375,11 +442,14 @@ class WISCEuropeanWinterStorm(Onboarder):
 
     def _peak_annual_gust_speed_fit(self) -> xr.Dataset:
         logger.info("Computing peak annual 3s gust wind speeds")
-        peak_annual_gust_speed = self._peak_annual_gust_speed()
+        peak_annual_gust_speed = self.peak_annual_gust_speed()
         # any deferred behaviour undesirable here
         peak_annual_gust_speed = peak_annual_gust_speed.compute()
         logger.info("Fitting peak wind speeds")
-        return self._fit_gumbel(peak_annual_gust_speed).to_dataset(name="wind_speed")
+        return self.fit_gumbel(peak_annual_gust_speed).to_dataset(name="wind_speed")
+
+    def gcms(self):
+        return super().gcms()
 
     def _resource(self) -> HazardResource:
         """Create resource."""
@@ -398,8 +468,13 @@ class WISCEuropeanWinterStorm(Onboarder):
                 "wind/wisc/v1/max_speed_{scenario}_{year}/max_speed"
             ),  # the double path allows an XArray-readable data array to be written
             params={},
+            license="Licence to use Copernicus Products",
+            source="Copernicus: https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=download",
+            version="",
             display_name="Max 3 second gust wind speed (WISC)",
             description=description,
+            resolution="2500 m",
+            attribution="Copernicus Climate Change Service, Climate Data Store, (2022): Synthetic windstorm events for Europe from 1986 to 2011. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.ce973f02",
             group_id="",
             display_groups=[],
             map=MapInfo(
@@ -412,13 +487,13 @@ class WISCEuropeanWinterStorm(Onboarder):
                     name="flare",
                     min_value=0.0,
                     max_value=50.0,
-                    units="years",
+                    units="m/s",
                 ),
                 index_values=None,
                 path="maps/wind/wisc/v1/max_speed_{scenario}_{year}/max_speed_map",
                 source="map_array_pyramid",
             ),
-            units="years",
+            units="m/s",
             store_netcdf_coords=True,
             scenarios=[Scenario(id="historical", years=[1999])],
         )

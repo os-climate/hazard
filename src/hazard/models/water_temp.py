@@ -1,3 +1,4 @@
+"""Module for onboarding water temperature data and calculating indicators of temperature thresholds exceeded."""
 # https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/waterTemp/
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9200746/
 
@@ -5,7 +6,8 @@ import logging
 import os
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Iterable, List, Tuple
+from typing import Sequence
+from typing_extensions import Iterable, List, Tuple
 
 import requests  # type: ignore
 import xarray as xr
@@ -24,17 +26,32 @@ logger = logging.getLogger(__name__)
 
 
 class FutureStreamsSource(OpenDataset):
+    """Handles the download and file management for water temperature data from FutureStreams.
+
+    Attributes
+    working_dir : str
+        Directory path where data is downloaded and stored.
+    from_years : List[int]
+        Starting years of each data interval.
+    to_years : List[int]
+        Ending years of each data interval.
+
+    """
+
     def __init__(self, working_dir: str):
-        """Source requires a working_dir. The data is not hosted in S3 but is rather
-        downloaded to the working directory.
+        """Source requires a working_dir. The data is not hosted in S3 but is rather downloaded to the working directory.
 
         Args:
             working_dir (str): Working directory path.
+
         """
-        self.working_dir = working_dir
+        self.working_dir = os.path.join(
+            working_dir,
+            "downloads",
+            "chronic_heat",
+        )
         if not os.path.exists(self.working_dir):
-            if 0 < len(self.working_dir):
-                os.makedirs(self.working_dir)
+            os.makedirs(self.working_dir)
 
         self.from_years = [
             1976,
@@ -66,6 +83,7 @@ class FutureStreamsSource(OpenDataset):
         ]
 
     def from_year(self, gcm: str, year: int) -> int:
+        """Return the starting year corresponding to an ending year in `to_years` for the specified model."""
         if year not in self.to_years:
             raise ValueError(
                 f"The input year {year} is not within the available from_years={list(self.to_years)}"
@@ -78,11 +96,13 @@ class FutureStreamsSource(OpenDataset):
     def open_dataset_year(
         self, gcm: str, scenario: str, _: str, year: int, chunks=None
     ) -> xr.Dataset:
+        """Download the dataset for a specific year and opens it as an xarray dataset."""
         path, url = self.water_temp_download_path(gcm, scenario, year)
         self.download_file(url, path)
         return xr.open_dataset(path, chunks=chunks)
 
     def delete_file(self, gcm: str, scenario: str, year: int) -> None:
+        """Delete the downloaded file for a specific GCM, scenario, and year."""
         path, _ = self.water_temp_download_path(gcm, scenario, year)
         if os.path.isfile(path) or os.path.islink(path):
             os.unlink(path)
@@ -90,6 +110,7 @@ class FutureStreamsSource(OpenDataset):
     def water_temp_download_path(
         self, gcm: str, scenario: str, year: int
     ) -> Tuple[str, str]:
+        """Construct the download URL and local path for the specified GCM, scenario, and year."""
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
         filename = self.filename(gcm, scenario, year)
@@ -100,6 +121,7 @@ class FutureStreamsSource(OpenDataset):
         return os.path.join(self.working_dir, filename), url
 
     def filename(self, gcm: str, scenario: str, year: int) -> str:
+        """Generate a filename based on GCM, scenario, and year, using conventions from the data source."""
         from_year = self.from_year(gcm, year)
         from_date = f"{from_year}-01-07"
         to_date = f"{year}-12-30"
@@ -108,12 +130,14 @@ class FutureStreamsSource(OpenDataset):
         return f"waterTemp_weekAvg_output_{adjusted_gcm}_{adjusted_scenario}_{from_date}_to_{to_date}.nc"
 
     def download_all(self, gcm: str, scenario: str) -> None:
+        """Download all datasets for specified years for a given GCM and scenario."""
         years = self.to_years[:3] if scenario == "historical" else self.to_years[3:]
         for year in years:
             filename, url = self.water_temp_download_path(gcm, scenario, year)
             self.download_file(url, os.path.join(self.working_dir, filename))
 
     def download_file(self, url: str, path: str) -> None:
+        """Download a file from a URL and saves it to a specified path."""
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(path, "wb") as f:
@@ -122,9 +146,19 @@ class FutureStreamsSource(OpenDataset):
 
 
 class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
+    """Calculates indicators of weeks with water temperatures above given thresholds.
+
+    Attributes
+        threshold_temps_c : List[float]
+            Threshold temperatures in Celsius for calculation.
+        resource : HazardResource
+            Describes metadata for hazard resources.
+
+    """
+
     def __init__(
         self,
-        threshold_temps_c: List[float] = [
+        threshold_temps_c: Sequence[float] = [
             5,
             7.5,
             10,
@@ -142,8 +176,8 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             40,
         ],
         window_years: int = 20,
-        gcms: Iterable[str] = ["E2O", "GFDL", "HadGEM", "IPSL", "MIROC", "NorESM"],
-        scenarios: Iterable[str] = [
+        gcms: Sequence[str] = ["E2O", "GFDL", "HadGEM", "IPSL", "MIROC", "NorESM"],
+        scenarios: Sequence[str] = [
             "historical",
             "rcp2p6",
             "rcp4p5",
@@ -151,8 +185,25 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             "rcp8p5",
         ],
         central_year_historical: int = 1991,
-        central_years: Iterable[int] = [2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090],
+        central_years: Sequence[int] = [2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090],
     ):
+        """Initialize the water temperature threshold indicator with model parameters.
+
+        Args:
+            threshold_temps_c : Sequence[float]
+                Temperature thresholds in Celsius for calculating exceedances.
+            window_years : int
+                Number of years for average calculations.
+            gcms : Iterable[str]
+                List of global climate models (GCMs) to include in the analysis.
+            scenarios : Iterable[str]
+                Climate scenarios to evaluate.
+            central_year_historical : int
+                Central year for historical averages.
+            central_years : Iterable[int]
+                Target years for future scenario calculations.
+
+        """
         super().__init__(
             window_years=window_years,
             gcms=gcms,
@@ -190,7 +241,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             return [
                 to_year
                 for (from_year, to_year) in zip(
-                    source.from_years[3:], source.to_years[3:]
+                    source.from_years[3:], source.to_years[3:], strict=False
                 )
                 if from_year == item.central_year or to_year + 1 == item.central_year
             ]
@@ -261,9 +312,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
         # normalize to 52 weeks
         scale = 52.0 * correction / len(input.time)
         coords = {
-            "index": self.threshold_temps_c,
-            "lat": input.coords["latitude"].values,
-            "lon": input.coords["longitude"].values,
+            "index": list(range(len(self.threshold_temps_c))),
+            "latitude": input.coords["latitude"].values,
+            "longitude": input.coords["longitude"].values,
         }
         output = xr.DataArray(coords=coords, dims=list(coords.keys()))
         for i, threshold_c in enumerate(self.threshold_temps_c):
@@ -271,12 +322,12 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             output[i, :, :] = xr.where(input > threshold_k, scale, 0.0).sum(
                 dim=["time"]
             )
+        output = output.rename({"latitude": "lat", "longitude": "lon"})
+
         return output
 
     def create_maps(self, source: OscZarr, target: OscZarr):
-        """
-        Create map images.
-        """
+        """Create map images."""
         for resource in self.inventory():
             create_tiles_for_resource(source, target, resource)
 
@@ -295,6 +346,10 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average water temperature above threshold in °C/{gcm}",
             description=description,
+            resolution="400 m",
+            license="Creative Commons",
+            source="",
+            version="",
             display_groups=[
                 "Weeks with average water temperature above threshold in °C"
             ],  # display names of groupings
@@ -305,14 +360,14 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                     nodata_index=0,
                     min_index=1,
                     min_value=0.0,
-                    max_value=100,
+                    max_value=0.1,
                     max_index=255,
                     units="weeks/year",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 bbox=[-180.0, -85.0, 180.0, 85.0],
                 path="maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
-                index_values=self.threshold_temps_c,
+                index_values=[3],
                 source="map_array_pyramid",
             ),
             units="weeks/year",
@@ -344,6 +399,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             indicator_model_id=self.resource.indicator_model_id,
             indicator_model_gcm=self.resource.indicator_model_gcm.format(gcm="E2O"),
             params={},
+            resolution=self.resource.resolution,
             path=self.resource.path.format(
                 gcm="E2O", scenario="{scenario}", year="{year}"
             ),
