@@ -137,11 +137,13 @@ def test_spei_indicator(test_dir, test_output_dir, s3_credentials):
     gcm = "MIROC6"
     scenario = "ssp585"
 
-    # Montamos el store S3 dev
-    s3 = get_s3_fs(use_dev=True)
-    working_store = get_store(
-        s3=s3, use_dev=True, group_path_suffix="hazard/hazard.zarr"
-    )
+    # s3 = get_s3_fs(use_dev=True)
+    # working_store = get_store(
+    #     s3=s3, use_dev=True, group_path_suffix="hazard/hazard.zarr"
+    # )
+
+    working_store = local_zarr_working_store(test_output_dir)
+    working_store = in_memory_zarr_working_store()
 
     model = DroughtIndicator(working_zarr_store=working_store)
 

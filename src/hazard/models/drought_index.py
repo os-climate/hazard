@@ -37,6 +37,13 @@ class BatchItem:
         self.scenario = scenario
         self.central_years = central_years
 
+    def __repr__(self):
+        return f"{self.gcm}, {self.scenario}, years: {','.join(str(y) for y in self.central_years)}"
+
+    def __str__(self):
+        return f"{self.gcm}, {self.scenario}, years: {','.join(str(y) for y in self.central_years)}"
+
+
 
 def s3_zarr_working_store():
     s3 = s3fs.S3FileSystem(

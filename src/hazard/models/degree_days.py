@@ -247,7 +247,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         ).sum(dim=["time"])
 
     def _item_path(self, item: BatchItem) -> PosixPath:
-        return PosixPath(
+        return PurePosixPath(
             item.resource.path.format(
                 gcm=item.gcm, scenario=item.scenario, year=item.central_year
             )
