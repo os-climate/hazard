@@ -44,7 +44,6 @@ class BatchItem:
         return f"{self.gcm}, {self.scenario}, years: {','.join(str(y) for y in self.central_years)}"
 
 
-
 def s3_zarr_working_store():
     s3 = s3fs.S3FileSystem(
         anon=False,
