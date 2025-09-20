@@ -9,6 +9,7 @@ from typing import Iterable, List, MutableMapping, Optional, Sequence, Union
 import dask.array as da
 from distributed import Client
 import numpy as np  # type: ignore
+import pandas as pd
 import s3fs  # type: ignore
 import xarray as xr
 import xclim.indices  # type: ignore
@@ -158,16 +159,25 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
 
         def download_dataset(variable, year, gcm, scenario, datasource=datasource):
             scenario_ = "historical" if year < 2015 else scenario
-            with datasource.open_dataset_year(
-                gcm, scenario_, variable, year
-            ) as ds_temp:
-                ds = ds_temp.astype("float32").compute()
-                return ds
+            for _ in range(5):
+                try:
+                    with datasource.open_dataset_year(
+                        gcm, scenario_, variable, year
+                    ) as ds_temp:
+                        ds = ds_temp.astype("float32").compute()
+                        return ds
+                except Exception:
+                    logger.exception(f"Failed to download year {year} for variable={variable} gcm={gcm}")
+            raise Exception("Too many retries.")
 
         for quantity in quantities:
             group = quantity + "_" + item.gcm + "_" + item.scenario
             logger.info(f"processing group {group}.")
-
+            try:
+                existing_ds = xr.open_zarr(store=self.working_zarr_store, group=group)
+                latest_year = pd.Timestamp(existing_ds["time"].values[-1]).year
+            except Exception as e:
+                latest_year = -1
             def download_year(year: int, quantity=quantity, group=group):
                 ds = download_dataset(quantity, year, item.gcm, item.scenario).chunk(
                     {"time": 365, "lat": lat_chunk_size, "lon": lon_chunk_size}
@@ -189,6 +199,8 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                 logger.info(f"completed processing: variable={quantity}, year={year}.")
 
             for year in years:
+                if year <= latest_year:
+                    continue
                 download_year(year)
             # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             #     futures = [executor.submit(download_year, year) for year in years]
@@ -340,7 +352,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         return chunk_name
 
     def _calculate_spei_for_slice(
-        self, lat_min, lat_max, lon_min, lon_max, *, gcm, scenario, num_workers=2
+        self, lat_min, lat_max, lon_min, lon_max, *, gcm, scenario, num_workers=4
     ):
         ds_tas = (
             self.read_quantity_from_s3_store(
