@@ -52,13 +52,14 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     ]
     # see Palmer et al. 'Performance-based sub-selection of CMIP6 models for impact assessments in Europe'
     # https://esd.copernicus.org/articles/14/457/2023/
+
     _europe_gcms: Iterable[str] = [
         "ACCESS-CM2",
-        "CESM2-WACCM",
         "CNRM-CM6-1",
         "EC-Earth3",
         "GFDL-ESM4",
         "MRI-ESM2-0",
+        "TaiESM1",
     ]
     _default_scenarios: Iterable[str] = ["historical", "ssp126", "ssp245", "ssp585"]
     _default_central_year_historical: int = 2005
