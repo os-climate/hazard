@@ -67,9 +67,7 @@ class NexGddpCmip6(OpenDataset):
         component = self.subset[gcm]
         variant_label = component["variant_label"]
         grid_label = component["grid_label"]
-        filename = (
-            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}_v2.0.nc"
-        )
+        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}_v2.0.nc"
         return (
             posixpath.join(
                 self.root,

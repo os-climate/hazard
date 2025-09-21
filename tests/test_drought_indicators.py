@@ -263,10 +263,16 @@ def test_doc_store(test_output_dir, s3_credentials):
 
 def test_prechunker(test_output_dir):
     from hazard.models.prechunker import Prechunker
+
     store_path = Path(test_output_dir) / "prechunk"
-    prechunker_zarr_store = zarr.DirectoryStore(store_path)   
-    prechunker = Prechunker(store_path / "working", prechunker_zarr_store,
-                            gcms =["NorESM2-MM"], year_min=2010, year_max=2020,
-                            scenarios=["ssp585"], quantities=["tas"], 
-                            )
+    prechunker_zarr_store = zarr.DirectoryStore(store_path)
+    prechunker = Prechunker(
+        store_path / "working",
+        prechunker_zarr_store,
+        gcms=["NorESM2-MM"],
+        year_min=2010,
+        year_max=2020,
+        scenarios=["ssp585"],
+        quantities=["tas"],
+    )
     prechunker.prechunk()

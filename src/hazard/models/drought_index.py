@@ -142,8 +142,8 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         item: BatchItem,
         years: Union[Sequence[int], np.ndarray] = DEFAULT_YEARS,
         quantities: Sequence[str] = ["tas", "pr"],
-        lat_chunk_size: int=40,
-        lon_chunk_size: int=40,
+        lat_chunk_size: int = 40,
+        lon_chunk_size: int = 40,
         datasource: NexGddpCmip6 = DEFAULT_DATASOURCE,
     ):
         """Create a chunked data set for the given quantities and data source. This is for when the data
@@ -158,16 +158,17 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             lon_chunk_size (int, optional): Longitude chunks. Defaults to 40.
             datasource (_type_, optional): Source for building chunked data. Defaults to NexGddpCmip6().
         """
-        prechunker = Prechunker(Path(self.progress_store_path) / "temp_download",
-                                self.working_zarr_store, 
-                                gcms=[item.gcm],
-                                year_min=self.calib_start.year,
-                                year_max=self.calc_end.year,
-                                scenarios=[item.scenario],
-                                quantities=quantities)
+        prechunker = Prechunker(
+            Path(self.progress_store_path) / "temp_download",
+            self.working_zarr_store,
+            gcms=[item.gcm],
+            year_min=self.calib_start.year,
+            year_max=self.calc_end.year,
+            scenarios=[item.scenario],
+            quantities=quantities,
+        )
         prechunker.prechunk()
 
-    
     def read_quantity_from_s3_store(
         self, gcm, scenario, quantity, lat_min, lat_max, lon_min, lon_max
     ) -> xr.Dataset:
