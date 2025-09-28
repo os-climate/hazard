@@ -2,7 +2,7 @@ import logging
 import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Dict, Generator, List, Optional
+from typing import Dict, Generator, Iterator, List, Optional
 
 import fsspec
 import s3fs  # type: ignore
@@ -129,7 +129,7 @@ class NexGddpCmip6(OpenDataset):
         chunks=None,
         catalog_url: Optional[str] = None,
         collection_id: Optional[str] = None,  # type: ignore
-    ) -> Generator[xr.Dataset, None, None]:
+    ) -> Iterator[xr.Dataset]:
         # use "s3://bucket/root" ?
         if catalog_url is not None or collection_id is not None:
             assert catalog_url is not None and collection_id is not None

@@ -5,6 +5,7 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+import zarr.hierarchy
 import zarr.core
 from affine import Affine
 
@@ -140,6 +141,9 @@ class OscZarr(ReadWriteDataArray):
 
         """
         z = self.root[path]
+        if isinstance(z, zarr.hierarchy.Group):
+            ds = self.read_dataset(path)
+            return ds.indicator
         return xarray_utilities.data_array_from_zarr(z)
 
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
