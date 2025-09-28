@@ -16,8 +16,7 @@ class OpenDataset(Protocol):
 
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
-    ) -> Iterator[xr.Dataset]:
-        ...
+    ) -> Iterator[xr.Dataset]: ...
 
 
 class ReadDataArray(Protocol):

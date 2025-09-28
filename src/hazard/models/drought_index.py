@@ -414,8 +414,16 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             [len(self.spei_threshold), len(lats_all), len(lons_all)]
         )
         if isinstance(ds_spei.time.values[0], cftime.DatetimeNoLeap):
-            spei_temp = ds_spei.sel(time=slice(cftime.DatetimeNoLeap(period[0].year, period[0].month, period[0].day), 
-                                               cftime.DatetimeNoLeap(period[1].year, period[1].month, period[1].day)))
+            spei_temp = ds_spei.sel(
+                time=slice(
+                    cftime.DatetimeNoLeap(
+                        period[0].year, period[0].month, period[0].day
+                    ),
+                    cftime.DatetimeNoLeap(
+                        period[1].year, period[1].month, period[1].day
+                    ),
+                )
+            )
         else:
             spei_temp = ds_spei.sel(time=slice(period[0], period[1]))
         spei_temp = spei_temp.compute()
@@ -465,21 +473,24 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                     item.gcm, item.scenario, central_year, target
                 )
 
-    def calculate_multi_model(self, source: ReadWriteDataArray, target: ReadWriteDataArray):
+    def calculate_multi_model(
+        self, source: ReadWriteDataArray, target: ReadWriteDataArray
+    ):
         for scenario in self.scenarios:
             for central_year in self.central_years:
                 for i, gcm in enumerate(self.gcms):
                     path = self.resource.path.format(
-                        gcm=gcm, scenario=scenario, year=central_year)
+                        gcm=gcm, scenario=scenario, year=central_year
+                    )
                     if i == 0:
                         combined = source.read(path).copy()
                     else:
                         combined = combined + source.read(path)
                 combined = combined / len(self.gcms)
                 target_path = self.resource.path.format(
-                        gcm="multi_model_0", scenario=scenario, year=central_year)
+                    gcm="multi_model_0", scenario=scenario, year=central_year
+                )
                 target.write(target_path, combined)
-
 
     def batch_items(self) -> Iterable[BatchItem]:
         """Get a list of all batch items."""
@@ -516,7 +527,9 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             path="drought/osc/v2/months_spei12m_below_threshold_{gcm}_{scenario}_{year}",
             display_name="Months 12m SPEI below threshold/{gcm}",
             description=description,
-            display_groups=["Months 12m SPEI below threshold"],  # display names of groupings
+            display_groups=[
+                "Months 12m SPEI below threshold"
+            ],  # display names of groupings
             group_id="",
             map=MapInfo(
                 colormap=Colormap(
