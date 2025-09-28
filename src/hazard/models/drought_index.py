@@ -486,7 +486,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                         combined = source.read(path).copy()
                     else:
                         combined = combined + source.read(path)
-                combined = combined / len(self.gcms)
+                combined = combined / len(list(self.gcms))
                 target_path = self.resource.path.format(
                     gcm="multi_model_0", scenario=scenario, year=central_year
                 )

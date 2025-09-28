@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Generator, Iterable, Iterator, List, Optional, Protocol
 
 import xarray as xr
@@ -14,6 +15,7 @@ class OpenDataset(Protocol):
 
     def gcms(self) -> Iterable[str]: ...  # noqa:E704
 
+    @contextmanager
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
     ) -> Iterator[xr.Dataset]: ...

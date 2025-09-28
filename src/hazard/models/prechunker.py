@@ -5,7 +5,7 @@ import time
 import logging
 import os
 from pathlib import Path, PurePosixPath
-from typing import Iterator, MutableMapping, Protocol, Sequence
+from typing import Any, Iterable, Iterator, MutableMapping, Protocol, Sequence
 
 import boto3
 from botocore import UNSIGNED
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CachingSource(OpenDataset):
     def download_to_cache(
+        self,
         gcms: Sequence[str],
         scenarios: Sequence[str],
         quantities: Sequence[str],
@@ -28,7 +29,7 @@ class CachingSource(OpenDataset):
     ): ...
 
 
-def download_single(path: str, cache_dir: Path, client: any):
+def download_single(path: str, cache_dir: Path, client: Any):
     p = Path(path)
     local_file = cache_dir / p.parts[-1]
     if local_file.exists():
@@ -54,7 +55,7 @@ def download_single(path: str, cache_dir: Path, client: any):
     return local_file
 
 
-def download_paths(paths: Sequence[str], cache_dir: Path, client: any):
+def download_paths(paths: Sequence[str], cache_dir: Path, client: Any):
     result = {}
     with futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_key = {
@@ -87,6 +88,9 @@ class NexGddpCmip6CachedSource(CachingSource):
             if client is None
             else client
         )
+
+    def gcms(self) -> Iterable[str]:
+        return self.source.gcms()
 
     @contextmanager
     def open_dataset_year(
@@ -203,12 +207,12 @@ class Prechunker:
             )
             try:
                 latest_year = pd.Timestamp(existing_ds["time"].values[-1]).year
-            except:
+            except Exception:
                 # in case of cftime.DatetimeNoLeap
                 latest_year = existing_ds.indexes["time"].to_datetimeindex()[-1].year
             remaining_years = [y for y in years if y > latest_year]
         except Exception:
-            remaining_years = years
+            remaining_years = list(years)
 
         if self.cache:
             assert isinstance(self.source, CachingSource)

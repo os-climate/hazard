@@ -246,7 +246,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             ds.tasmax > self.threshold, ds.tasmax - self.threshold, 0
         ).sum(dim=["time"])
 
-    def _item_path(self, item: BatchItem) -> PosixPath:
+    def _item_path(self, item: BatchItem) -> PurePosixPath:
         return PurePosixPath(
             item.resource.path.format(
                 gcm=item.gcm, scenario=item.scenario, year=item.central_year

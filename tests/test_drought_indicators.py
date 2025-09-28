@@ -14,6 +14,8 @@ from hazard.docs_store import DocStore
 from hazard.models.drought_index import (
     DroughtIndicator,
     ProgressStore,
+    in_memory_zarr_working_store,
+    local_zarr_working_store,
 )
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.s3_utilities import get_s3_fs, get_store
