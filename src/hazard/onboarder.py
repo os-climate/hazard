@@ -81,5 +81,4 @@ class Onboarder(ABC):
     @abstractmethod
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create maps for the onboarded data."""
-
         pass
