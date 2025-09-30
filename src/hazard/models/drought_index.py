@@ -477,7 +477,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         self, source: ReadWriteDataArray, target: ReadWriteDataArray
     ):
         for scenario in self.scenarios:
-            for central_year in self.central_years:
+            for central_year in ([self.central_years[0]] if scenario == "historical" else self.central_years[1:]):
                 for i, gcm in enumerate(self.gcms):
                     path = self.resource.path.format(
                         gcm=gcm, scenario=scenario, year=central_year
@@ -554,7 +554,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
                     id=scen,
                     years=[self.central_years[0]]
                     if scen == "historical"
-                    else list(self.central_years),
+                    else list(self.central_years[1:]),
                 )
                 for scen in self.scenarios
             ],
