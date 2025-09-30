@@ -24,6 +24,13 @@ def s3_credentials():
 
 
 @pytest.fixture
+def test_input_dir():
+    """Provides directory for test inputs."""
+    input_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_input")
+    yield input_dir
+
+
+@pytest.fixture
 def test_output_dir():
     """Provides directory for (for example) testing (file-based) storage of datasets."""
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_output")

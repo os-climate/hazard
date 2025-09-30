@@ -2,7 +2,7 @@ import logging
 import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Dict, Generator, List, Optional
+from typing import Dict, Generator, Iterator, List, Optional
 
 import fsspec
 import s3fs  # type: ignore
@@ -47,6 +47,14 @@ class NexGddpCmip6(OpenDataset):
             "MPI-ESM1-2-LR": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
             "MIROC6": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
             "NorESM2-MM": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
+            "CNRM-ESM2-1": {"variant_label": "r1i1p1f2", "grid_label": "gr"},
+            "EC-Earth3": {"variant_label": "r1i1p1f1", "grid_label": "gr"},
+            "GFDL-ESM4": {"variant_label": "r1i1p1f1", "grid_label": "gr1"},
+            "HadGEM-GC31-LL": {"variant_label": "r1i1p1f3", "grid_label": "gn"},
+            "KACE-1-0-G": {"variant_label": "r1i1p1f1", "grid_label": "gr"},
+            "MRI-ESM2-0": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
+            "TaiESM1": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
+            "UKESM1-0-LL": {"variant_label": "r1i1p1f2", "grid_label": "gn"},
         }
         # <variable_id>_<table_id>_<source_id>_<experiment_id>_<variant_label>_<grid_label>_<time_range>.nc
         self.fs = s3fs.S3FileSystem(anon=True) if fs is None else fs
@@ -59,9 +67,7 @@ class NexGddpCmip6(OpenDataset):
         component = self.subset[gcm]
         variant_label = component["variant_label"]
         grid_label = component["grid_label"]
-        filename = (
-            f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}.nc"
-        )
+        filename = f"{quantity}_day_{gcm}_{scenario}_{variant_label}_{grid_label}_{year}_v2.0.nc"
         return (
             posixpath.join(
                 self.root,
@@ -123,7 +129,7 @@ class NexGddpCmip6(OpenDataset):
         chunks=None,
         catalog_url: Optional[str] = None,
         collection_id: Optional[str] = None,  # type: ignore
-    ) -> Generator[xr.Dataset, None, None]:
+    ) -> Iterator[xr.Dataset]:
         # use "s3://bucket/root" ?
         if catalog_url is not None or collection_id is not None:
             assert catalog_url is not None and collection_id is not None

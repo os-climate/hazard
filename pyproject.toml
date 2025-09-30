@@ -32,39 +32,38 @@ dependencies = [
     "cartopy",
     "cdsapi~=0.7.6",
     "cftime~=1.6.4.post1",
-    "dask[dataframe,distributed]",
+    "dask[dataframe,distributed]>=2025.9.0",
     "fire~=0.7.0",
     "fsspec~=2025.5.1",
-    "geopandas",
+    "geopandas~=0.14.4",
     "h5netcdf~=1.6.1",
     "mapbox~=0.18.1",
     "matplotlib",
     "mercantile~=1.2.1",
     "mkdocs~=1.6.1",
     "numpy~=1.26.4",
-    "pydantic~=2.11.5",
+    "pydantic>=2.11.5",
     "pymdown-extensions~=10.15",
     "pyproj",
     "pystac-client",
     "pystac",
     "python-dotenv~=1.1.0",
     "rasterio~=1.4.3",
-    "rioxarray~=0.19.0",
+    "rioxarray~=0.17.0",
     "s3fs~=2025.5.1",
     "scipy~=1.11.0",
     "seaborn~=0.13.2",
-    "shapely",
+    "shapely~=2.1.1",
     "tomli~=2.2.1; python_version < \"3.11\"",
     "typer~=0.16.0",
     "xarray",
-    "cf_xarray~=0.10.6",
-    "xclim~=0.44.0",
-    "zarr",
+    "cf_xarray",
+    "xclim~=0.47.0",
+    "zarr<3",
 ]
 
-
 [dependency-groups]
-lint = ["mypy~=1.16.0", "pre-commit~=4.2.0", "ruff~=0.11.13"]
+dev = ["mypy~=1.16.0", "pre-commit~=4.2.0", "ruff~=0.11.13"]
 test = [
     "pdm[pytest]~=2.24.2",
     "pytest-cov~=6.1.1",
@@ -84,7 +83,6 @@ Documentation = "https://github.com/os-climate/hazard/tree/main/docs"
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "-v"
@@ -102,14 +100,6 @@ ignore_missing_imports = true
 source = "src"
 omit = "tests/*"
 relative_files = true
-
-
-
-
-
-
-
-
 
 [tool.pdm.resolution.overrides]
 numpy = "<2"
@@ -222,3 +212,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
+
+[tool.uv]
+default-groups = ["dev", "test"]

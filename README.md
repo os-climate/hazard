@@ -5,16 +5,14 @@
 Clone the repository :
 
 ```console
-git clone git@github.com:os-climate/hazard.git
+git clone https://github.com/os-climate/hazard.git
 cd hazard
 ```
 
-Then use either `pdm` (recommended):
+Then use either [uv](https://docs.astral.sh/uv/) (recommended):
 
 ```console
-pip install pdm
-pdm config venv.with_pip True
-pdm install
+uv sync
 ```
 
 Or `virtualenv`:
@@ -25,6 +23,8 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+We recommend using [uv](https://docs.astral.sh/uv/) for maintaining a consistent working environment.
+There are a number of [installation options](https://docs.astral.sh/uv/getting-started/installation/).
 ## Usage
 
 ### In a virtual environment
@@ -107,7 +107,11 @@ All changes must pass the automated test suite, along with various static checks
 The easiest way to run these is via:
 
 ```console
-pdm run all
+uv run pytest
+```
+
+```console
+uv run pre-commit run --all-files
 ```
 
 ## Hazard modelling

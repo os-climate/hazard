@@ -74,6 +74,10 @@ class WRIAqueductFlood(Onboarder):
     def prepare(self, force, download_dir, force_download):
         return super().prepare(force, download_dir, force_download)
 
+    @override
+    def is_prepared(self, force=False, force_download=False):
+        return super().is_prepared(force, force_download)
+
     def _get_items_to_process(self) -> Iterable[dict]:
         """Get a list of all batch items."""
         items = (

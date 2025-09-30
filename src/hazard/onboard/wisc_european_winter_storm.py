@@ -214,6 +214,7 @@ class WISCEuropeanWinterStorm(Onboarder):
                 target.write(
                     resource.path.format(scenario=scenario.id, year=year),
                     ds["wind_speed"].compute(),
+                    chunks=[len(ds.return_period), 256, 256],
                     spatial_coords=resource.store_netcdf_coords,
                 )
 

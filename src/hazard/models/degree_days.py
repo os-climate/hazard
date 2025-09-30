@@ -246,8 +246,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
             ds.tasmax > self.threshold, ds.tasmax - self.threshold, 0
         ).sum(dim=["time"])
 
-    def _item_path(self, item: BatchItem) -> PosixPath:
-        return PosixPath(
+    def _item_path(self, item: BatchItem) -> PurePosixPath:
+        return PurePosixPath(
             item.resource.path.format(
                 gcm=item.gcm, scenario=item.scenario, year=item.central_year
             )
@@ -359,7 +359,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
             raise ValueError("unexpected year found")
         # normalize to 365 days
         scale = 365.0 / len(tas["time"])
-        # will raise error if tax not present
+        # will raise error if tas not present
         da = xr.DataArray(
             coords={
                 "index": self.threshold_temps_c,
