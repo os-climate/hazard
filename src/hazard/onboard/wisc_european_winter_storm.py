@@ -495,6 +495,6 @@ class WISCEuropeanWinterStorm(Onboarder):
                 source="map_array_pyramid",
             ),
             units="m/s",
-            store_netcdf_coords=True,
+            store_netcdf_coords=False,
             scenarios=[Scenario(id="historical", years=[1999])],
         )
