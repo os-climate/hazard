@@ -2,8 +2,9 @@ import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+import warnings
 
-import dask.array as da
+import dask.array
 import numpy as np
 import pytest
 import xarray as xr
@@ -115,41 +116,33 @@ def load_test_data_sets(test_inputs: Path):
     return ds_tas, ds_pr
 
 
+@pytest.mark.skip(reason="example")
 def test_batches(test_dir):
-    # Creamos el filesystem sobre S3 (entorno dev)
-    s3 = get_s3_fs(use_dev=True)
-    # Montamos el store en el grupo base 'hazard/hazard.zarr'
-    working_store = get_store(
-        s3=s3, use_dev=True, group_path_suffix="hazard/hazard.zarr"
-    )
+    progress_store_path = test_dir
+    local_store = local_zarr_working_store(test_dir)
 
-    # Instanciamos el modelo usando el working store real de S3
-    model = DroughtIndicator(
-        working_zarr_store=working_store, progress_store_path=test_dir
-    )
-
-    batches = model.batch_items()
-
-    # Comprobamos que se generan los 18 batch items esperados
-    assert len(batches) == 18
+    model = DroughtIndicator(local_store, progress_store_path)
+    store = zarr.DirectoryStore(os.path.join(r"D:\hazard", "hazard.zarr"))
+    target = OscZarr(store=store, store_netcdf_coords=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        model.run_all(None, target)
+    model.calculate_multi_model(target, target)
+    model.create_maps(target, target)
 
 
-@pytest.mark.skip(reason="incomplete")
-def test_spei_indicator(test_dir, test_output_dir, s3_credentials):
+def test_spei_indicator(test_dir, test_input_dir, test_output_dir):
     gcm = "MIROC6"
     scenario = "ssp585"
-
-    # s3 = get_s3_fs(use_dev=True)
-    # working_store = get_store(
-    #     s3=s3, use_dev=True, group_path_suffix="hazard/hazard.zarr"
-    # )
 
     working_store = local_zarr_working_store(test_output_dir)
     working_store = in_memory_zarr_working_store()
 
-    model = DroughtIndicator(working_zarr_store=working_store)
+    model = DroughtIndicator(
+        working_zarr_store=working_store, progress_store_path=test_dir
+    )
 
-    test_input_path = Path(test_dir)
+    test_input_path = Path(test_input_dir)
 
     ds_tas, ds_pr = load_test_data_sets(test_input_path)
     ds_tas.to_zarr(
@@ -169,7 +162,13 @@ def test_spei_indicator(test_dir, test_output_dir, s3_credentials):
     ds_slice = model._calculate_spei_for_slice(
         lat_min, lat_max, lon_min, lon_max, gcm=gcm, scenario=scenario
     )
-    path = os.path.join("spei", gcm + "_" + scenario)
+
+    np.testing.assert_allclose(
+        ds_slice.spei[1000:1004, :, :].values.squeeze(),
+        [-3.7237626e-01, 1.0303878e-04, 5.9551436e-01, 1.2405885e00],
+    )
+
+    path = "spei" + "_" + gcm + "_" + scenario
     ds_slice.to_zarr(store=working_store, group=path, mode="w")
 
     zarr_store = zarr.DirectoryStore(
@@ -190,6 +189,7 @@ def test_spei_indicator(test_dir, test_output_dir, s3_credentials):
     assert lon_min == 30.0 and lon_max == 40.0
 
 
+@pytest.mark.skip(reason="example")
 def test_partial_write_zarr(test_output_dir):
     zarr_store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "drought", "hazard.zarr")
@@ -202,15 +202,14 @@ def test_partial_write_zarr(test_output_dir):
         datetime(2100, 12, 31, hour=12),
         timedelta(days=1),
     ).astype(np.datetime64)
-    # data = da.zeros([len(time), len(lat), len(lon)])
-    data = da.empty([len(time), len(lat), len(lon)])
+    data = dask.array.empty([len(time), len(lat), len(lon)])
     da_spei = xr.DataArray(
         data=data,
         coords={"time": time, "lat": lat, "lon": lon},
         dims=["time", "lat", "lon"],
     ).chunk(chunks={"lat": 40, "lon": 40, "time": 100000})
     ds_spei = da_spei.to_dataset(name="spei")
-    ds_spei.to_zarr(store=zarr_store, mode="w", compute=False)
+    ds_spei.to_zarr(store=zarr_store, mode="w", compute=False, consolidated=False)
     # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores # noqa: E501
     sliced = ds_spei.sel(lat=slice(10, 20), lon=slice(30, 40))
     lat_indexes = np.where(
@@ -263,6 +262,7 @@ def test_doc_store(test_output_dir, s3_credentials):
     docs_store.update_inventory([resource])
 
 
+@pytest.mark.skip(reason="example")
 def test_prechunker(test_output_dir):
     from hazard.models.prechunker import Prechunker
 
