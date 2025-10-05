@@ -290,7 +290,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
 
     def open_dataset_year(
         self, _: str, scenario: str, indicator: str, year: int, chunks=None
-    ) -> Optional[xr.Dataset]:
+    ):
         """Open the dataset for specified indicator and year, applying relevant transformations."""
         if indicator.replace("_multiplier", "") not in self.indicator_map:
             raise ValueError(

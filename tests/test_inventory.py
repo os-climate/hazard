@@ -23,39 +23,35 @@ from hazard.utilities import zarr_utilities
 from hazard.utilities.s3_utilities import get_store  # type: ignore
 
 
-@pytest.mark.skip(reason="Requires credentials")
-def test_create_inventory(test_dir):
-    """Create inventory for all indicators and write into this repo."""
-    zarr_utilities.set_credential_env_variables()
-
+def test_create_inventory(test_output_dir):
+    """Create inventory for all indicators and write into the test output directory."""
+    # zarr_utilities.set_credential_env_variables()
     # path = os.path.join(Path(__file__).parents[1], "src", "inventories")
 
-    docs_store = DocStore(local_path=test_dir)
+    docs_store = DocStore(local_path=test_output_dir)
 
     models = [
         WRIAqueductFlood(),
         DegreeDays(),
-        Jupiter(),
+        Jupiter(test_output_dir),
         WorkLossIndicator(),
         DaysTasAboveIndicator(),
-        IRISIndicator(test_dir),
+        IRISIndicator(test_output_dir),
         HeatingCoolingDegreeDays(),
         WaterTemperatureAboveIndicator(),
         WetBulbGlobeTemperatureAboveIndicator(),
-        WRIAqueductWaterRisk(test_dir),
-        DroughtIndicator(test_dir),
-        TUDelftRiverFlood(test_dir),
-        DavydzenkaEtAlLandSubsidence(test_dir),
-        FLOPROSFloodStandardOfProtection(),
-        WISCEuropeanWinterStorm(),
+        WRIAqueductWaterRisk(test_output_dir),
+        DroughtIndicator(None, test_output_dir),
+        TUDelftRiverFlood(test_output_dir),
+        DavydzenkaEtAlLandSubsidence(test_output_dir),
+        FLOPROSFloodStandardOfProtection(test_output_dir),
+        WISCEuropeanWinterStorm(test_output_dir),
     ]
 
     docs_store.write_new_empty_inventory()
     # docs_store.write_inventory_json(json_str)
     for model in models:
         docs_store.update_inventory(model.inventory())
-
-    print("wait")
 
 
 @pytest.mark.skip(reason="just example")

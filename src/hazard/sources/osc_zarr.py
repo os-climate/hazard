@@ -5,6 +5,7 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+import zarr.hierarchy
 import zarr.core
 from affine import Affine
 
@@ -140,6 +141,9 @@ class OscZarr(ReadWriteDataArray):
 
         """
         z = self.root[path]
+        if isinstance(z, zarr.hierarchy.Group):
+            ds = self.read_dataset(path)
+            return ds.indicator
         return xarray_utilities.data_array_from_zarr(z)
 
     def read_dataset(self, path: str, index=0) -> xr.DataArray:
@@ -345,8 +349,10 @@ class OscZarr(ReadWriteDataArray):
             index_name=str(da_norm.dims[0]),
             index_values=da_norm[da_norm.dims[0]].data,
         )
-        options = {"write_empty_chunks": False}
-        if da.chunks is None:
+        options: Dict[str, Any] = {"write_empty_chunks": False}
+        if chunks is not None:
+            options["chunks"] = chunks
+        elif da.chunks is None:
             options["chunks"] = self._chunks(da_norm[da_norm.dims[0]].data)
         da_norm.to_dataset().to_zarr(
             self.root.store,

@@ -591,7 +591,7 @@ def sync_buckets(
         if target_etags.get(rename(key), "") != etag
     )
     missing = set(key for key in source_etags if rename(key) not in target_etags)
-    different = set(key for key in all_diffs if rename(key) not in missing)
+    different = set(key for key in all_diffs if key not in missing)
     logger.info(
         f"Checked {len(source_etags)} files from {source_bucket_name} against {target_bucket_name}"  # noqa:W503
     )
