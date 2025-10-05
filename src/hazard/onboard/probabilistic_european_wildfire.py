@@ -175,7 +175,7 @@ Disclaimer: These data are not intended for use in emergency response, public sa
                         max_index=255,
                         min_index=1,
                         nodata_index=0,
-                        name="Reds",
+                        name="heating",
                         min_value=0.0,
                         max_value=0.7,
                         units="probability",

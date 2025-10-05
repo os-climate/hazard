@@ -25,10 +25,10 @@ class Jupiter(Onboarder):
     """On-board data set provided by Jupiter Intelligence for use by OS-Climate to set up a OS-C ClimateScore API Service (“ClimateScore Service”)."""
 
     _jupiter_description = """
-    These data should not be used in any manner relating to emergency management or planning, public safety,
-    physical safety or property endangerment. For higher-resolution data based on up-to-date methods,
-    subject to greater validation, and suitable for bottom-up risk analysis please contact
-    [Jupiter Intelligence](https://www.jupiterintel.com).
+These data should not be used in any manner relating to emergency management or planning, public safety,
+physical safety or property endangerment. For higher-resolution data based on up-to-date methods,
+subject to greater validation, and suitable for bottom-up risk analysis please contact
+[Jupiter Intelligence](https://www.jupiterintel.com).
     """
 
     def __init__(
@@ -224,7 +224,7 @@ class Jupiter(Onboarder):
                 path="fire/jupiter/v1/fire_probability_{scenario}_{year}",
                 params={},
                 display_name="Fire probability (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of
@@ -255,7 +255,7 @@ and 0% for other months, the hazard indicator value is 20%.
                         units="",
                     ),
                     index_values=None,
-                    path="maps/fire/jupiter/v1/fire_probability_{scenario}_{year}_map",
+                    path="fire/jupiter/v1/fire_probability_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="",
@@ -272,7 +272,7 @@ and 0% for other months, the hazard indicator value is 20%.
                 path="drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
                 params={},
                 display_name="Drought (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI).
@@ -308,7 +308,7 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                         units="months/year",
                     ),
                     index_values=None,
-                    path="maps/drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}_map",
+                    path="drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="months/year",
@@ -325,7 +325,7 @@ bias-corrected and downscaled multiple Global Climate Models (GCMs).
                 path="precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}",
                 params={},
                 display_name="Precipitation (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year
@@ -355,7 +355,7 @@ downscaled Global Climate Models (GCMs).
                         units="mm",
                     ),
                     index_values=None,
-                    path="maps/precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}_map",
+                    path="precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="mm",
@@ -372,7 +372,7 @@ downscaled Global Climate Models (GCMs).
                 path="hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
                 params={},
                 display_name="Large hail days per year (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible
@@ -402,7 +402,7 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                         units="days/year",
                     ),
                     index_values=None,
-                    path="maps/hail/jupiter/v1/days_above_5cm_{scenario}_{year}_map",
+                    path="hail/jupiter/v1/days_above_5cm_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="days/year",
@@ -419,7 +419,7 @@ across multiple bias-corrected and downscaled Global Climate Models (GCMs).
                 path="chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
                 params={},
                 display_name="Days per year above 35°C (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits
@@ -449,7 +449,7 @@ across multiple Global Climate Models (GCMs).
                         units="days/year",
                     ),
                     index_values=None,
-                    path="maps/chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}_map",
+                    path="chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="days/year",
@@ -466,7 +466,7 @@ across multiple Global Climate Models (GCMs).
                 path="wind/jupiter/v1/max_1min_{scenario}_{year}",
                 params={},
                 display_name="Max 1 minute sustained wind speed (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 This wind speed model computes the maximum 1-minute sustained wind speed (in m/s) experienced over a
@@ -487,7 +487,7 @@ from multiple Global Climate Models (GCMs).
                     ],
                     bbox=[-180.0, -85.0, 180.0, 85.0],
                     colormap=Colormap(
-                        name="viridis",
+                        name="heating",
                         nodata_index=0,
                         min_index=1,
                         min_value=0.0,
@@ -496,7 +496,7 @@ from multiple Global Climate Models (GCMs).
                         units="m/s",
                     ),
                     index_values=None,
-                    path="maps/wind/jupiter/v1/max_1min_{scenario}_{year}_map",
+                    path="wind/jupiter/v1/max_1min_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="m/s",
@@ -513,7 +513,7 @@ from multiple Global Climate Models (GCMs).
                 path="combined_flood/jupiter/v1/fraction_{scenario}_{year}",
                 params={},
                 display_name="Flooded fraction (Jupiter)",
-                resolution="39400 m",
+                resolution="0.25°",
                 description=self._jupiter_description
                 + """
 Flooded fraction provides the spatial fraction of land flooded in a defined grid.
@@ -545,7 +545,7 @@ Open oceans are excluded.
                         units="",
                     ),
                     index_values=None,
-                    path="maps/combined_flood/jupiter/v1/fraction_{scenario}_{year}_map",
+                    path="combined_flood/jupiter/v1/fraction_{scenario}_{year}_map",
                     source="map_array",
                 ),
                 units="none",

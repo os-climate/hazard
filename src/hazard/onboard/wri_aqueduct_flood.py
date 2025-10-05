@@ -284,7 +284,7 @@ class WRIAqueductFlood(Onboarder):
             "units": "m",
         }
         license = (
-            "WRIs Open Data Commitment: https://www.wri.org/data/open-data-commitment"
+            "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment"
         )
         source = "WRI"
         attribution = "Source © WRI — Aqueduct Floods v2 (2020), CC-BY-4.0"
@@ -308,7 +308,7 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -335,12 +335,12 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -364,12 +364,12 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -393,12 +393,12 @@ Met Office Hadley Centre.
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -422,12 +422,12 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -452,12 +452,12 @@ Institut Pierre Simon Laplace
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -492,13 +492,13 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_historical_nosub_hist_0_map",
                     # "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
                     "source": "map_array_pyramid",  # "mapbox",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -519,12 +519,12 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -548,12 +548,12 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_05_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -577,12 +577,12 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_50_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -606,12 +606,12 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_historical_wtsub_hist_0_map",
                     "source": "map_array_pyramid",  # "mapbox",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -632,12 +632,12 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -661,12 +661,12 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_05_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,
@@ -690,12 +690,12 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 + aqueduct_description,  # noqa:W503
                 "map": {
                     "colormap": wri_colormap,
-                    "index_values": [8],
+                    "index_values": [1000],
                     "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_50_map",
                     "source": "map_array_pyramid",
                 },
                 "units": "metres",
-                "resolution": "1000 m",
+                "resolution": "30 arcsec",
                 "license": license,
                 "source": source,
                 "attribution": attribution,

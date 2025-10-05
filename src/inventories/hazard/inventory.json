@@ -2106,7 +2106,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "path": "maps/chronic_heat/osc/v2/mean_degree_days_above_index_{gcm}_{scenario}_{year}_map",
+                "path": "chronic_heat/osc/v2/mean_degree_days_above_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -2205,7 +2205,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "path": "maps/chronic_heat/osc/v2/mean_degree_days_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "chronic_heat/osc/v2/mean_degree_days_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
