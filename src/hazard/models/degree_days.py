@@ -387,7 +387,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
     def _resource(self) -> Dict[str, HazardResource]:  # type: ignore[override]
         # Unsure why this returns a dict vs a single resource
         resources: Dict[str, HazardResource] = {}
-        #for above_below in ["above", "below"]:
+        # for above_below in ["above", "below"]:
         for above_below in ["above"]:
             with open(
                 os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"

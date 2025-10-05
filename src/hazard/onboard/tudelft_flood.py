@@ -96,7 +96,7 @@ class TUDelftRiverFlood(Onboarder):
         - SoP
         """
 
-        self._depth_resource = self.inventory()
+        self._depth_resource = list(self.inventory())[0]
 
     @override
     def prepare(self, force=False, download_dir=None, force_download=False):
@@ -293,13 +293,6 @@ class TUDelftRiverFlood(Onboarder):
             max_zoom=10,
             nodata_as_zero_coarsening=True,
         )
-        create_tiles_for_resource(
-            source,
-            target,
-            self._sop_resource,
-            max_zoom=10,
-            nodata_as_zero_coarsening=True,
-        )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
@@ -307,10 +300,6 @@ class TUDelftRiverFlood(Onboarder):
             os.path.join(os.path.dirname(__file__), "tudelft_flood.md"), "r"
         ) as f:
             description = f.read()
-        with open(
-            os.path.join(os.path.dirname(__file__), "tudelft_flood_sop.md"), "r"
-        ) as f:
-            description_sop = f.read()
         return [
             HazardResource(
                 hazard_type="RiverineInundation",
@@ -350,47 +339,7 @@ class TUDelftRiverFlood(Onboarder):
                     Scenario(id="rcp4p5", years=[2035, 2085]),
                     Scenario(id="rcp8p5", years=[2035, 2085]),
                 ],
-            ),
-            # HazardResource(
-            #     hazard_type="RiverineInundation",
-            #     indicator_id="flood_sop",
-            #     indicator_model_id="tudelft",
-            #     indicator_model_gcm="CLMcom-CCLM4-8-17-EC-EARTH",
-            #     resolution="1000 m",
-            #     path="inundation/river_tudelft/v2/flood_sop_{scenario}_{year}",
-            #     params={},
-            #     display_name="Standard of protection (TUDelft)",
-            #     description=description_sop,
-            #     group_id="",
-            #     version="",
-            #     attribution="“This product incorporates FLOPROS data © Authors 2016, licensed under CC BY 3.0.”    , Scussolini, P., Aerts, J. C. J. H., Jongman, B., Bouwer, L. M., Winsemius, H. C., de Moel, H., & Ward, P. J. (2016). FLOPROS: an evolving global database of flood protection standards. Natural Hazards and Earth System Sciences, 16, 1049–1061. https://doi.org/10.5194/nhess-16-1049-2016",
-            #     license="CC BY 3.0.",
-            #     source="4TU Research Data: https://data.4tu.nl/articles/dataset/Pan-European_data_sets_of_river_flood_probability_of_occurrence_under_present_and_future_climate/12708122",
-            #     display_groups=[],
-            #     map=MapInfo(
-            #         bbox=[],
-            #         bounds=[],
-            #         colormap=Colormap(
-            #             max_index=255,
-            #             min_index=1,
-            #             nodata_index=0,
-            #             name="viridis",
-            #             min_value=0.0,
-            #             max_value=1500.0,
-            #             units="years",
-            #         ),
-            #         index_values=None,
-            #         path="maps/inundation/river_tudelft/v2/flood_sop_{scenario}_{year}_map",
-            #         source="map_array_pyramid",
-            #     ),
-            #     units="years",
-            #     store_netcdf_coords=False,
-            #     scenarios=[
-            #         Scenario(id="historical", years=[1985]),
-            #         Scenario(id="rcp4p5", years=[2035, 2085]),
-            #         Scenario(id="rcp8p5", years=[2035, 2085]),
-            #     ],
-            # ),
+            )
         ]
 
 
