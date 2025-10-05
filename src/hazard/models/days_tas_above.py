@@ -141,7 +141,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
             license="Creative Commons",
             source="",
             version="",
-            resolution="47100 m",
+            resolution="0.25°",
             attribution="",
             map=MapInfo(
                 colormap=Colormap(
@@ -156,8 +156,8 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
-                path="maps/chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
-                source="map_array_pyramid",
+                path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
+                source="map_array",
             ),
             units="days/year",
             store_netcdf_coords=False,

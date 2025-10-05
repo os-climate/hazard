@@ -128,7 +128,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             source="",
             version="",
             group_id="",
-            resolution="1800 m",
+            resolution="0.25°",
             map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
                 colormap=Colormap(
                     name="heating",
@@ -142,8 +142,8 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
-                path="maps/chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
-                source="map_array_pyramid",
+                path="chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                source="map_array",
             ),
             units="fractional loss",
             scenarios=[

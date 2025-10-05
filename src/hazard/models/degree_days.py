@@ -152,8 +152,8 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
-                path="maps/" + path,
-                source="map_array_pyramid",
+                path=path + "_map",
+                source="map_array",
             ),
             units="degree days",
             scenarios=scenarios,
@@ -387,7 +387,8 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
     def _resource(self) -> Dict[str, HazardResource]:  # type: ignore[override]
         # Unsure why this returns a dict vs a single resource
         resources: Dict[str, HazardResource] = {}
-        for above_below in ["above", "below"]:
+        #for above_below in ["above", "below"]:
+        for above_below in ["above"]:
             with open(
                 os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"
             ) as f:
@@ -407,7 +408,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 params={"gcm": ["ACCESS-CM2"]},
                 group_id="",
                 display_groups=["Mean degree days"],
-                resolution="1800 m",
+                resolution="0.25°",
                 map=MapInfo(  # type:ignore
                     colormap=Colormap(
                         name="heating",
@@ -425,8 +426,8 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                         (-180.0, -60.0),
                     ],
                     index_values=self.threshold_temps_c,
-                    path="maps/" + path,
-                    source="map_array_pyramid",
+                    path=path + "_map",
+                    source="map_array",
                 ),
                 units="degree days",
                 scenarios=[

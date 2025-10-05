@@ -15,6 +15,7 @@ from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
+from hazard.onboard.probabilistic_european_wildfire import FireRiskIndicators
 from hazard.onboard.tudelft_flood import TUDelftRiverFlood
 from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
@@ -43,9 +44,10 @@ def test_create_inventory(test_output_dir):
         WRIAqueductWaterRisk(test_output_dir),
         DroughtIndicator(None, test_output_dir),
         TUDelftRiverFlood(test_output_dir),
-        DavydzenkaEtAlLandSubsidence(test_output_dir),
         FLOPROSFloodStandardOfProtection(test_output_dir),
+        DavydzenkaEtAlLandSubsidence(test_output_dir),
         WISCEuropeanWinterStorm(test_output_dir),
+        FireRiskIndicators(test_output_dir),
     ]
 
     docs_store.write_new_empty_inventory()
