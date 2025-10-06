@@ -499,13 +499,13 @@ class WRIAqueductWaterRisk(Onboarder):
                 "units": "centimeters/year",
                 "display": "Water demand in centimeters/year (Aqueduct 4.0)",
                 "min_value": 0.0,
-                "max_value": 100,
+                "max_value": 75,
             },
             "water_supply": {
                 "units": "centimeters/year",
                 "display": "Water supply in centimeters/year (Aqueduct 4.0)",
                 "min_value": 0.0,
-                "max_value": 2000,
+                "max_value": 1500,
             },
             "water_stress": {
                 "units": "",

@@ -138,7 +138,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             license="Creative Commons",
             source="",
             version="",
-            resolution="1800 m",
+            resolution="0.25°",
             display_groups=["Mean degree days"],
             map=MapInfo(  # type:ignore
                 colormap=Colormap(
@@ -147,7 +147,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
                     min_index=1,
                     min_value=0.0,
                     max_index=255,
-                    max_value=4000.0,
+                    max_value=2000.0,
                     units="degree days",
                 ),
                 bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
@@ -416,7 +416,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                         min_index=1,
                         min_value=0.0,
                         max_index=255,
-                        max_value=4000.0,
+                        max_value=2000.0,
                         units="degree days",
                     ),
                     bounds=[

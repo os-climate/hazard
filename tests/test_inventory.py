@@ -1,5 +1,6 @@
 import os
 
+from anyio import Path
 import fsspec.implementations.local as local  # type: ignore
 import pytest
 import tempfile as temp
@@ -27,9 +28,12 @@ from hazard.utilities.s3_utilities import get_store  # type: ignore
 def test_create_inventory(test_output_dir):
     """Create inventory for all indicators and write into the test output directory."""
     # zarr_utilities.set_credential_env_variables()
-    # path = os.path.join(Path(__file__).parents[1], "src", "inventories")
 
-    docs_store = DocStore(local_path=test_output_dir)
+    docs_store = DocStore(
+        local_path=os.path.join(
+            Path(__file__).parents[1], "src", "inventories", "hazard"
+        )
+    )
 
     models = [
         WRIAqueductFlood(),

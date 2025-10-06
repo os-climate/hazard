@@ -118,16 +118,16 @@ class FireRiskIndicators(Onboarder):
                 hazard_type="Fire",
                 indicator_id="fire_probability",
                 indicator_model_gcm="FireRiskAlphaKlima",
-                path="fire/probabilistic_pan_european_wildfire/{scenario}_{year}",
+                # path="fire/probabilistic_pan_european_wildfire/{scenario}_{year}",
+                path="fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}",
                 params={},
                 display_name="Probabilistic Pan-European Wildfire Map",
                 resolution="2500 m",
+                # to add, but not displaying properly in UI
+                # [![Logo](https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png)](https://alpha-klima.com/)
+                # or
+                # <img src="https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png" alt="drawing" width="150"/>
                 description="""
-
-
-[![Logo](https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png)](https://alpha-klima.com/)
-
-
 This spatial dataset provides annual probabilities of fire occurrence across Europe under both historical
 conditions (2002–2022) and projected future climates (2023–2050) for two emissions pathways (RCP 4.5 and
 RCP 8.5). It builds upon the methodology presented in **“Climate Change Risk Indicators for Central Banking:
@@ -180,7 +180,8 @@ Disclaimer: These data are not intended for use in emergency response, public sa
                         max_value=0.7,
                         units="probability",
                     ),
-                    path="maps/fire/probabilistic_pan_european_wildfire/{scenario}_{year}_map",
+                    # path="maps/fire/probabilistic_pan_european_wildfire/{scenario}_{year}_map",
+                    path="maps/fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
                 store_netcdf_coords=False,
