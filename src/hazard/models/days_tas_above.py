@@ -2,14 +2,13 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from contextlib import ExitStack
-from typing import Sequence
-from typing_extensions import Iterable, List
+from typing import List
 
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-
 from hazard.models.multi_year_average import (
     BatchItem,
     Indicator,
@@ -74,7 +73,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
@@ -88,7 +87,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _days_tas_above_indicators(
         self, tas: xr.DataArray, year: int, threshold_temps_c: Sequence[float]
-    ) -> List[xr.DataArray]:
+    ) -> list[xr.DataArray]:
         """Create DataArrays containing indicators the thresholds for a single year."""
         if any(coord not in tas.coords.keys() for coord in ["lat", "lon", "time"]):
             raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
@@ -104,7 +103,6 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self.resource)
 
     def _resource(self) -> HazardResource:

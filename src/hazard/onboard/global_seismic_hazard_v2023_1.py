@@ -5,17 +5,20 @@ from __future__ import annotations
 import logging
 import os
 import zipfile
+from collections.abc import Iterable
 from pathlib import PurePath
-from typing_extensions import Iterable, Optional, override, cast
+from typing import Optional, cast
 
 import numpy as np
 import xarray as xr
-
-from xarray import DataArray
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
+from xarray import DataArray
 
-from hazard.indicator_model import IndicatorModel  # noqa: F401  (required by Onboarder parent)
+from hazard.indicator_model import (
+    IndicatorModel,
+)
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
@@ -29,7 +32,7 @@ class GEMSeismicHazard(Onboarder):
     """On-boards the GEM Global Seismic Hazard Map (v2023.1, PGA 10 % in 50 years)."""
 
     def __init__(
-        self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None
+        self, source_dir_base: str, fs: AbstractFileSystem | None = None
     ) -> None:
         """Args:
         ----

@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Literal, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any, Dict, Literal
 
 from hazard.protocols import OpenDataset
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
@@ -16,7 +17,7 @@ _SOURCE_DATASETS: Mapping[str, Callable[..., OpenDataset]] = {
 
 
 def get_source_dataset_instance(
-    source_dataset: SourceDataset, source_dataset_kwargs: Dict[str, Any]
+    source_dataset: SourceDataset, source_dataset_kwargs: dict[str, Any]
 ) -> OpenDataset:
     if source_dataset not in _SOURCE_DATASETS:
         raise ValueError(f"Invalid source dataset: {source_dataset}")

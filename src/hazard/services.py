@@ -1,15 +1,16 @@
 """Services Module for Hazard Indicators."""
 
-import logging  # noqa: E402
-from typing import Any, Dict, Optional, Sequence, Tuple
+import logging
+from collections.abc import Sequence
+from typing import Any, Dict, Optional, Tuple
 
-from dask.distributed import Client, LocalCluster  # noqa: E402
+from dask.distributed import Client, LocalCluster
 
-from hazard.docs_store import DocStore  # type: ignore # noqa: E402
-from hazard.models.days_tas_above import DaysTasAboveIndicator  # noqa: E402
-from hazard.models.degree_days import DegreeDays  # noqa: E402
+from hazard.docs_store import DocStore  # type: ignore
+from hazard.models.days_tas_above import DaysTasAboveIndicator
+from hazard.models.degree_days import DegreeDays
 from hazard.sources import SourceDataset, get_source_dataset_instance
-from hazard.sources.osc_zarr import OscZarr  # noqa: E402
+from hazard.sources.osc_zarr import OscZarr
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,18 +20,18 @@ logging.basicConfig(
 
 def days_tas_above_indicator(
     source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
-    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
+    source_dataset_kwargs: dict[str, Any] | None = None,
     gcm_list: Sequence[str] = ["NorESM2-MM"],
     scenario_list: Sequence[str] = ["ssp585"],
     threshold_list: Sequence[float] = [20],
     central_year_list: Sequence[int] = [2090],
     central_year_historical: int = 2005,
     window_years: int = 1,
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
 ):
     """Run the days_tas_above indicator generation for a list of models,scenarios, thresholds, central years and a given size of years window over which to compute the average.
 
@@ -64,18 +65,18 @@ def days_tas_above_indicator(
 
 def degree_days_indicator(
     source_dataset: SourceDataset = "NEX-GDDP-CMIP6",
-    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
+    source_dataset_kwargs: dict[str, Any] | None = None,
     gcm_list: Sequence[str] = ["NorESM2-MM"],
     scenario_list: Sequence[str] = ["ssp585"],
     threshold_temperature: float = 32,
     central_year_list: Sequence[int] = [2090],
     central_year_historical: int = 2005,
     window_years: int = 1,
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
 ):
     """Run the degree days indicator generation for a list of models,scenarios, a threshold temperature, central years and a given size of years window over which to compute the average.
 
@@ -108,12 +109,12 @@ def degree_days_indicator(
 
 
 def setup(
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
-) -> Tuple[DocStore, OscZarr, Client]:
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
+) -> tuple[DocStore, OscZarr, Client]:
     """Initialize output store, docs store and local dask client."""
     if store is not None:
         docs_store = DocStore(local_path=store)

@@ -4,10 +4,10 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Sequence
-from typing_extensions import Iterable, List, Tuple
+from typing import List, Tuple
 
 import requests  # type: ignore
 import xarray as xr
@@ -109,7 +109,7 @@ class FutureStreamsSource(OpenDataset):
 
     def water_temp_download_path(
         self, gcm: str, scenario: str, year: int
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Construct the download URL and local path for the specified GCM, scenario, and year."""
         adjusted_gcm = gcm if gcm == "E2O" else gcm.lower()
         adjusted_scenario = scenario[:4] if scenario == "historical" else scenario
@@ -141,8 +141,7 @@ class FutureStreamsSource(OpenDataset):
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             with open(path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192 * 4):
-                    f.write(chunk)
+                f.writelines(r.iter_content(chunk_size=8192 * 4))
 
 
 class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
@@ -234,7 +233,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             )
         return items
 
-    def _years(self, source: OpenDataset, item: Averageable) -> List[int]:
+    def _years(self, source: OpenDataset, item: Averageable) -> list[int]:
         if hasattr(source, "from_years") and hasattr(source, "to_years"):
             if item.scenario == "historical":  # type: ignore
                 return source.to_years[:3]
@@ -249,7 +248,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         from_year: int = (
             source.from_year(item.gcm, year)
             if hasattr(source, "from_year")

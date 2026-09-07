@@ -2,15 +2,17 @@
 
 import logging
 import os
-from pathlib import PurePath, Path
-from typing_extensions import Iterable, Optional, override
+from collections.abc import Iterable
+from pathlib import Path, PurePath
+from typing import Optional
 
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 class DavydzenkaEtAlLandSubsidence(Onboarder):
     """Handles the onboarding and processing of the Davydzenka et al. land subsidence dataset."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the land subsidence dataset.
 
         METADATA:
@@ -55,7 +57,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         download_file(
             url=self.download_url,
-            directory=(Path((self.source_dir))),
+            directory=(Path(self.source_dir)),
         )
 
     @override
@@ -91,7 +93,6 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self.resource)
 
     def inventory(self) -> Iterable[HazardResource]:
