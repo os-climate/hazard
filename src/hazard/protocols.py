@@ -1,5 +1,6 @@
+from collections.abc import Generator, Iterable, Iterator
 from contextlib import contextmanager
-from typing import Generator, Iterable, Iterator, List, Optional, Protocol
+from typing import List, Optional, Protocol
 
 import xarray as xr
 
@@ -34,9 +35,9 @@ class WriteDataArray(Protocol):
         self,
         path: str,
         data_array: xr.DataArray,
-        chunks: Optional[List[int]] = None,
-        spatial_coords: Optional[bool] = True,
+        chunks: list[int] | None = None,
+        spatial_coords: bool | None = True,
     ): ...
 
 
-class ReadWriteDataArray(ReadDataArray, WriteDataArray): ...  # noqa: E701
+class ReadWriteDataArray(ReadDataArray, WriteDataArray): ...

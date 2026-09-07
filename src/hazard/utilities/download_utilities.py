@@ -10,7 +10,7 @@ import requests
 
 
 def download_file(
-    url: str, directory: str, filename: Optional[str] = None, force_download=False
+    url: str, directory: str, filename: str | None = None, force_download=False
 ):
     """Download a file in chunks."""
     if not os.path.exists(directory):
@@ -30,8 +30,7 @@ def download_file(
 
         r.raise_for_status()
         with open(file_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
+            f.writelines(r.iter_content(chunk_size=8192))
 
     return filename
 

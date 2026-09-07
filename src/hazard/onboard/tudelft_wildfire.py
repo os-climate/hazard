@@ -2,17 +2,18 @@
 
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import PurePath
-from typing_extensions import Iterable, Optional, override
+from typing import Optional
 
 import numpy as np
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class TUDelftFire(Onboarder):
     """On-board returns data set from TUDelft for fire hazard."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Pan-European data sets of forest fire probability of occurrence under present and future climate.
 
         METADATA:
@@ -176,7 +177,6 @@ class TUDelftFire(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self._resource_fwi20)
         create_tiles_for_resource(source, target, self._resource_fwi45)
 

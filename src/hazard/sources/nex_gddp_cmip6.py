@@ -1,8 +1,9 @@
 import logging
 import posixpath
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Dict, Generator, Iterator, List, Optional
+from typing import Dict, List, Optional
 
 import fsspec
 import s3fs  # type: ignore
@@ -31,8 +32,8 @@ class NexGddpCmip6(OpenDataset):
 
     def __init__(
         self,
-        root: Optional[str] = None,
-        fs: Optional[fsspec.spec.AbstractFileSystem] = None,
+        root: str | None = None,
+        fs: fsspec.spec.AbstractFileSystem | None = None,
     ):
         """
         Args:
@@ -40,7 +41,7 @@ class NexGddpCmip6(OpenDataset):
             root: Optional root path (bucket name in case of S3).
         """
         # subset of General Circulation Models (GCMs) and Variant IDs for analysis
-        self.subset: Dict[str, Dict[str, str]] = {
+        self.subset: dict[str, dict[str, str]] = {
             "ACCESS-CM2": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
             "CMCC-ESM2": {"variant_label": "r1i1p1f1", "grid_label": "gn"},
             "CNRM-CM6-1": {"variant_label": "r1i1p1f2", "grid_label": "gr"},
@@ -116,7 +117,7 @@ class NexGddpCmip6(OpenDataset):
         )
         return href_replaced
 
-    def gcms(self) -> List[str]:
+    def gcms(self) -> list[str]:
         return list(self.subset.keys())
 
     @contextmanager
@@ -127,8 +128,8 @@ class NexGddpCmip6(OpenDataset):
         quantity: str,
         year: int,
         chunks=None,
-        catalog_url: Optional[str] = None,
-        collection_id: Optional[str] = None,  # type: ignore
+        catalog_url: str | None = None,
+        collection_id: str | None = None,  # type: ignore
     ) -> Iterator[xr.Dataset]:
         # use "s3://bucket/root" ?
         if catalog_url is not None or collection_id is not None:
@@ -139,7 +140,7 @@ class NexGddpCmip6(OpenDataset):
         else:
             path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
-        ds: Optional[xr.Dataset] = None
+        ds: xr.Dataset | None = None
         f = None
         try:
             f = self.fs.open(path, "rb")
@@ -152,7 +153,7 @@ class NexGddpCmip6(OpenDataset):
                 f.close()
 
     def search_stac_items(
-        self, catalog_url: str, search_params: Dict
+        self, catalog_url: str, search_params: dict
     ) -> ItemCollection:
         client = Client.open(catalog_url)
         search = client.search(**search_params)

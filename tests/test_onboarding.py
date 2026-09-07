@@ -1,28 +1,28 @@
 import logging
 import os
 import sys
+import tempfile as temp
 from pathlib import Path, PurePath, PurePosixPath
 
-import fsspec.implementations.local as local  # type: ignore
 import pytest
-import tempfile as temp
 import zarr
 import zarr.convenience
-from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
-from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
-from hazard.models.water_temp import WaterTemperatureAboveIndicator
+from fsspec.implementations import local  # type: ignore
+
 from hazard.models.days_tas_above import DaysTasAboveIndicator
 from hazard.models.degree_days import DegreeDays
 from hazard.models.drought_index import DroughtIndicator
-
+from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
+from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
 from hazard.onboard.ipcc_drought import IPCCDrought
 from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
 from hazard.onboard.jrc_landslides import JRCLandslides
 from hazard.onboard.jrc_subsidence import JRCSubsidence
 from hazard.onboard.jupiter import Jupiter  # type: ignore
+from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
 from hazard.onboard.storm_wind import STORMIndicator
 from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
 from hazard.onboard.tudelft_wildfire import TUDelftFire
