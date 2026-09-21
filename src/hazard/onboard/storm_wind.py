@@ -1,19 +1,21 @@
 """Module for onboarding and processing STORM wind data provided by Jupiter Intelligence."""
 
 import os
+import zipfile
+from collections.abc import Iterable
 from contextlib import ExitStack
 from pathlib import PurePath
-from typing_extensions import Dict, Iterable, Optional, override
-import zipfile
+from typing import Dict, Optional
 
-from fsspec.implementations.local import LocalFileSystem
-from fsspec import AbstractFileSystem
 import numpy as np  # type: ignore
 import xarray as xr
 from affine import Affine  # type: ignore
+from fsspec import AbstractFileSystem
+from fsspec.implementations.local import LocalFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import HazardResource
+from hazard.onboarder import Onboarder
 from hazard.utilities import xarray_utilities
 from hazard.utilities.download_utilities import download_file
 
@@ -21,7 +23,7 @@ from hazard.utilities.download_utilities import download_file
 class STORMIndicator(Onboarder):
     """On-board data set provided by Jupiter Intelligence for use by OS-Climate to set up a OS-C ClimateScore API Service (“ClimateScore Service”)."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Source to load STORM wind data set.
 
         https://data.4tu.nl/articles/dataset/STORM_climate_change_tropical_cyclone_wind_speed_return_periods }.
@@ -129,7 +131,7 @@ class STORMIndicator(Onboarder):
     @override
     def onboard(self, target):
         path = "storm_test"
-        data_arrays: Dict[str, xr.DataArray] = {}
+        data_arrays: dict[str, xr.DataArray] = {}
         for return_period in self._return_periods:
             with ExitStack() as stack:
                 for basin_id in self._basin_ids:

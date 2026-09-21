@@ -1,12 +1,13 @@
 """xarray_utilities."""
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any, Dict, List, Optional, Tuple
 
 import dask  # type: ignore
 import dask.array
 import numpy as np
 import rasterio  # type: ignore
-import rioxarray  # noqa: F401
+import rioxarray
 import xarray as xr
 import zarr  # type: ignore
 import zarr.core
@@ -84,7 +85,7 @@ def affine_has_rotation(affine: Affine) -> bool:
 
 def affine_to_coords(
     affine: Affine, width: int, height: int, x_dim: str = "x", y_dim: str = "y"
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     """Generate 1d pixel centered coordinates from affine.
 
     Args:
@@ -110,7 +111,7 @@ def affine_to_coords(
     return {y_dim: y_coords, x_dim: x_coords}
 
 
-def assert_sources_combinable(sources: List[xr.DataArray]):
+def assert_sources_combinable(sources: list[xr.DataArray]):
     """Check that children array all have same CRS (e.g. EPSG:4326) and represent fragments of a parent image that can be assembled without reprojection.
 
     Raises an exception if children do not meet criteria.
@@ -194,7 +195,7 @@ def enforce_conventions_lat_lon(da: xr.DataArray) -> xr.DataArray:
 
 def get_array_components(
     da: xr.DataArray, assume_normalized: bool = False
-) -> Tuple[Any, Affine, Any]:
+) -> tuple[Any, Affine, Any]:
     """Extract the components of an xarray DataArray, including its data, affine transformation, and CRS.
 
     Args:
@@ -237,7 +238,7 @@ def global_crs_transform(width: int = 3600, height: int = 1800):
     return crs, affine
 
 
-def normalize_array(da: xr.DataArray) -> xr.DataArray:  # noqa: C901
+def normalize_array(da: xr.DataArray) -> xr.DataArray:
     """Ensure that DataArray follows the conventions expected by downstream algorithms.
 
     The conventions are:
@@ -337,7 +338,7 @@ def empty_data_array(
     index_name: str = "index",
     index_units: str = "",
     index_values: Sequence[str] = ["0"],
-    chunks: Optional[Sequence[int]] = None,
+    chunks: Sequence[int] | None = None,
 ):
     """Create an empty xarray DataArrau with the specified dimensions and spatial attributes.
 

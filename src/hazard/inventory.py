@@ -1,10 +1,10 @@
 """Hazard Inventory Management Module."""
 
 import json
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
-
 
 # region HazardModel
 
@@ -12,14 +12,14 @@ from pydantic import BaseModel, Field
 class Colormap(BaseModel):
     """Provides details of colormap."""
 
-    min_index: Optional[int] = Field(
+    min_index: int | None = Field(
         1,
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison.",
     )
     min_value: float = Field(
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison."
     )
-    max_index: Optional[int] = Field(
+    max_index: int | None = Field(
         255,
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison.",
     )
@@ -27,28 +27,28 @@ class Colormap(BaseModel):
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison."
     )
     name: str = Field(description="Name of colormap, e.g. 'flare', 'heating'.")
-    nodata_index: Optional[int] = Field(0, description="Index used for no data.")
+    nodata_index: int | None = Field(0, description="Index used for no data.")
     units: str = Field(description="Units, e.g. 'degree days', 'metres'.")
 
 
 class MapInfo(BaseModel):
     """Provides information about map layer."""
 
-    colormap: Optional[Colormap] = Field(description="Details of colormap.")
+    colormap: Colormap | None = Field(description="Details of colormap.")
     path: str = Field(
-        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
+        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."
     )
-    bounds: List[Tuple[float, float]] = Field(
+    bounds: list[tuple[float, float]] = Field(
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
-        description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
+        description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",
     )
-    bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
-    index_values: Optional[Sequence[Any]] = Field(
+    bbox: list[float] | None = Field(default=[-180.0, -85.0, 180.0, 85.0])
+    index_values: Sequence[Any] | None = Field(
         default=None,
         description="Index values to include in maps. If None, the last index value only is included.",
     )
     # note that the bounds should be consistent with the array attributes
-    source: Optional[str] = Field(
+    source: str | None = Field(
         description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
@@ -70,7 +70,7 @@ class Scenario(BaseModel):
     """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'."""
 
     id: str
-    years: List[int]
+    years: list[int]
     # periods: Optional[List[Period]]
 
 
@@ -78,7 +78,7 @@ class HazardResource(BaseModel):
     """Provides information about a set of hazard indicators, including available scenarios and years."""
 
     hazard_type: str = Field(description="Type of hazard.")
-    group_id: Optional[str] = Field(
+    group_id: str | None = Field(
         "public",
         description="Identifier of the resource group (used for authentication).",
     )
@@ -89,7 +89,7 @@ class HazardResource(BaseModel):
     indicator_id: str = Field(
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
     )
-    indicator_model_id: Optional[str] = Field(
+    indicator_model_id: str | None = Field(
         default=None,
         description="Identifier specifying the type of model used in the derivation of the indicator \
                                     (e.g. whether flood model includes impact of sea-level rise).",
@@ -97,36 +97,36 @@ class HazardResource(BaseModel):
     indicator_model_gcm: str = Field(
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )
-    params: Dict[str, Sequence[str]] = Field(
+    params: dict[str, Sequence[str]] = Field(
         {}, description="Parameters used to expand wild-carded fields."
     )
     display_name: str = Field(description="Text used to display indicator.")
-    display_groups: List[str] = Field(
+    display_groups: list[str] = Field(
         [], description="Text used to group the (expanded) indicators for display."
     )
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
-    license: Optional[str] = Field(
+    license: str | None = Field(
         default="",
         description="The license under which the indicator or dataset is distributed. This defines how the data can be used, shared, or modified.",
     )
-    source: Optional[str] = Field(
+    source: str | None = Field(
         default="",
         description="The origin or provenance of the indicator or dataset, such as the organization, research project, or publication responsible for its creation.",
     )
-    attribution: Optional[str] = Field(
+    attribution: str | None = Field(
         default="",
         description="Identifies the source, author, or entity responsible for the content or item in the inventory, allowing for proper credit or origin tracking.",
     )
-    version: Optional[str] = Field(
+    version: str | None = Field(
         default="", description="The version identifier of the indicator or dataset."
     )
-    map: Optional[MapInfo] = Field(
+    map: MapInfo | None = Field(
         description="Optional information used for display of the indicator in a map."
     )
 
-    resolution: Optional[str] = Field(
+    resolution: str | None = Field(
         default=None,
         description="Resolution of the hazard indicator. This is typically the resolution of the original data set. It is not always available and may be None.",
     )
@@ -137,7 +137,7 @@ class HazardResource(BaseModel):
             natively. By convention, the hazard indicator data array is named 'indicator' and the path to \
             the Zarr array is then path/indicator (not path).",
     )
-    scenarios: List[Scenario] = Field(
+    scenarios: list[Scenario] = Field(
         description="Climate change scenarios for which the indicator is available."
     )
     units: str = Field(description="Units of the hazard indicator.")
@@ -169,7 +169,7 @@ class HazardResources(BaseModel):
 
     """
 
-    resources: List[HazardResource]
+    resources: list[HazardResource]
 
 
 def expand(item: str, key: str, param: str):
@@ -188,7 +188,7 @@ def expand(item: str, key: str, param: str):
 
 
 def expand_resource(
-    resource: HazardResource, keys: List[str], params: Dict[str, List[str]]
+    resource: HazardResource, keys: list[str], params: dict[str, list[str]]
 ) -> Iterable[HazardResource]:
     """Recursively expand a resource by replacing placeholders with parameter values.
 
@@ -238,7 +238,7 @@ class HazardInventory(BaseModel):
 
     """
 
-    models: List[HazardResource]
+    models: list[HazardResource]
     colormaps: dict
 
 
@@ -256,7 +256,7 @@ def inventory_json(models: Iterable[HazardResource]) -> str:
     return json.dumps(response.dict())
 
 
-def paths_for_resources(resources: List[HazardResource], include_maps: bool = True):
+def paths_for_resources(resources: list[HazardResource], include_maps: bool = True):
     """List all the paths (to arrays or DataSets) for the HazardResources listed."""
     paths = []
     for resource in resources:

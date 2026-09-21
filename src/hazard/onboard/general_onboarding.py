@@ -2,11 +2,12 @@
 
 import os
 import tempfile as temp
+from collections.abc import Sequence
 from pathlib import Path
-from typing_extensions import Optional, Sequence
+from typing import Optional
 
-import fsspec.implementations.local as local
 import zarr
+from fsspec.implementations import local
 
 from hazard import get_hazards_onboarding
 from hazard.docs_store import DocStore
@@ -17,10 +18,10 @@ from hazard.utilities.s3_utilities import get_store, load_s3_parameters
 
 def onboard_hazards(
     local: bool = False,
-    credentials_path: Optional[str] = None,
-    source_dir_base: Optional[str] = None,
+    credentials_path: str | None = None,
+    source_dir_base: str | None = None,
     hazards: Sequence[str] = "",
-    download_dir: Optional[str] = None,
+    download_dir: str | None = None,
     force_download=False,
     force_prepare=False,
 ):
@@ -101,9 +102,7 @@ def onboard_hazards(
     print("Inventory updated succesfully")
 
 
-def initialize_class(
-    hazard: str, hazard_map: dict, source_dir_base: Optional[str] = None
-):
+def initialize_class(hazard: str, hazard_map: dict, source_dir_base: str | None = None):
     """Initialize the hazard model class based on the hazard name, passing directory if needed."""
     special_hazards = [
         "WRIAqueductFlood",

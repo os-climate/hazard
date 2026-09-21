@@ -1,22 +1,22 @@
 import os
+import tempfile
 from typing import List
 
-import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import pytest
-import tempfile
 import s3fs  # type: ignore
 import xarray as xr
 import zarr  # type: ignore
 from dask.distributed import Client, LocalCluster
+from fsspec.implementations import local  # type: ignore
 from pytest import approx
 
-import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.docs_store import DocStore
 from hazard.models.degree_days import BatchItem, DegreeDays, HeatingCoolingDegreeDays
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities import zarr_utilities
 from tests.conftest import (
     TestSource,
     TestTarget,
@@ -73,7 +73,7 @@ def test_work_loss_mocked() -> None:
         window_years=2, gcms=[gcm], scenarios=[scenario], central_years=[year]
     )
     model.run_all(source, target, debug_mode=True)
-    expected: List[xr.DataArray] = []
+    expected: list[xr.DataArray] = []
     with source.open_dataset_year(gcm, scenario, "tas", 2029).tas as t0:
         with source.open_dataset_year(gcm, scenario, "tas", 2030).tas as t1:
             with source.open_dataset_year(gcm, scenario, "hurs", 2029).hurs as h0:
@@ -107,7 +107,7 @@ def test_work_loss_mocked() -> None:
     )
 
 
-def test_zarr_read_write(test_output_dir):  # noqa: F811
+def test_zarr_read_write(test_output_dir):
     """Test that an xarray can be stored in xarray's native zarr format and then
     read from the zarr array alone using attributes and ignoring coordinates.
     """
@@ -123,7 +123,7 @@ def test_zarr_read_write(test_output_dir):  # noqa: F811
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_degree_days(test_output_dir):  # noqa: F811
+def test_degree_days(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -160,7 +160,7 @@ def test_degree_days(test_output_dir):  # noqa: F811
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_work_loss(test_output_dir):  # noqa: F811
+def test_work_loss(test_output_dir):
     """Cut-down but still *slow* test that performs downloading of real datasets."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -223,7 +223,7 @@ def test_example_run_degree_days():
 
 
 def download_test_datasets(
-    test_output_dir,  # noqa: F811
+    test_output_dir,
     gcm,
     scenario,
     years,
@@ -242,7 +242,7 @@ def download_test_datasets(
 
 
 @pytest.mark.skip(reason="just example")
-def test_load_dataset(test_output_dir):  # noqa: F811
+def test_load_dataset(test_output_dir):
     fs = local.LocalFileSystem()
     store = NexGddpCmip6(root=os.path.join(test_output_dir, "nex-gddp-cmip6"), fs=fs)
     with store.open_dataset_year("NorESM2-MM", "ssp585", "tasmax", 2029) as ds:
