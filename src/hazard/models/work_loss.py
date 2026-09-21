@@ -2,10 +2,11 @@
 
 import logging
 import os
+from collections.abc import Iterable
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing_extensions import Iterable, List
+from typing import List
 
 import numpy as np
 import xarray as xr
@@ -15,7 +16,6 @@ from hazard.models.multi_year_average import Indicator, MultiYearAverageIndicato
 from hazard.protocols import OpenDataset
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
-
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,6 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self.resource)
 
     def _resource(self) -> HazardResource:
@@ -157,7 +156,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: WorkLossBatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
             tas = stack.enter_context(
@@ -189,12 +188,12 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
 
     def _work_loss_indicators(
         self, tas: xr.DataArray, hurs: xr.DataArray
-    ) -> List[xr.DataArray]:
+    ) -> list[xr.DataArray]:
         tas_c = tas - 273.15  # convert from K to C
         # vpp is water vapour partial pressure in kPa
         vpp = (hurs / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))
         wbgt = 0.567 * tas_c + 0.393 * vpp + 3.94
-        result: List[xr.DataArray] = []
+        result: list[xr.DataArray] = []
         for alpha1, alpha2 in [self.alpha_light, self.alpha_medium, self.alpha_heavy]:
             wa = 0.1 + 0.9 / (1.0 + (wbgt / alpha1) ** alpha2)  # work-ability
             wlm = 1.0 - wa.mean(dim=["time"])  # work-loss

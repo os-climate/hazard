@@ -2,18 +2,20 @@
 
 import logging
 import os
-from pathlib import PurePath
-from typing_extensions import Iterable, Optional, override
 import zipfile
+from collections.abc import Iterable
+from pathlib import PurePath
+from typing import Optional
 
 import numpy as np
-import rioxarray  # noqa: F401
+import rioxarray
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 class TUDelftRiverFlood(Onboarder):
     """On-board returns data set from TUDelft for river inundation."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the Delft University of Technology river flood data.
 
         METADATA:
@@ -283,7 +285,6 @@ class TUDelftRiverFlood(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         # for TUDelft data, zero risk of flooding seems to be NaN
         # this presents a problem when creating lower resolution images where we might want to see an
         create_tiles_for_resource(
@@ -346,7 +347,7 @@ class TUDelftRiverFlood(Onboarder):
 class TUDelftCoastalFlood(Onboarder):
     """On-board returns data set from TUDelft for coastal inundation."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the Delft University of Technology coastal flood data.
 
         METADATA:
@@ -509,7 +510,6 @@ class TUDelftCoastalFlood(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self._resource)
 
     def inventory(self) -> Iterable[HazardResource]:

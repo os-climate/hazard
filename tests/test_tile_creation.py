@@ -16,7 +16,7 @@ from hazard.utilities import zarr_utilities
 from hazard.utilities.tiles import create_tile_set, create_tiles_for_resource
 
 
-def test_convert_tiles_mocked(test_output_dir):  # noqa: F811 not unused, its a fixture
+def test_convert_tiles_mocked(test_output_dir):
     """We are combining useful logic from a few sources.
     rio_tiler and titiler are very useful and also:
     https://github.com/mapbox/rio-mbtiles
@@ -79,14 +79,14 @@ def test_convert_tiles_mocked(test_output_dir):  # noqa: F811 not unused, its a 
 
 
 @pytest.mark.skip(reason="Example not test")
-def test_map_tiles_from_model(test_output_dir) -> None:  # noqa: F811
+def test_map_tiles_from_model(test_output_dir) -> None:
     local_store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "hazard", "hazard.zarr")
     )
     source = OscZarr(store=local_store)
     target = source
 
-    models: List[IndicatorModel] = [
+    models: list[IndicatorModel] = [
         # TUDelftRiverFlood(source_dir_base="None"),
         # WRIAqueductFlood(),
         # DegreeDays(),
@@ -104,7 +104,7 @@ def test_map_tiles_from_model(test_output_dir) -> None:  # noqa: F811
 
 
 @pytest.mark.skip(reason="Requires mocking")
-def test_convert_tiles(test_output_dir):  # noqa: F811
+def test_convert_tiles(test_output_dir):
     zarr_utilities.set_credential_env_variables()
     id = "00000NorESM1-M"
     scenario = "rcp8p5"
@@ -123,7 +123,7 @@ def test_convert_tiles(test_output_dir):  # noqa: F811
     create_tile_set(source, path, target, map_path, max_zoom=10)
 
 
-def copy_zarr_local(test_output_dir, path):  # noqa: F811
+def copy_zarr_local(test_output_dir, path):
     local_store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "hazard_test", "hazard.zarr")
     )

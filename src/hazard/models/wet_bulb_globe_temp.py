@@ -2,16 +2,15 @@
 
 import logging
 import os
+from collections.abc import Sequence
 from contextlib import ExitStack
 from pathlib import PurePosixPath
-from typing import Sequence
-from typing_extensions import List
+from typing import List
 
 import numpy as np
 import xarray as xr
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-
 from hazard.models.multi_year_average import (
     BatchItem,
     Indicator,
@@ -108,7 +107,7 @@ class WetBulbGlobeTemperatureAboveIndicator(
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
             tas = stack.enter_context(

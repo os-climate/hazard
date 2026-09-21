@@ -1,17 +1,18 @@
+import logging
+import os
+import time
+from collections.abc import Iterable, Iterator, MutableMapping, Sequence
 from concurrent import futures
 from contextlib import contextmanager
 from datetime import datetime
-import time
-import logging
-import os
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable, Iterator, MutableMapping, Protocol, Sequence
+from typing import Any, Protocol
 
 import boto3
-from botocore import UNSIGNED
-from botocore.client import Config
 import pandas as pd
 import xarray as xr
+from botocore import UNSIGNED
+from botocore.client import Config
 
 from hazard.protocols import OpenDataset
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
@@ -49,7 +50,6 @@ def download_single(path: str, cache_dir: Path, client: Any):
                 else:
                     logger.info(f"Retrying download, attempt {attempt}: {e}")
                     time.sleep(5 * 2**attempt)
-                    pass
     os.rename(str(local_file) + ".download", str(local_file))
     logger.info(f"Completed download {path}")
     return local_file
