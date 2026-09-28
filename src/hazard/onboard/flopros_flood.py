@@ -1,21 +1,22 @@
 """."""
 
 import logging
-import os
 import math
+import os
+from collections.abc import Iterable
 from pathlib import Path, PurePath
-from typing_extensions import Any, Dict, Iterable, List, Optional, Tuple, override
+from typing import Dict, List, Optional, Tuple
 
 import geopandas as gpd
+import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 from rasterio import features
 from rasterio.enums import MergeAlg
-import xarray as xr
+from typing_extensions import Any, override
 
-
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_and_unzip
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -23,7 +24,6 @@ from hazard.utilities.xarray_utilities import (
     empty_data_array,
     global_crs_transform,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
     data into a GeoDataFrame. It supports both local and remote file systems.
     """
 
-    def __init__(self, source_dir_base, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base, fs: AbstractFileSystem | None = None):
         """Flood protection standards expressed as return period.
 
         METADATA:
@@ -163,8 +163,8 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
             return float("Nan")  # zero is no data, represented by NaN here.
 
         logger.info(f"Processing hazard type {hazard_type}")
-        min_shapes: List[Tuple[float, Any]] = []
-        max_shapes: List[Tuple[float, Any]] = []
+        min_shapes: list[tuple[float, Any]] = []
+        max_shapes: list[tuple[float, Any]] = []
         logger.info("Inferring max and min protection levels per region")
         for _, row in self.df.iterrows():
             flood_type = (
@@ -224,7 +224,7 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
         """Get the inventory item(s)."""
         return self._resources().values()
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         """Create resource."""
         with open(
             os.path.join(os.path.dirname(__file__), "flopros_flood.md"), "r"

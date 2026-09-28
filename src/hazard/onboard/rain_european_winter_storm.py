@@ -2,23 +2,24 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from pathlib import PurePath
-from typing_extensions import Iterable, List, Optional, Sequence, Tuple, override
+from typing import List, Optional, Tuple
 
+import numpy as np
+import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
-import numpy as np
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 from scipy.optimize import curve_fit
-import xarray as xr
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
-
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +52,10 @@ class RAINEuropeanWinterStorm(Onboarder):
     def __init__(
         self,
         source_dir_base: str,
-        fs: Optional[AbstractFileSystem] = None,
-        scenarios: Optional[Sequence[str]] = None,
-        years: Optional[Sequence[int]] = None,
-        return_periods: Optional[Sequence[float]] = None,
+        fs: AbstractFileSystem | None = None,
+        scenarios: Sequence[str] | None = None,
+        years: Sequence[int] | None = None,
+        return_periods: Sequence[float] | None = None,
     ):
         """_summary_.
 
@@ -154,7 +155,7 @@ class RAINEuropeanWinterStorm(Onboarder):
     def run_historical(
         self,
         target: ReadWriteDataArray,
-        gev_params: List[List[Tuple[float, float, float]]],
+        gev_params: list[list[tuple[float, float, float]]],
     ):
         """Complete all processes (extrapolation, interpolation, data array production) on historical data.
 
@@ -188,7 +189,7 @@ class RAINEuropeanWinterStorm(Onboarder):
         target: ReadWriteDataArray,
         scenario,
         year,
-        gev_params: List[List[Tuple[float, float, float]]],
+        gev_params: list[list[tuple[float, float, float]]],
     ):
         """Complete all processes (conversion, extrapolation, interpolation) on scenario data.
 
@@ -250,7 +251,7 @@ class RAINEuropeanWinterStorm(Onboarder):
         return result
 
     def convert_datasets(
-        self, exceed_datasets, gev_params: List[List[Tuple[float, float, float]]]
+        self, exceed_datasets, gev_params: list[list[tuple[float, float, float]]]
     ):
         """Two types of datasets are used in this document - historical and scenario.
 
@@ -314,7 +315,7 @@ class RAINEuropeanWinterStorm(Onboarder):
         x_p = mu - (sigma / xi) * (1 - (-np.log(1 - p)) ** (-xi))
         return x_p
 
-    def extrapolate(self, datasets, gev_params: List[List[Tuple[float, float, float]]]):
+    def extrapolate(self, datasets, gev_params: list[list[tuple[float, float, float]]]):
         """Take DataArrays which hold wind speed return values (absolute values, not relative), and extend return periods from 5-50 to 100-500.
 
         This is done by fitting each pixel to a GEV curve (defined in gev_fit()) and then using this curve to calculate return values for p=1/100, 1/200, 1/500.
@@ -394,7 +395,7 @@ class RAINEuropeanWinterStorm(Onboarder):
             da_comb: All 'slices' of return values for different return periods are put together in one data array.
                     The data array has dimension lat, lon, and index. Index is the return period (ie 5, 10, 20 etc.)
 
-        """  # noqa: D400
+        """
         interpolated_das = []
         returns = [5, 10, 20, 50, 100, 200]  # 500
         assert len(returns) == len(da_returns_list)
@@ -470,7 +471,6 @@ class RAINEuropeanWinterStorm(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self.resource)
 
     def inventory(self) -> Iterable[HazardResource]:

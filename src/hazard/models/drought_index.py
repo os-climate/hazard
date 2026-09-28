@@ -3,13 +3,13 @@ import itertools
 import json
 import logging
 import os
+from collections.abc import Iterable, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List, MutableMapping, Optional, Sequence, Union
+from typing import List, Optional, Union
 
 import cftime
 import dask.array as da
-from distributed import Client
 import numpy as np  # type: ignore
 import pandas as pd
 import s3fs  # type: ignore
@@ -17,13 +17,16 @@ import xarray as xr
 import xclim.indices  # type: ignore
 import zarr  # type: ignore
 import zarr.hierarchy
+from distributed import Client
 from pydantic import BaseModel
 from pydantic.type_adapter import TypeAdapter
 from zarr.errors import GroupNotFoundError  # type: ignore
 
 from hazard.indicator_model import IndicatorModel  # type: ignore
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
-from hazard.models.multi_year_average import MultiYearAverageIndicatorBase  # type: ignore
+from hazard.models.multi_year_average import (
+    MultiYearAverageIndicatorBase,  # type: ignore
+)
 from hazard.models.prechunker import Prechunker
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
@@ -37,7 +40,7 @@ MULTI_MODEL_ID = "multi_model_0"
 
 
 class BatchItem:
-    def __init__(self, gcm: str, scenario: str, central_years: List[int]):
+    def __init__(self, gcm: str, scenario: str, central_years: list[int]):
         self.gcm = gcm
         self.scenario = scenario
         self.central_years = central_years
@@ -69,7 +72,7 @@ def in_memory_zarr_working_store():
 
 
 class ChunkIndicesComplete(BaseModel):
-    complete_indices: List[int]
+    complete_indices: list[int]
 
 
 class ProgressStore:
@@ -142,7 +145,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
     def pre_chunk(
         self,
         item: BatchItem,
-        years: Union[Sequence[int], np.ndarray] = DEFAULT_YEARS,
+        years: Sequence[int] | np.ndarray = DEFAULT_YEARS,
         quantities: Sequence[str] = ["tas", "pr"],
         lat_chunk_size: int = 40,
         lon_chunk_size: int = 40,
@@ -210,7 +213,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
         return data_chunks
 
     def calculate_spei(
-        self, gcm, scenario, progress_store: Optional[ProgressStore] = None
+        self, gcm, scenario, progress_store: ProgressStore | None = None
     ):
         """Calculate SPEI for the given GCM and scenario, storing"""
         # we infer the lats and lons from the source dataset:

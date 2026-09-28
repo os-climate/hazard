@@ -2,14 +2,15 @@
 
 import logging
 from abc import abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing_extensions import Iterable, List, Tuple, TypeVar
+from typing import List, Tuple
 
 import xarray as xr
 from dask.distributed import Client
 from rasterio.crs import CRS  # type: ignore
-
+from typing_extensions import TypeVar
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource, MapInfo
@@ -32,7 +33,7 @@ class Indicator:
 
     array: xr.DataArray  # Union[xr.DataArray, Sequence[xr.DataArray]]
     path: PurePosixPath
-    bounds: List[Tuple[float, float]]
+    bounds: list[tuple[float, float]]
 
 
 class MultiYearAverageIndicatorBase(IndicatorModel[T]):
@@ -106,7 +107,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
-            logger.info(f"Writing array to {str(indicator.path)}")
+            logger.info(f"Writing array to {indicator.path!s}")
             target.write(str(indicator.path), indicator.array)
 
     def _years(self, _: OpenDataset, item: Averageable):
@@ -121,11 +122,11 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         source: OpenDataset,
         target: WriteDataArray,
         item: Averageable,
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = self._years(source, item)
         logger.info(
-            f"Calculating average indicator for batch item {str(item)}, years={list(years)}"
+            f"Calculating average indicator for batch item {item!s}, years={list(years)}"
         )
         futures = []
         for year in years:
@@ -133,11 +134,11 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
                 self._calculate_single_year_indicators, source, item, year
             )
             futures.append(future)
-        single_year_sets: List[List[Indicator]] = list(
+        single_year_sets: list[list[Indicator]] = list(
             client.gather(futures)
         )  # indicators for each year
         indics_per_year = len(single_year_sets[0])  # number of indicators for each year
-        res: List[Indicator] = []
+        res: list[Indicator] = []
         for i in range(indics_per_year):
             average = sum(set[i].array for set in single_year_sets) / float(len(years))
             assert isinstance(average, xr.DataArray)  # must be non-zero
@@ -163,7 +164,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     @abstractmethod
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: T, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """Calculate indicators for a single year for a single batch item.
 
         If just a single indicator per batch, a list of length one is expected.
@@ -211,8 +212,8 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
         return [self._resource()]  # .expand()
 
     def _get_indicators(
-        self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
-    ) -> List[Indicator]:
+        self, item: BatchItem, data_arrays: list[xr.DataArray], param: str
+    ) -> list[Indicator]:
         """Generate a list of indicators for given thresholds and data arrays.
 
         Args:

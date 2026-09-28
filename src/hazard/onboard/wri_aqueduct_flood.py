@@ -2,13 +2,15 @@
 
 import logging
 import os
-from typing_extensions import Iterable, List, override
+from collections.abc import Iterable
+from typing import List
 
 from affine import Affine
 from pydantic import TypeAdapter
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import HazardResource, Period
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities.map_utilities import alphanumeric
@@ -88,7 +90,7 @@ class WRIAqueductFlood(Onboarder):
         # "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]]
         return items
 
-    def _get_items_to_process_riverine(self) -> List[dict]:
+    def _get_items_to_process_riverine(self) -> list[dict]:
         """Get a list of all riverine items."""
         gcms = [
             "00000NorESM1-M",
@@ -131,7 +133,7 @@ class WRIAqueductFlood(Onboarder):
         )
         return items
 
-    def _get_items_to_process_coastal(self) -> List[dict]:
+    def _get_items_to_process_coastal(self) -> list[dict]:
         """Get a list of all coastal items."""
         models = ["0", "0_perc_05", "0_perc_50"]
         subs = ["wtsub", "nosub"]
@@ -706,12 +708,12 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                 ],
             },
         ]
-        resources = TypeAdapter(List[HazardResource]).validate_python(
+        resources = TypeAdapter(list[HazardResource]).validate_python(
             wri_riverine_inundation_models + wri_coastal_inundation_models
         )
         return resources  # self._expand_resources(resources)
 
-    def _expand_resources(self, models: List[HazardResource]) -> List[HazardResource]:
+    def _expand_resources(self, models: list[HazardResource]) -> list[HazardResource]:
         expanded_models = [e for model in models for e in model.expand()]
         # we populate map_id hashes programmatically
         for model in expanded_models:
@@ -738,7 +740,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                     ):
                         if period.map_id != test_period.map_id:
                             raise Exception(
-                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501
+                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"
                             )
 
         return expanded_models
