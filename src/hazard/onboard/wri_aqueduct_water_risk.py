@@ -2,20 +2,21 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from pathlib import PurePath
-from typing import Sequence
-from typing_extensions import Dict, Iterable, Optional, override
-import fsspec.implementations.local as local
+from typing import Dict, Optional
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
+from fsspec.implementations import local
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
 from rasterio import features
 from rasterio.crs import CRS  # type: ignore
 from rasterio.enums import MergeAlg
 from shapely import union_all
+from typing_extensions import override
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.onboarder import Onboarder
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 class WRIAqueductWaterRiskSource(OpenDataset):
     """Handles onboarding and initialization of Aqueduct water risk data from WRI."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the Water Resources Institute (WRI) water-related risk data.
 
         METADATA:
@@ -117,7 +118,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             include_fields=["aq30_id", "pfaf_id", "geometry"],
         )
 
-        self.geometry: Dict[str, pd.DataFrame] = dict()
+        self.geometry: dict[str, pd.DataFrame] = dict()
 
         # The jointure is based on aq30_id for the baseline:
         geo = geometry.drop(columns=["pfaf_id"])
@@ -159,18 +160,14 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         joint_on = "aq30_id" if scenario == "historical" else "pfaf_id"
         filename = os.path.join(
             os.path.join(self.file_dir, "CVS"),
-            "Aqueduct40_{key}_annual_y2023m07d05.csv".format(key=key),
+            f"Aqueduct40_{key}_annual_y2023m07d05.csv",
         )
         if indicator not in self.indicator_map[key]:
-            raise ValueError(
-                "unexpected indicator {indicator}".format(indicator=indicator)
-            )
+            raise ValueError(f"unexpected indicator {indicator}")
         label = self.indicator_map[key][indicator]
         if key == "future":
             if scenario not in self.scenario_map:
-                raise ValueError(
-                    "unexpected scenario {scenario}".format(scenario=scenario)
-                )
+                raise ValueError(f"unexpected scenario {scenario}")
             label = "_".join(
                 [self.scenario_map[scenario] + str(year)[-2:], label, "x", "r"]
             )
@@ -200,7 +197,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
 
-        da: Dict[str, xr.DataArray] = dict()
+        da: dict[str, xr.DataArray] = dict()
         for column in [column for column in df.columns if column != "geometry"]:
             shapes = [
                 (geometry, value)
@@ -228,7 +225,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
     """Manages baseline and future projections of water demand and supply indicators."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Built baseline water demand/supply from the future values as well as their change from baseline.
 
         METADATA:
@@ -492,7 +489,7 @@ class WRIAqueductWaterRisk(Onboarder):
         """Get the inventory item(s)."""
         return self.resources.values()  # .expand()
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         """Create resource."""
         resource_map = {
             "water_demand": {
@@ -538,11 +535,11 @@ class WRIAqueductWaterRisk(Onboarder):
         ) as f:
             description = f.read()
 
-        resources: Dict[str, HazardResource] = dict()
+        resources: dict[str, HazardResource] = dict()
         for key in resource_map:
             indicator = key.replace("_category", "")
             if indicator in self.indicators:
-                path = "water_risk/wri/v2/{key}".format(key=key) + "_{scenario}_{year}"
+                path = f"water_risk/wri/v2/{key}" + "_{scenario}_{year}"
                 resources[key] = HazardResource(
                     hazard_type="WaterRisk",
                     indicator_id=key,
