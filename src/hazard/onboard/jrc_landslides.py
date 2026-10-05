@@ -2,17 +2,19 @@
 
 import logging
 import os
-from pathlib import PurePosixPath, PurePath
-from typing_extensions import Iterable, Optional, override
 import zipfile
+from collections.abc import Iterable
+from pathlib import PurePath, PurePosixPath
+from typing import Optional
 
-import xarray as xr
 import numpy as np
+import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 
@@ -63,7 +65,7 @@ class JRCLandslides(Onboarder):
     by defining new `Scenario` instances in the `inventory` method and providing the corresponding data files.
     """
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the Joint Research Center (JRC) landslide data.
 
         Args:
@@ -190,7 +192,6 @@ class JRCLandslides(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(
             source,
             target,

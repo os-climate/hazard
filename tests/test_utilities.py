@@ -11,7 +11,7 @@ from hazard.utilities.xarray_utilities import (
 )
 
 
-def test_xarray_write_small(test_output_dir):  # noqa: F811
+def test_xarray_write_small(test_output_dir):
     _, affine = global_crs_transform(3600, 1800)
     da = empty_data_array(3600, 1800, affine)
     x = np.linspace(0, 1, 3600)
@@ -26,7 +26,7 @@ def test_xarray_write_small(test_output_dir):  # noqa: F811
     target.write("test/test_small", da)
 
 
-def test_xarray_write_net_cdf_coords(test_output_dir):  # noqa: F811
+def test_xarray_write_net_cdf_coords(test_output_dir):
     """Test writing of XArrays with NetCDF-type style co-ordinates.
     Hazard indicators are generally maps of values, i.e. have two (spatial) dimensions, but often it is convenient
     to group a set of indicators (for a given scenario and year). For example, flood depths with different return
@@ -59,7 +59,7 @@ def test_xarray_write_net_cdf_coords(test_output_dir):  # noqa: F811
     assert z.attrs["min_max_units"] == ""
 
 
-def test_xarray_write_net_cdf_coords_huge(test_output_dir):  # noqa: F811
+def test_xarray_write_net_cdf_coords_huge(test_output_dir):
     """Do we need
     See distributed writes of:
     https://docs.xarray.dev/en/stable/user-guide/io.html
@@ -76,4 +76,3 @@ def test_xarray_write_net_cdf_coords_huge(test_output_dir):  # noqa: F811
                                         })
 
     """
-    ...

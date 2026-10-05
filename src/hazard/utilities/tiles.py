@@ -3,9 +3,10 @@
 import logging
 import math
 import os
-from pathlib import PurePosixPath
 import posixpath
-from typing import Any, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from pathlib import PurePosixPath
+from typing import Any, Optional, Tuple
 
 import mercantile
 import numpy as np  # type: ignore
@@ -13,7 +14,7 @@ import rasterio  # type: ignore
 import rasterio.coords
 import rasterio.transform
 import rasterio.warp
-import rioxarray  # noqa: F401
+import rioxarray
 import xarray as xr
 from rasterio import CRS  # type: ignore
 from rasterio.warp import Resampling  # type: ignore
@@ -29,7 +30,7 @@ def create_tiles_for_resource(
     source: OscZarr,
     target: OscZarr,
     resource: HazardResource,
-    max_zoom: Optional[int] = None,
+    max_zoom: int | None = None,
     nodata=None,
     nodata_as_zero=False,
     nodata_as_zero_coarsening=False,
@@ -183,11 +184,11 @@ def create_tile_set(
     source_path: str,
     target: OscZarr,
     target_path: str,
-    indices: Optional[Sequence[int]] = None,
+    indices: Sequence[int] | None = None,
     max_tile_batch_size: int = 32,
     reprojection_threads: int = 8,
-    max_zoom: Optional[int] = None,
-    nodata: Optional[float] = None,
+    max_zoom: int | None = None,
+    nodata: float | None = None,
     nodata_as_zero: bool = False,
     nodata_as_zero_coarsening: bool = False,
     check_fill: bool = False,
@@ -331,7 +332,7 @@ def _write_zoom_level(
     target: OscZarr,
     target_path: str,
     zoom: int,
-    indices: Optional[Sequence[int]] = None,
+    indices: Sequence[int] | None = None,
     max_tile_batch_size: int = 32,
     reprojection_threads: int = 8,
     nodata=None,
@@ -357,8 +358,8 @@ def _write_zoom_level(
             da_index.data[np.isnan(da_index.data)] = 0
             if nodata:
                 da_index.data[da_index.data == nodata] = 0
-        for batch_x in range(0, num_batches):
-            for batch_y in range(0, num_batches):
+        for batch_x in range(num_batches):
+            for batch_y in range(num_batches):
                 x_slice = slice(
                     xmin + batch_x * tile_batch_size,
                     min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level),
@@ -454,8 +455,8 @@ def _coarsen(
     target: OscZarr,
     target_path: str,
     max_zoom: int,
-    bounds: Tuple[float, float, float, float],
-    indices: Optional[Sequence[int]],
+    bounds: tuple[float, float, float, float],
+    indices: Sequence[int] | None,
     max_tile_batch_size: int = 16,
     nodata_as_zero_coarsening: bool = False,
 ):
@@ -477,8 +478,8 @@ def _coarsen(
             num_batches = max(1, math.ceil(ntiles / max_tile_batch_size))
             tile_batch_size = min(ntiles, max_tile_batch_size)
             # in this case we can process the batches in parallel: consider multi-threading this part?
-            for batch_x in range(0, num_batches):
-                for batch_y in range(0, num_batches):
+            for batch_x in range(num_batches):
+                for batch_y in range(num_batches):
                     x_slice = slice(
                         xmin + batch_x * tile_batch_size,
                         min(xmin + (batch_x + 1) * tile_batch_size, ntiles_in_level),

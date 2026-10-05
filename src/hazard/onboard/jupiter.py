@@ -1,10 +1,11 @@
 """Module for onboarding and processing Jupiter Intelligence datasets for OS-Climate."""
 
 import os
-from pathlib import PurePosixPath, PurePath
 import shutil
-from typing_extensions import Dict, Iterable, Optional, override
 import zipfile
+from collections.abc import Iterable
+from pathlib import PurePath, PurePosixPath
+from typing import Dict, Optional
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
@@ -13,8 +14,8 @@ import rasterio.enums  # type: ignore
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
-
 from rasterio.crs import CRS  # type: ignore
+from typing_extensions import override
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.onboarder import Onboarder
@@ -34,7 +35,7 @@ subject to greater validation, and suitable for bottom-up risk analysis please c
     def __init__(
         self,
         source_dir_base: str,
-        fs: Optional[AbstractFileSystem] = None,
+        fs: AbstractFileSystem | None = None,
     ):
         """Source to load data set provided by Jupiter Intelligence for use by OS-Climate to set up a OS-C ClimateScore API Service (“ClimateScore Service”).
 
@@ -106,7 +107,7 @@ subject to greater validation, and suitable for bottom-up risk analysis please c
             for csv_filename in csv_filenames
         )
 
-    def read(self, csv_filename: str) -> Dict[str, xr.DataArray]:
+    def read(self, csv_filename: str) -> dict[str, xr.DataArray]:
         """Read Jupiter csv data and convert into a set of DataArrays.
 
         Args:
@@ -124,7 +125,7 @@ subject to greater validation, and suitable for bottom-up risk analysis please c
         )
         ids = [c for c in df.columns if c not in ["key", "latitude", "longitude"]]
         df_pv = df.pivot(index="latitude", columns="longitude", values=ids)
-        arrays: Dict[str, xr.DataArray] = {}
+        arrays: dict[str, xr.DataArray] = {}
         for id in ids:
             da = xr.DataArray(data=df_pv[id], attrs={"crs": CRS.from_epsg(4326)})
             da = da.where(da.data > -9999)  # Jupiter set no-data

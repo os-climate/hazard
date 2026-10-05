@@ -1,9 +1,9 @@
 import os
-
-from anyio import Path
-import fsspec.implementations.local as local  # type: ignore
-import pytest
 import tempfile as temp
+
+import pytest
+from anyio import Path
+from fsspec.implementations import local  # type: ignore
 
 from hazard.docs_store import DocStore
 from hazard.models.days_tas_above import DaysTasAboveIndicator
@@ -12,8 +12,8 @@ from hazard.models.drought_index import DroughtIndicator
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.models.work_loss import WorkLossIndicator
-from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
+from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
 from hazard.onboard.iris_wind import IRISIndicator
 from hazard.onboard.jupiter import Jupiter
 from hazard.onboard.probabilistic_european_wildfire import FireRiskIndicators
@@ -61,7 +61,7 @@ def test_create_inventory(test_output_dir):
 
 
 @pytest.mark.skip(reason="just example")
-def test_check_inventory(test_output_dir):  # noqa: F811
+def test_check_inventory(test_output_dir):
     zarr_utilities.set_credential_env_variables()
     temp_dir = temp.TemporaryDirectory()
     local_fs = local.LocalFileSystem(root=temp_dir)

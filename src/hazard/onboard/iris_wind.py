@@ -1,15 +1,18 @@
 """Module for handling the onboarding and processing of IRIS - Imperial College Storm Model data."""
 
 import os
+from collections.abc import Iterable
 from pathlib import PurePath
 from typing import Optional
-from typing_extensions import Iterable, override
+
 import numpy as np
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
-from hazard.onboarder import Onboarder
+from typing_extensions import override
+
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import tiles
@@ -18,7 +21,7 @@ from hazard.utilities import tiles
 class IRISIndicator(Onboarder):
     """On-board returns data set from IRIS - Imperial College Storm Model."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Initialize the IRISIndicator class with the input directory for IRIS data.
 
         Assumes iris downloaded data is of the form wind/IRIS/return_value_maps/--files and that they are in the downloads folder.
@@ -176,7 +179,6 @@ class IRISIndicator(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images for the IRIS dataset."""
-        pass
 
     def _file_name(self, scenario: str, year: int):
         """Return the file name for a specific scenario and year."""
