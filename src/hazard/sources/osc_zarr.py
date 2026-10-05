@@ -1,18 +1,18 @@
 import logging
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import s3fs
 import xarray as xr
 import zarr
-import zarr.hierarchy
 import zarr.core
+import zarr.hierarchy
 from affine import Affine
 
-import hazard.utilities.xarray_utilities as xarray_utilities
 from hazard.protocols import ReadWriteDataArray
+from hazard.utilities import xarray_utilities
 from hazard.utilities.s3_utilities import get_store
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,12 @@ class OscZarr(ReadWriteDataArray):
 
     def __init__(
         self,
-        s3: Optional[s3fs.S3FileSystem] = None,
-        store: Optional[Any] = None,
-        store_netcdf_coords: Optional[bool] = False,
-        bucket: Optional[str] = None,
+        s3: s3fs.S3FileSystem | None = None,
+        store: Any | None = None,
+        store_netcdf_coords: bool | None = False,
+        bucket: str | None = None,
         group_path_suffix: str = "hazard/hazard.zarr",
-        extra_s3fs_kwargs: Optional[dict] = None,
+        extra_s3fs_kwargs: dict | None = None,
     ):
         """Class for reading and writing to OSC Climate Zarr storage.
 
@@ -99,7 +99,7 @@ class OscZarr(ReadWriteDataArray):
         transform: Affine,
         crs: str,
         overwrite=False,
-        index_name: Optional[str] = "index",
+        index_name: str | None = "index",
         index_values: Any = None,
         chunks=None,
     ):
@@ -188,7 +188,7 @@ class OscZarr(ReadWriteDataArray):
             data = z.get_coordinate_selection((iy, ix))
         return data
 
-    def read_numpy(self, path: str, index=0) -> Tuple[np.ndarray, Affine, str]:
+    def read_numpy(self, path: str, index=0) -> tuple[np.ndarray, Affine, str]:
         """Read a Zarr array at a given index as a two-dimensional NumPy array along with its affine transform and CRS.
 
         This method is intended for small datasets. For larger datasets, it is recommended
@@ -226,8 +226,8 @@ class OscZarr(ReadWriteDataArray):
         self,
         path: str,
         da: xr.DataArray,
-        chunks: Optional[Sequence[int]] = None,
-        spatial_coords: Optional[bool] = True,
+        chunks: Sequence[int] | None = None,
+        spatial_coords: bool | None = True,
     ):
         """Write a DataArray to the Zarr store at the specified path.
 
@@ -242,7 +242,7 @@ class OscZarr(ReadWriteDataArray):
             self.write_zarr(path, da, chunks)
 
     def write_zarr(
-        self, path: str, da: xr.DataArray, chunks: Optional[Sequence[int]] = None
+        self, path: str, da: xr.DataArray, chunks: Sequence[int] | None = None
     ):
         """Write DataArray according to the standard OS-Climate conventions.
 
@@ -311,7 +311,7 @@ class OscZarr(ReadWriteDataArray):
         return self._data_array_from_zarr(z)
 
     def write_data_array(
-        self, path: str, da: xr.DataArray, chunks: Optional[Sequence[int]] = None
+        self, path: str, da: xr.DataArray, chunks: Sequence[int] | None = None
     ):
         """Write an xarray DataArray to the provided relative path.
 
@@ -349,7 +349,7 @@ class OscZarr(ReadWriteDataArray):
             index_name=str(da_norm.dims[0]),
             index_values=da_norm[da_norm.dims[0]].data,
         )
-        options: Dict[str, Any] = {"write_empty_chunks": False}
+        options: dict[str, Any] = {"write_empty_chunks": False}
         if chunks is not None:
             options["chunks"] = chunks
         elif da.chunks is None:
@@ -377,11 +377,11 @@ class OscZarr(ReadWriteDataArray):
     def _zarr_create(
         self,
         path: str,
-        shape: Union[np.ndarray, Tuple[int, ...]],
+        shape: np.ndarray | tuple[int, ...],
         transform: Affine,
         crs: str,
         overwrite=False,
-        index_name: Optional[str] = None,
+        index_name: str | None = None,
         index_values: Any = None,
         chunks=None,
     ):
@@ -425,10 +425,10 @@ class OscZarr(ReadWriteDataArray):
 
     def _add_attributes(
         self,
-        attrs: Dict[str, Any],
+        attrs: dict[str, Any],
         transform: Affine,
         crs: str,
-        index_name: Optional[str] = None,
+        index_name: str | None = None,
         index_values: Any = None,
         index_units: str = "",
     ):
@@ -451,7 +451,7 @@ class OscZarr(ReadWriteDataArray):
             attrs[f"{index_name}_values"] = list(index_values)
             attrs[f"{index_name}_units"] = index_units
 
-    def _chunks(self, index_values: List[Any]):
+    def _chunks(self, index_values: list[Any]):
         chunk_dim = 1000 if len(index_values) < 10 else 500
         chunks = (
             1 if index_values is None else len(index_values),

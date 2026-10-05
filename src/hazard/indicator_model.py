@@ -2,7 +2,8 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterable, Optional, TypeVar
+from collections.abc import Iterable
+from typing import Any, Generic, Optional, TypeVar
 
 from dask.distributed import Client, LocalCluster
 
@@ -21,7 +22,7 @@ class IndicatorModel(ABC, Generic[T]):
         self,
         source: OpenDataset,
         target: ReadWriteDataArray,
-        client: Optional[Client] = None,
+        client: Client | None = None,
         debug_mode=False,
     ):
         """Run all items in the batch."""
