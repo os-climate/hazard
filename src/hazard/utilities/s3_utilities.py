@@ -8,12 +8,13 @@ and handles parallelized copy operations.
 
 import asyncio
 import concurrent.futures
-from glob import iglob
 import logging
 import os
 import pathlib
 import sys
-from typing import Callable, Optional, Sequence
+from collections.abc import Callable, Sequence
+from glob import iglob
+from typing import Optional
 
 try:
     ## python >3.11 includes tomllib
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_s3_fs(
-    use_dev: bool = True, extra_s3fs_kwargs: Optional[dict] = None, **kwargs
+    use_dev: bool = True, extra_s3fs_kwargs: dict | None = None, **kwargs
 ) -> s3fs.S3FileSystem:
     """Return a S3FileSystem object.
 
@@ -75,10 +76,10 @@ def get_s3_fs(
 
 
 def get_store(
-    s3: Optional[s3fs.S3FileSystem] = None,
+    s3: s3fs.S3FileSystem | None = None,
     use_dev: bool = True,
-    extra_s3fs_kwargs: Optional[dict] = None,
-    bucket: Optional[str] = None,
+    extra_s3fs_kwargs: dict | None = None,
+    bucket: str | None = None,
     group_path_suffix: str = "hazard/hazard.zarr",
     *_,
 ) -> FSMap:
@@ -118,7 +119,7 @@ def get_store(
     return store
 
 
-def load_s3_parameters(toml_path: Optional[str] = None) -> dict:
+def load_s3_parameters(toml_path: str | None = None) -> dict:
     """Load the parameters (mostly credentials) for the S3 utilities from a TOML file.
 
     The env_vars_override dictionary will be poped and use to override the environment.
@@ -453,7 +454,7 @@ def copy_objects(
     source_bucket_name: str,
     s3_target_client,
     target_bucket_name: str,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Copy objects from one S3 bucket to another.
 
@@ -549,7 +550,7 @@ def sync_buckets(
     target_bucket_name: str,
     prefix: str,
     dry_run=True,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Synchronize files between two S3 buckets based on ETag differences.
 

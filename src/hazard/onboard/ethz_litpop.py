@@ -2,20 +2,22 @@
 
 import logging
 import os
-from pathlib import PurePath
 import tarfile
-from typing_extensions import Dict, Iterable, Optional, override
+from collections.abc import Iterable
+from pathlib import PurePath
+from typing import Dict, Optional
 
-import numpy as np
-import xarray as xr
 import dask
 import dask.array as da
 import dask.dataframe as dd
+import numpy as np
+import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.download_utilities import download_file
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -30,7 +32,7 @@ class ETHZurichLitPop(Onboarder):
     def __init__(
         self,
         source_dir_base: str,
-        fs: Optional[AbstractFileSystem] = None,
+        fs: AbstractFileSystem | None = None,
     ):
         """Define every attribute of the onboarding class for the ETH Zurich LitPop data.
 
@@ -199,9 +201,9 @@ class ETHZurichLitPop(Onboarder):
         """Get the inventory item(s)."""
         return self.resources.values()
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         """Create resource."""
-        resources: Dict[str, HazardResource] = dict()
+        resources: dict[str, HazardResource] = dict()
         resource_map = {
             "country_code": {
                 "units": "",
@@ -232,10 +234,7 @@ Report 2017".
             },
         }
         for key in resource_map:
-            path = (
-                "spatial_distribution/ethz/v1/{indicator_id}".format(indicator_id=key)
-                + "_{scenario}_{year}"
-            )
+            path = f"spatial_distribution/ethz/v1/{key}" + "_{scenario}_{year}"
 
             resources[key] = HazardResource(
                 hazard_type="SpatialDistribution",
