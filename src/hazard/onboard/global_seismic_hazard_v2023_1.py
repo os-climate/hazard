@@ -51,7 +51,12 @@ class GEMSeismicHazard(Onboarder):
         self._resource: HazardResource = list(self.inventory())[0]
 
     @override
-    def prepare(self, download_dir: str | None = None) -> None:
+    def prepare(
+        self,
+        download_dir: str | None = None,
+        force: bool = False,
+        force_download: bool = False,
+    ) -> None:
         """Download and unzip the GeoTIFF if it is not already available."""
         self.fs.makedirs(self.source_dir, exist_ok=True)
 

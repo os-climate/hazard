@@ -3,11 +3,9 @@
 Contains the get_hazards_onboarding functions.
 """
 
-from typing import Dict
+from typing import Dict, Type
 
-from hazard.models.days_tas_above import DaysTasAboveIndicator
-from hazard.models.water_temp import WaterTemperatureAboveIndicator
-from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
+from hazard.onboarder import Onboarder
 from hazard.onboard.probabilistic_european_wildfire import FireRiskIndicators
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
@@ -26,31 +24,30 @@ from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 from hazard.onboard.global_seismic_hazard_v2023_1 import GEMSeismicHazard
 from hazard.onboard.jrc_riverflood import JRCRiverFlood
 
-hazard_map = {
-    "DavydzenkaEtAlLandSubsidence": DavydzenkaEtAlLandSubsidence,
-    "DaysTasAboveIndicator": DaysTasAboveIndicator,
-    "ETHZurichLitPop": ETHZurichLitPop,
-    "IPCCDrought": IPCCDrought,
-    "IRISIndicator": IRISIndicator,
-    "JRCLandslides": JRCLandslides,
-    "JRCSubsidence": JRCSubsidence,
-    "Jupiter": Jupiter,
-    "RAINEuropeanWinterStorm": RAINEuropeanWinterStorm,
-    "TUDelftCoastalFlood": TUDelftCoastalFlood,
-    "TUDelftConvectiveWindstorm": TUDelftConvectiveWindstorm,
-    "TUDelftFire": TUDelftFire,
-    "TUDelftRiverFlood": TUDelftRiverFlood,
-    "WaterTemperatureAboveIndicator": WaterTemperatureAboveIndicator,
-    "WetBulbGlobeTemperatureAboveIndicator": WetBulbGlobeTemperatureAboveIndicator,
-    "WRIAqueductFlood": WRIAqueductFlood,
-    "WRIAqueductWaterRisk": WRIAqueductWaterRisk,
-    "WISCEuropeanWinterStorm": WISCEuropeanWinterStorm,
-    "GEMSeismicHazard": GEMSeismicHazard,
-    "JRCRiverflood": JRCRiverFlood,
-    "FireRiskIndicators": FireRiskIndicators,
-}
+_onboarder_classes: list[Type[Onboarder]] = [
+    DavydzenkaEtAlLandSubsidence,
+    ETHZurichLitPop,
+    IPCCDrought,
+    IRISIndicator,
+    JRCLandslides,
+    JRCSubsidence,
+    Jupiter,
+    RAINEuropeanWinterStorm,
+    TUDelftCoastalFlood,
+    TUDelftConvectiveWindstorm,
+    TUDelftFire,
+    TUDelftRiverFlood,
+    WRIAqueductFlood,
+    WRIAqueductWaterRisk,
+    WISCEuropeanWinterStorm,
+    GEMSeismicHazard,
+    JRCRiverFlood,
+    FireRiskIndicators,
+]
+
+hazard_map: Dict[str, Type[Onboarder]] = {cls.__name__: cls for cls in _onboarder_classes}
 
 
-def get_hazards_onboarding() -> Dict:
+def get_hazards_onboarding() -> Dict[str, Type[Onboarder]]:
     """Return a dictionary with the hazards that can be onboarded."""
     return hazard_map

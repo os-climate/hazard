@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing_extensions import Iterable, List, override
+from typing_extensions import Iterable, List, Optional, override
 
 from affine import Affine
 from pydantic import TypeAdapter
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class WRIAqueductFlood(Onboarder):
     """On-board the WRI Aqueduct flood model data set from http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html."""
 
-    def __init__(self):
+    def __init__(self, source_dir_base: Optional[str] = None):
         """WRI Aqueduct Floods model of acute riverine and coastal flood hazards, providing flood intensities as return period maps.
 
         METADATA:
@@ -56,7 +56,9 @@ class WRIAqueductFlood(Onboarder):
         - Refer to OS-Climate Physical Climate Risk Methodology for methodology details and usage guidelines.
 
         Args:
-            None
+            source_dir_base: Unused. Present only so this class can be constructed the
+                same way as other Onboarders; source data is streamed directly from the
+                public WRI S3 bucket rather than downloaded to a local directory.
 
         """
         self.resources = {}
@@ -71,8 +73,8 @@ class WRIAqueductFlood(Onboarder):
         return self.resources[path]
 
     @override
-    def prepare(self, force, download_dir, force_download):
-        return super().prepare(force, download_dir, force_download)
+    def prepare(self, download_dir=None, force=False, force_download=False):
+        return super().prepare(download_dir, force, force_download)
 
     @override
     def is_prepared(self, force=False, force_download=False):
@@ -185,7 +187,8 @@ class WRIAqueductFlood(Onboarder):
             f"inuncoast_{scenario}_{sub}_{year}_rp{{return_period:05d}}_{model}",
         )
 
-    def onboard(self, target, download_dir):
+    @override
+    def onboard(self, target):
         """Onboards a single hazard resource by running all batch items."""
         source = WRIAqueductSource()
         items = self._get_items_to_process()

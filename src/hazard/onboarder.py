@@ -57,14 +57,21 @@ class Onboarder(ABC):
         ...
 
     @abstractmethod
-    def prepare(self, source_dir_base: str):
+    def prepare(
+        self,
+        download_dir: Optional[str] = None,
+        force: bool = False,
+        force_download: bool = False,
+    ) -> None:
         """Create the source files in source_dir_base using abstract file system fs. Typically
         this might involve downloading, unzipping and rearranging the input files. The intent is
         to retain the data lineage.
 
         Args:
-            working_dir (str): Path to local working directory for any temporary downloading and unzipping prior to
-            copy to source directory.
+            download_dir: Path to local working directory for any temporary downloading and
+                unzipping prior to copy to source directory.
+            force: If True, forces preparation even if the source files already appear ready.
+            force_download: If True, forces download of the source files even if they exist.
 
         """
         ...

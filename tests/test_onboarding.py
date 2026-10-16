@@ -9,6 +9,7 @@ import tempfile as temp
 import zarr
 import zarr.convenience
 from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
+from hazard.onboard.general_onboarding import onboard_hazards
 from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
 from hazard.models.days_tas_above import DaysTasAboveIndicator
@@ -242,6 +243,18 @@ def test_wri_aqueduct_water_risk(onboarding_output_dir):
     )
     target = OscZarr(store=store)
     model.onboard_single(target, onboarding_output_dir)
+
+
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_water_risk_via_onboard_hazards(onboarding_output_dir):
+    """Exercise the full local onboarding pipeline (download, prepare, onboard,
+    create_maps, inventory update) for water risk via the onboard_hazards entry
+    point used by the CLI, rather than instantiating the model directly."""
+    onboard_hazards(
+        local=True,
+        hazards=["WRIAqueductWaterRisk"],
+        download_dir=onboarding_output_dir,
+    )
 
 
 @pytest.mark.skip(reason="on-boarding script")
