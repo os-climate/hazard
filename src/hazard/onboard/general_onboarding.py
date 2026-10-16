@@ -36,9 +36,12 @@ def onboard_hazards(
     onboarded -- a hazard whose prepare/onboard/create_maps step failed is excluded.
 
     Args:
-        local: If True, onboard to a local zarr store instead of S3 (ignored if
-            credentials_path is given, which always targets S3).
+        local: If True, onboard to a local zarr store. If False, onboard to S3 instead,
+            using credentials_path (if given) to source S3 parameters and credentials;
+            if not given, S3 access falls back to whatever credentials are already
+            available in the environment.
         credentials_path: Path to TOML file with S3 parameters and credentials (optional).
+            Only consulted when local=False; has no effect when local=True.
         source_dir_base (Optional[str], optional): Base directory for source data. If None, a temporary directory
             will be created. Defaults to None.
         hazards: Names of the hazards to onboard, e.g. as returned by
@@ -52,24 +55,13 @@ def onboard_hazards(
         force_prepare: If True, forces the preparation of hazard data even if it is ready.
             Defaults to False.
 
-    Raises:
-        ValueError: If neither credentials_path nor local is given, so no target storage
-            can be determined.
-
     """
     if not source_dir_base:
         source_dir = create_temporary_directory()
     else:
         source_dir = source_dir_base
 
-    if credentials_path:
-        logger.info("Using S3 as target")
-        zarr_utilities.set_credential_env_variables()
-        s3_parameters = load_s3_parameters(credentials_path)
-        s3_store = get_store(**s3_parameters)
-        target = OscZarr(store=s3_store)
-        doc_store = DocStore(s3_store=s3_store)
-    elif local:
+    if local:
         logger.info("Using local storage as target")
         store = zarr.DirectoryStore(source_dir)
         target = OscZarr(store=store)
@@ -78,7 +70,12 @@ def onboard_hazards(
         )  # assume local inventory is here
         doc_store = DocStore(local_path=inventory_dir)
     else:
-        raise ValueError("No local_path or credentials specification")
+        logger.info("Using S3 as target")
+        zarr_utilities.set_credential_env_variables()
+        s3_parameters = load_s3_parameters(credentials_path)
+        s3_store = get_store(**s3_parameters)
+        target = OscZarr(store=s3_store)
+        doc_store = DocStore(s3_store=s3_store)
 
     updt_inv_hazards = []
     hazard_map: Dict[str, Type[Onboarder]] = get_hazards_onboarding()
