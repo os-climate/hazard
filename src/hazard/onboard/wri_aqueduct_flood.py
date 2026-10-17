@@ -73,12 +73,13 @@ class WRIAqueductFlood(Onboarder):
         return self.resources[path]
 
     @override
-    def prepare(self, download_dir=None, force=False, force_download=False):
-        return super().prepare(download_dir, force, force_download)
+    def prepare(self, download_dir=None, force_download=False) -> None:
+        """No local preparation needed; source data is streamed directly from S3."""
 
     @override
-    def is_prepared(self, force=False, force_download=False):
-        return super().is_prepared(force, force_download)
+    def is_prepared(self) -> bool:
+        """No local preparation needed; source data is streamed directly from S3."""
+        return True
 
     def _get_items_to_process(self) -> Iterable[dict]:
         """Get a list of all batch items."""

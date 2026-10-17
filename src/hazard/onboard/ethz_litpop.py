@@ -67,7 +67,7 @@ class ETHZurichLitPop(Onboarder):
         self.resources = self._resources()
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
 
         download_file(
@@ -95,20 +95,18 @@ class ETHZurichLitPop(Onboarder):
                         mifi.write(extracted_file.read())
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if not os.path.exists(self.source_dir) or force or force_download:
+        if not os.path.exists(self.source_dir):
             return False
-        # Listar todos los archivos en el directorio
         try:
             files = os.listdir(self.source_dir)
         except FileNotFoundError:
             return False
 
-        # Filtrar los archivos CSV
         csv_files = [file for file in files if file.endswith(".csv")]
 
-        # Verificar si hay exactamente 229 archivos CSV
+        # expect exactly 229 CSV files
         return len(csv_files) == 229
 
     def _get_items_to_process(self):

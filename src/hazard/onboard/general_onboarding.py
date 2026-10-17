@@ -90,9 +90,10 @@ def onboard_hazards(
         try:
             model = initialize_class(hazard, hazard_map, source_dir_base=source_dir)
 
-            if not model.is_prepared(force_download=force_download) or force_prepare:
+            if not model.is_prepared() or force_prepare or force_download:
                 model.prepare(
                     download_dir=download_dir,
+                    force_download=force_download,
                 )
 
             model.onboard(

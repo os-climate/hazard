@@ -29,16 +29,14 @@ class IRISIndicator(Onboarder):
         self.fs = fs if fs else LocalFileSystem()
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         if download_dir and not os.path.exists(download_dir):
             msg = f"{self.__class__.__name__} requires the file return_value_maps to be in the download_dir.\nThe download_dir was {download_dir}."
             raise FileNotFoundError(msg)
 
         if download_dir:
-            # Define la ruta específica donde se deben buscar los archivos
             search_dir = PurePath(download_dir, "wind", "IRIS", "return_value_maps")
 
-            # Verifica si el directorio existe
             if not os.path.exists(search_dir):
                 msg = f"{self.__class__.__name__} requires the files to be in the {search_dir} directory.\nThe directory was not found."
                 raise FileNotFoundError(msg)
@@ -48,57 +46,57 @@ class IRISIndicator(Onboarder):
             for _, _, files in os.walk(search_dir):
                 for file_name in files:
                     dest_file_path = PurePath(self.source_dir, file_name)
-                    if force or not os.path.exists(dest_file_path):
+                    if force_download or not os.path.exists(dest_file_path):
                         self.fs.copy(
                             PurePath(search_dir, file_name),
                             self.source_dir,
                         )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if not os.path.exists(self.source_dir) or force or force_download:
+        if not os.path.exists(self.source_dir):
             return False
-        # Listar todos los archivos en el directorio
         try:
             files = os.listdir(self.source_dir)
         except FileNotFoundError:
             return False
 
-        # Filtrar los archivos CSV
         nc_files = [file for file in files if file.endswith(".nc")]
 
-        # verificar que están los 4 .nc files
+        # expect 4 .nc files
         return len(nc_files) == 4
 
     @override
     def onboard(self, target: ReadWriteDataArray):
         items_to_process = self._get_items_to_process()
-        resource = self._hazard_resource()  # Llamar una vez y almacenar en una variable
+        resource = self._hazard_resource()  # compute once, reuse in loop
 
         def _pad_to_global(da_src: xr.DataArray, *, nodata_val=np.nan) -> xr.DataArray:
-            """Extiende la latitud hasta ±85° manteniendo la resolución del dataset.
-            Evita pérdidas por desajuste de flotantes usando `nearest` + tolerancia.
+            """Extend the latitude axis to ±85° while preserving the dataset's resolution.
+
+            Avoids floating-point mismatch losses by using `nearest` matching with a
+            tolerance.
             """
             lat = da_src.latitude
 
-            # 1) Asegurarnos de que el eje esté en orden N→S
+            # 1) ensure the axis is in N->S order
             if lat[0] < lat[-1]:
                 da_src = da_src.sortby("latitude", ascending=False)
                 lat = da_src.latitude
 
-            # 2) Resolución original (redondeada a 6 decimales para estabilidad)
+            # 2) original resolution (rounded to 6 decimals for stability)
             lat_res = round(float(abs(lat[1] - lat[0])), 6)
 
-            # 3) Construct nuevo eje:  85 … -85  (mismo paso)
+            # 3) build new axis: 85 ... -85 (same step)
             full_lat = np.round(np.arange(85.0, -85.0 - lat_res / 2, -lat_res), 6)
 
-            # 4) Reindex — nearest con tolerancia = ½ resolución
+            # 4) reindex, nearest with tolerance = 1/2 resolution
             da_full = (
                 da_src.reindex(
                     latitude=full_lat,
                     method="nearest",
-                    tolerance=lat_res / 2 + 1e-9,  # margen de seguridad
+                    tolerance=lat_res / 2 + 1e-9,  # safety margin
                 )
                 .fillna(nodata_val)
                 .rio.write_nodata(nodata_val, inplace=False)
@@ -114,7 +112,7 @@ class IRISIndicator(Onboarder):
 
             da = OscZarr.normalize_dims(ds["vmax"])
 
-            # opcional: ajustar la referencia de píxel si usas centros en vez de vértices
+            # optional: adjust pixel reference if using centers instead of corners
             # da = da.assign_coords(latitude=da["latitude"] + 0.05, longitude=da["longitude"] + 0.05)
             lat = da.latitude
             lat_res = round(float(abs(lat[1] - lat[0])), 6)
@@ -132,13 +130,13 @@ class IRISIndicator(Onboarder):
                 resource.path.format(
                     scenario=item["scenario"], year=item["central_year"]
                 ),
-                da_padded,  # ← se escribe la versión “global”
+                da_padded,  # writes the padded ("global") version
                 chunks=[da_padded.shape[0], 250, 250],
             )
 
             self.generate_single_map(item=item, source=target, target=target)
 
-    # Asumiendo que la resolución es la misma para todos los archivos
+    # Assumes the same resolution applies to all files
 
     def generate_single_map(
         self, item, source: ReadWriteDataArray, target: ReadWriteDataArray

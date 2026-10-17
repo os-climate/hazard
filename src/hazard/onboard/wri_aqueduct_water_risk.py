@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import PurePath
-from typing import Sequence
+from typing import List, Sequence, Union
 from typing_extensions import Dict, Iterable, Optional, override
 import fsspec.implementations.local as local
 
@@ -93,7 +93,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         }
         self.scenario_map = {"ssp126": "opt", "ssp370": "bau", "ssp585": "pes"}
 
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         if (
             not self.fs.exists(self.source_dir)
@@ -138,13 +138,9 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
         self.geometry["pfaf_id"] = geo
 
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return (
-            os.path.exists(os.path.join(self.file_dir, "CVS"))
-            and not force
-            and not force_download
-        )
+        return os.path.exists(os.path.join(self.file_dir, "CVS"))
 
     def open_dataset_year(
         self,
@@ -276,7 +272,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
             "aqueduct_projections_20150309.shx",
         )
 
-    def prepare(self, force=None, download_dir=None, force_download=None):
+    def prepare(self, download_dir=None, force_download=None):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
         download_and_unzip(
@@ -284,9 +280,9 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         )
         # os.remove(PurePath(self.source_dir, self.zip_url.split("/")[-1]).as_posix())
 
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return os.path.exists(self.filename) and not force and not force_download
+        return os.path.exists(self.filename)
 
     def open_dataset_year(
         self, _: str, scenario: str, indicator: str, year: int, chunks=None
@@ -371,7 +367,9 @@ class WRIAqueductWaterRisk(Onboarder):
         self.central_years = central_years
         self.central_year_historical = central_year_historical
         self.resources = self._resources()
-        self.sources = [
+        self.sources: List[
+            Union[WRIAqueductWaterRiskSource, WRIAqueductWaterSupplyDemandBaselineSource]
+        ] = [
             WRIAqueductWaterRiskSource(
                 source_dir_base=self.source_dir, fs=local.LocalFileSystem()
             ),
@@ -385,8 +383,6 @@ class WRIAqueductWaterRisk(Onboarder):
         items = self._get_items_to_process()
         for item in items:
             indicator_suffix = ""
-            # Seleccionar la fuente apropiada automáticamente
-            # Selección automática de fuente
             if (
                 item["indicator"] in ["water_demand", "water_supply"]
                 and item["scenario"] == "historical"
@@ -398,12 +394,12 @@ class WRIAqueductWaterRisk(Onboarder):
                 )
                 indicator_suffix = "_multiplier"
             else:
-                # Ignorar casos no válidos para WRIAqueductWaterRiskSource
+                # skip invalid cases for WRIAqueductWaterRiskSource
                 if (
                     item["indicator"] in ["water_demand", "water_supply"]
                     and item["scenario"] == "historical"
                 ):
-                    continue  # usar continue en vez de return para seguir con otros items
+                    continue  # continue (not return) to keep processing remaining items
 
                 source = next(
                     s
@@ -468,19 +464,16 @@ class WRIAqueductWaterRisk(Onboarder):
         return items
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         for source in self.sources:
             source.prepare(
                 download_dir=download_dir,
+                force_download=force_download,
             )
 
     @override
-    def is_prepared(self, force=False, force_download=False):
-        for source in self.sources:
-            source.prepare(
-                force=force,
-                force_download=force_download,
-            )
+    def is_prepared(self) -> bool:
+        return all(source.is_prepared() for source in self.sources)
 
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):

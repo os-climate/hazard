@@ -82,8 +82,7 @@ class JRCLandslides(Onboarder):
         self._resource = list(self.inventory())[0]
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
-        # if len(missing_files) > 0 or force:
+    def prepare(self, download_dir=None, force_download=False):
         if not os.path.exists(os.path.join(download_dir, self.dataset_filename)):
             msg = f"{self.__class__.__name__} requires the file {self.dataset_filename} to be in the download_dir.\nThe download_dir was {download_dir}."
             raise FileNotFoundError(msg)
@@ -103,13 +102,13 @@ class JRCLandslides(Onboarder):
                     mifi.write(z.read(name=zname))
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         missing_files = {
             a
             for a in self.source_files
             if not self.fs.exists(PurePosixPath(self.source_dir, a))
         }
-        return len(missing_files) == 0 and not force
+        return len(missing_files) == 0
 
     def onboard(self, target):
         items_to_process = self._get_items_to_process()

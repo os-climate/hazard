@@ -51,21 +51,18 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
         )
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         download_file(
             url=self.download_url,
             directory=(Path((self.source_dir))),
+            force_download=force_download,
         )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return (
-            Path(PurePath(self.source_dir + "ds03.tif")).exists()
-            and not force
-            and not force_download
-        )
+        return Path(PurePath(self.source_dir + "ds03.tif")).exists()
 
     @override
     def onboard(self, target):

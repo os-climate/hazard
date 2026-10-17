@@ -106,7 +106,7 @@ class RAINEuropeanWinterStorm(Onboarder):
         self.url = "https://opendap.4tu.nl/thredds/fileServer/data2/uuid/fbf3f7ba-d7e7-4f67-b4b4-19838251db10/{filename}"
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         for scenario in self.scenario_lookup:
             file_type = (
                 "return_level" if scenario == "historical" else "probability_change"
@@ -126,7 +126,7 @@ class RAINEuropeanWinterStorm(Onboarder):
                     logger.info(f"Downloaded {filename}")
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
         for scenario in self.scenario_lookup:
             file_type = (

@@ -60,7 +60,6 @@ class Onboarder(ABC):
     def prepare(
         self,
         download_dir: Optional[str] = None,
-        force: bool = False,
         force_download: bool = False,
     ) -> None:
         """Create the source files in source_dir_base using abstract file system fs. Typically
@@ -70,15 +69,20 @@ class Onboarder(ABC):
         Args:
             download_dir: Path to local working directory for any temporary downloading and
                 unzipping prior to copy to source directory.
-            force: If True, forces preparation even if the source files already appear ready.
-            force_download: If True, forces download of the source files even if they exist.
+            force_download: If True, forces download/copy of the source files even if they
+                already exist.
 
         """
         ...
 
     @abstractmethod
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the source files are prepared and available in the source directory.
+
+        This is a pure query: it reports actual on-disk state and takes no arguments to
+        override that. A caller that wants to force re-preparation regardless of this
+        result should do so itself (see onboard_hazards), rather than asking this method
+        to misreport its answer.
 
         Returns:
             bool: True if the source files are prepared, False otherwise.

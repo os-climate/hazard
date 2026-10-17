@@ -80,7 +80,7 @@ class JRCRiverFlood(Onboarder):
         #
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         # if not os.path.exists(os.path.join(download_dir, self.source_files)):
         #     msg = f"{self.__class__.__name__} requires the file {self.source_files} to be in the download_dir.\nThe download_dir was {download_dir}."
         #     raise FileNotFoundError(msg)
@@ -105,14 +105,14 @@ class JRCRiverFlood(Onboarder):
         shutil.rmtree(extracted_folder)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
         missing_files = {
             a
             for a in self.source_files
             if not self.fs.exists(PurePosixPath(self.source_dir, a))
         }
-        return len(missing_files) == 0 and not force
+        return len(missing_files) == 0
 
     @override
     def onboard(self, target):
@@ -151,7 +151,7 @@ class JRCRiverFlood(Onboarder):
                     chunks={"x": chunk_size, "y": chunk_size},
                 )
 
-                # Si el raster tiene la dimensión 'band', seleccionamos la primera banda
+                # if the raster has a 'band' dimension, select the first band
                 if "band" in da_depth.dims:
                     da_depth = da_depth.isel(band=0)
 
@@ -170,7 +170,6 @@ class JRCRiverFlood(Onboarder):
                         z_depth[i, y:y_end, x:x_end] = block
                         del block
 
-                # Cerrar explícitamente el DataArray
                 da_depth.close()
 
                 logger.info(f"Processed {return_period}")

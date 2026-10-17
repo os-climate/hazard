@@ -245,7 +245,7 @@ def test_wri_aqueduct_water_risk(onboarding_output_dir):
     model.onboard_single(target, onboarding_output_dir)
 
 
-@pytest.mark.skip(reason="on-boarding script")
+#@pytest.mark.skip(reason="on-boarding script")
 def test_onboard_water_risk_via_onboard_hazards(onboarding_output_dir):
     """Exercise the full local onboarding pipeline (download, prepare, onboard,
     create_maps, inventory update) for water risk via the onboard_hazards entry

@@ -107,7 +107,7 @@ class JRCSubsidence(Onboarder):
         self.crs = "3035"
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         if not os.path.exists(os.path.join(download_dir, self.dataset_filename)):
             msg = f"{self.__class__.__name__} requires the file {self.dataset_filename} to be in the download_dir.\nThe download_dir was {download_dir}."
             raise FileNotFoundError(msg)
@@ -133,14 +133,14 @@ class JRCSubsidence(Onboarder):
         shutil.rmtree(extracted_folder)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
         missing_files = {
             a
             for a in self.source_files
             if not self.fs.exists(PurePosixPath(self.source_dir, a))
         }
-        return len(missing_files) == 0 and not force
+        return len(missing_files) == 0
 
     def read_raw_data(self, filename: str) -> xr.DataArray:
         """Read raw raster data from the specified filename.
