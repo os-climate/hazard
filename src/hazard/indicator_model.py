@@ -8,6 +8,7 @@ from dask.distributed import Client, LocalCluster
 
 from hazard.inventory import HazardResource
 from hazard.protocols import OpenDataset, ReadWriteDataArray
+from hazard.sources.osc_zarr import OscZarr
 
 logger = logging.getLogger(__name__)
 
@@ -55,4 +56,9 @@ class IndicatorModel(ABC, Generic[T]):
         self, item: T, source: Any, target: ReadWriteDataArray, client: Client
     ):
         """Run a single item of the batch."""
+        ...
+
+    @abstractmethod
+    def create_maps(self, source: OscZarr, target: OscZarr) -> None:
+        """Create maps for the onboarded data."""
         ...

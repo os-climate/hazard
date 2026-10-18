@@ -65,9 +65,7 @@ def onboard_hazards(
         logger.info("Using local storage as target")
         store = zarr.DirectoryStore(source_dir)
         target = OscZarr(store=store)
-        inventory_dir = os.path.join(
-            Path.home(), "Downloads"
-        )  # assume local inventory is here
+        inventory_dir = source_dir
         doc_store = DocStore(local_path=inventory_dir)
     else:
         logger.info("Using S3 as target")
@@ -77,6 +75,55 @@ def onboard_hazards(
         target = OscZarr(store=s3_store)
         doc_store = DocStore(s3_store=s3_store)
 
+    onboard_hazards_to(
+        target,
+        doc_store,
+        source_dir,
+        hazards,
+        download_dir,
+        force_download,
+        force_prepare,
+    )
+
+
+def onboard_hazards_to(
+    target: OscZarr,
+    doc_store: DocStore,
+    source_dir_base: str,
+    hazards: Sequence[str] = [],
+    download_dir: Optional[str] = None,
+    force_download=False,
+    force_prepare=False,
+) -> None:
+    """Onboards a series of given hazards to an explicitly provided target and doc_store.
+
+    This is the storage-agnostic core of onboard_hazards: it has no opinion on whether
+    target/doc_store are backed by local storage or S3, and does no path resolution --
+    the caller is expected to have already built these building blocks. Use this directly
+    when you already have a target/doc_store (e.g. in tests or notebooks); use
+    onboard_hazards if you just want local-vs-S3 selection handled for you.
+
+    Each hazard is prepared and onboarded independently; a failure for one hazard is logged
+    and does not stop the rest from being processed. Once all hazards have been attempted,
+    the inventory is updated once with the resources for every hazard that was successfully
+    onboarded -- a hazard whose prepare/onboard/create_maps step failed is excluded.
+
+    Args:
+        target: Target to onboard hazard indicators to.
+        doc_store: DocStore to update with the resulting inventory.
+        source_dir_base: Base directory for source data.
+        hazards: Names of the hazards to onboard, e.g. as returned by
+            get_hazards_onboarding().keys().
+        download_dir: Path to the directory used by each hazard's prepare() step. Most
+            hazards download their source data into this directory; a few instead
+            require the source file(s) to already be present there and raise if they
+            are not. Defaults to None.
+        force_download: If True, forces the download of hazard data even if it already exists.
+            Defaults to False.
+        force_prepare: If True, forces the preparation of hazard data even if it is ready.
+            Defaults to False.
+
+    """
     updt_inv_hazards = []
     hazard_map: Dict[str, Type[Onboarder]] = get_hazards_onboarding()
     failed_hazards = []
@@ -88,7 +135,9 @@ def onboard_hazards(
             continue
 
         try:
-            model = initialize_class(hazard, hazard_map, source_dir_base=source_dir)
+            model = initialize_class(
+                hazard, hazard_map, source_dir_base=source_dir_base
+            )
 
             if not model.is_prepared() or force_prepare or force_download:
                 model.prepare(

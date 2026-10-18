@@ -82,6 +82,10 @@ class FutureStreamsSource(OpenDataset):
             2099,
         ]
 
+    def gcms(self) -> Iterable[str]:
+        """Not applicable; FutureStreamsSource takes the gcm per-call rather than owning a list."""
+        raise NotImplementedError()
+
     def from_year(self, gcm: str, year: int) -> int:
         """Return the starting year corresponding to an ending year in `to_years` for the specified model."""
         if year not in self.to_years:

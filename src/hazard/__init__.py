@@ -23,10 +23,23 @@ from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 from hazard.onboard.global_seismic_hazard_v2023_1 import GEMSeismicHazard
 from hazard.onboard.jrc_riverflood import JRCRiverFlood
+from hazard.onboard.indicator_model_onboarder import (
+    DaysTasAboveIndicator,
+    DegreeDays,
+    DroughtIndicator,
+    HeatingCoolingDegreeDays,
+    WaterTemperatureAboveIndicator,
+    WetBulbGlobeTemperatureAboveIndicator,
+    WorkLossIndicator,
+)
 
 _onboarder_classes: list[Type[Onboarder]] = [
     DavydzenkaEtAlLandSubsidence,
+    DaysTasAboveIndicator,
+    DegreeDays,
+    DroughtIndicator,
     ETHZurichLitPop,
+    HeatingCoolingDegreeDays,
     IPCCDrought,
     IRISIndicator,
     JRCLandslides,
@@ -37,6 +50,9 @@ _onboarder_classes: list[Type[Onboarder]] = [
     TUDelftConvectiveWindstorm,
     TUDelftFire,
     TUDelftRiverFlood,
+    WaterTemperatureAboveIndicator,
+    WetBulbGlobeTemperatureAboveIndicator,
+    WorkLossIndicator,
     WRIAqueductFlood,
     WRIAqueductWaterRisk,
     WISCEuropeanWinterStorm,

@@ -92,6 +92,13 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             },
         }
         self.scenario_map = {"ssp126": "opt", "ssp370": "bau", "ssp585": "pes"}
+        self.file_dir = os.path.join(
+            os.path.join(
+                self.source_dir,
+                "aqueduct-4-0-water-risk-data",
+                "Aqueduct40_waterrisk_download_Y2023M07D05",
+            )
+        )
 
     def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
@@ -103,14 +110,6 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             download_and_unzip(
                 self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
             )
-
-        self.file_dir = os.path.join(
-            os.path.join(
-                self.source_dir,
-                "aqueduct-4-0-water-risk-data",
-                "Aqueduct40_waterrisk_download_Y2023M07D05",
-            )
-        )
 
         geometry = gpd.read_file(
             os.path.join(os.path.join(self.file_dir, "GDB"), "Aq40_Y2023D07M05.gdb"),
@@ -140,7 +139,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
     def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return os.path.exists(os.path.join(self.file_dir, "CVS"))
+        return False
 
     def open_dataset_year(
         self,
@@ -250,7 +249,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         """
         self.fs = fs if fs else LocalFileSystem()
         self.source_dir = (
-            PurePath(source_dir_base, "wri_aqueducti_water_supply_demmand").as_posix()
+            PurePath(source_dir_base, "wri_aqueducti_water_supply_demand").as_posix()
             + "/"
         )
 
@@ -378,15 +377,23 @@ class WRIAqueductWaterRisk(Onboarder):
             ),
         ]
 
+    @staticmethod
+    def _is_multiplier_item(item) -> bool:
+        return (
+            item["indicator"] in ["water_demand", "water_supply"]
+            and item["scenario"] == "historical"
+        )
+
     @override
     def onboard(self, target):
         items = self._get_items_to_process()
+        # historical water_demand/water_supply items are multipliers applied to a
+        # reference ssp126/2030 value that another item writes; they must be
+        # processed after every other item so that reference value already exists.
+        items = sorted(items, key=self._is_multiplier_item)
         for item in items:
             indicator_suffix = ""
-            if (
-                item["indicator"] in ["water_demand", "water_supply"]
-                and item["scenario"] == "historical"
-            ):
+            if self._is_multiplier_item(item):
                 source = next(
                     s
                     for s in self.sources
@@ -394,13 +401,6 @@ class WRIAqueductWaterRisk(Onboarder):
                 )
                 indicator_suffix = "_multiplier"
             else:
-                # skip invalid cases for WRIAqueductWaterRiskSource
-                if (
-                    item["indicator"] in ["water_demand", "water_supply"]
-                    and item["scenario"] == "historical"
-                ):
-                    continue  # continue (not return) to keep processing remaining items
-
                 source = next(
                     s
                     for s in self.sources
