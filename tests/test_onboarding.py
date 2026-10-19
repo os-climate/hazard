@@ -1,37 +1,16 @@
 import logging
 import os
 import sys
-from pathlib import Path, PurePath, PurePosixPath
+from pathlib import Path, PurePosixPath
 
 import fsspec.implementations.local as local  # type: ignore
 import pytest
+import s3fs
 import tempfile as temp
 import zarr
-import zarr.convenience
-from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
-from hazard.onboard.general_onboarding import onboard_hazards
-from hazard.onboard.rain_european_winter_storm import RAINEuropeanWinterStorm
-from hazard.models.water_temp import WaterTemperatureAboveIndicator
-from hazard.models.days_tas_above import DaysTasAboveIndicator
-from hazard.models.degree_days import DegreeDays
-from hazard.models.drought_index import DroughtIndicator
-
-from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
-from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
-from hazard.onboard.ethz_litpop import ETHZurichLitPop
-from hazard.onboard.ipcc_drought import IPCCDrought
-from hazard.onboard.iris_wind import IRISIndicator  # type: ignore
-from hazard.onboard.jrc_landslides import JRCLandslides
-from hazard.onboard.jrc_subsidence import JRCSubsidence
-from hazard.onboard.jupiter import Jupiter  # type: ignore
-from hazard.onboard.storm_wind import STORMIndicator
-from hazard.onboard.tudelft_flood import TUDelftCoastalFlood, TUDelftRiverFlood
-from hazard.onboard.tudelft_wildfire import TUDelftFire
-from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
-from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
-from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood  # type: ignore
-from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
-from hazard.onboarder import Onboarder
+from hazard import get_hazards_onboarding
+from hazard.docs_store import DocStore
+from hazard.onboard.general_onboarding import initialize_class, onboard_hazards_to
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities import s3_utilities, zarr_utilities
 
@@ -63,8 +42,7 @@ def test_output_dir():
 def onboarding_output_dir():
     """Provides directory for onboarding data tests, organized in the same way for all hazard onboards.
 
-    It checks whether you have it already in your teporary files and creates it for you.
-
+    It checks whether you have it already in your temporary files and creates it for you.
     """
     fs = local.LocalFileSystem()
     temp_dir = os.path.join(temp.gettempdir(), "onboarding_raw_data")
@@ -86,87 +64,90 @@ def onboarding_output_dir():
     yield temp_dir
 
 
-class TestOnboarder(Onboarder):
-    __test__ = False
+@pytest.mark.skip(reason="on-boarding script")
+def test_onboard_named_hazard(test_output_dir):
+    """Used to onboard into a local directory a named hazard."""
+    hazard_to_onboard = "WRIAqueductWaterRisk"
 
-    def __init__(self, source_dir=None):
-        if source_dir:
-            source_dir = source_dir / "test_onboarder"
-        super().__init__(source_dir)
-        self.source_dir = source_dir
-
-    def onboard(self, target):
-        pass
-
-    def inventory(self):
-        return []
-
-    def run_single(self, item, source, target, client):
-        pass
-
-    def batch_items(self):
-        pass
-
-    def prepare(self, working_dir, force_download=False):
-        pass
-
-    def create_maps(self, source, target):
-        pass
-
-    def is_prepared(self):
-        pass
-
-    def source_dir_from_base(self, source_dir_base: PurePath):
-        return source_dir_base / "test_onboarder"
-
-
-def test_onboarder(test_output_dir):
-    onboarder_no_path = TestOnboarder()
-    assert onboarder_no_path
-
-    # Verifica que TestOnboarder inicializa correctamente la ruta de origen
-    onboarder = TestOnboarder(Path(test_output_dir))
-    test_path = Path(test_output_dir) / "test_onboarder"
-    assert str(onboarder.source_dir) == str(test_path)
-
-    # Verifica que la ruta se crea correctamente
-    assert onboarder.source_dir.exists() or onboarder.source_dir.parent.exists()
+    store = zarr.DirectoryStore(
+        os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
+    )
+    target = OscZarr(store=store)
+    doc_store = DocStore(local_path=test_output_dir)
+    onboard_hazards_to(
+        target=target,
+        doc_store=doc_store,
+        source_dir_base=test_output_dir,
+        hazards=[hazard_to_onboard],
+        download_dir=str(Path(test_output_dir) / "downloads"),
+    )
 
 
 @pytest.mark.skip(reason="on-boarding script")
-def test_wri_aqueduct(onboarding_output_dir):
-    model = WRIAqueductFlood()
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
+def test_sync_named_hazard(test_output_dir, s3_credentials):
+    """Used to sync a named hazard to an S3 bucket.
+
+    Run test_onboard_named_hazard first so that the data this looks for is actually
+    present in test_output_dir.
+    """
+    hazard_to_onboard = "WRIAqueductWaterRisk"
+
+    zarr_dir = os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
+
+    hazard_map = get_hazards_onboarding()
+    model = initialize_class(
+        hazard_to_onboard, hazard_map, source_dir_base=test_output_dir
     )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
+
+    # resource.path/resource.map.path are format strings templated with
+    # scenario/year (e.g. "water_risk/wri/v2/{key}_{scenario}_{year}"); the directory
+    # holding every expanded variant is the parent of that template.
+    array_paths = set()
+    for resource in model.inventory():
+        array_paths.add(str(PurePosixPath(resource.path).parent))
+        if resource.map is not None:
+            array_paths.add(str(PurePosixPath(resource.map.path).parent))
+
+    for array_path in sorted(array_paths):
+        s3_utilities.sync_local_to_prod(zarr_dir, array_path, dry_run=True)
 
 
-@pytest.mark.skip(reason="on-boarding script")
-def test_iris(onboarding_output_dir):
-    model = IRISIndicator(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "iris_wind")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
+#@pytest.mark.skip(reason="on-boarding script")
+def test_create_maps_from_prod_readonly(test_output_dir):
+    """Generate maps locally from the array data already on the production bucket.
+
+    Deliberately uses an anonymous (unsigned) S3FileSystem -- no access key, secret,
+    or token -- so the production bucket can only ever be read here, never written
+    to: any attempted write would be rejected by S3 for lack of credentials, with no
+    reliance on us getting read-only permissions/IAM policy right.
+    """
+    hazard_to_onboard = "WRIAqueductWaterRisk"
+
+    anon_s3 = s3fs.S3FileSystem(anon=True)
+    prod_store = s3fs.S3Map(
+        root=str(
+            PurePosixPath(
+                "os-climate-physical-risk", "hazard-indicators", "hazard.zarr"
+            )
+        ),
+        s3=anon_s3,
+        check=False,
     )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
+    source = OscZarr(store=prod_store)
 
+    local_dir = os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
+    target = OscZarr(store=zarr.DirectoryStore(local_dir))
 
-def promote_iris(s3_credentials):
-    for name in ["max_speed_ssp585_2050_map"]:
-        prefix = "hazard/hazard.zarr/wind/iris/v1/" + name
-        s3_utilities.remove_from_prod(prefix, dry_run=False)
-        s3_utilities.copy_dev_to_prod(
-            "hazard/hazard.zarr/wind/iris/v1/" + name, dry_run=True
-        )
+    hazard_map = get_hazards_onboarding()
+    model = initialize_class(
+        hazard_to_onboard, hazard_map, source_dir_base=test_output_dir
+    )
+
+    model.create_maps(source=source, target=target)
 
 
 def copy_iris_files(s3_credentials):
-    bucket = os.environ["OSC_S3_BUCKET_DEV"]  # physrisk-hazard-indicators-dev01
+    bucket = os.environ["OSC_S3_BUCKET_DEV"] 
     s3 = s3_utilities.get_s3_fs()
     files = [
         "/wind/IRIS/return_value_maps/IRIS_return_value_map_README.txt",
@@ -180,269 +161,3 @@ def copy_iris_files(s3_credentials):
         filepath = os.path.join(test_output_dir, *parts)
         s3_path = str(PurePosixPath(bucket, "inputs", *parts))
         s3.put(filepath, s3_path, recursive=True)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_jupiter(onboarding_output_dir):
-    # we need Jupiter osc-main.zip to be in downloads
-    model = Jupiter()
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="example")
-def test_check_result(s3_credentials, test_output_dir):
-    """Example for viewing S3 directory structure."""
-
-    s3 = s3_utilities.get_s3_fs()
-    path = PurePosixPath(
-        "redhat-osc-physical-landing-647521352890",
-        "hazard_test",
-        "hazard.zarr",
-        "ChronicHeat",
-        "v1",
-    )
-    check = s3.ls(path)
-    assert check is not None
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_river_tudelft(onboarding_output_dir):
-    model = TUDelftRiverFlood(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "tudelft")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_coastal_tudelft(onboarding_output_dir):
-    model = TUDelftCoastalFlood(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "tudelft")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_wri_aqueduct_water_risk(onboarding_output_dir):
-    model = WRIAqueductWaterRisk()
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-#@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_water_risk_via_onboard_hazards(onboarding_output_dir):
-    """Exercise the full local onboarding pipeline (download, prepare, onboard,
-    create_maps, inventory update) for water risk via the onboard_hazards entry
-    point used by the CLI, rather than instantiating the model directly."""
-    onboard_hazards(
-        local=True,
-        hazards=["WRIAqueductWaterRisk"],
-        download_dir=onboarding_output_dir,
-    )
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_water_temp(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = WaterTemperatureAboveIndicator()
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_wind_onboarding(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = STORMIndicator()
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_wet_bulb_globe_temp(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = WetBulbGlobeTemperatureAboveIndicator()
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_days_tas_above_temp(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = DaysTasAboveIndicator()
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_days_tas_above_temp_single_onboard(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = DegreeDays()
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_days_tas_above_temp_temp_run_all(onboarding_output_dir):
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model = DroughtIndicator(store)
-    model.run_all(None, target)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_landslides_jrc(onboarding_output_dir):
-    model = JRCLandslides(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "jrc_landslides")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_subsidence_jrc(onboarding_output_dir):
-    model = JRCSubsidence(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "jrc_subsidence")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_fire_tudelft(onboarding_output_dir):
-    model = TUDelftFire(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "tudelft")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_conv_wind_tudelft(onboarding_output_dir):
-    model = TUDelftConvectiveWindstorm(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "tudelft")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_litpop(onboarding_output_dir):
-    model = ETHZurichLitPop(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "ethz_litpop")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-    # model.create_maps(target, target)
-
-
-# def test_promote(s3_credentials):
-#    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "maps/inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
-#    s3_utilities.copy_dev_to_prod("hazard/hazard.zarr/" + "inundation/flopros_coastal/v1/flood_sop", dry_run=False, sync=False)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_onboard_flopros(test_output_dir):
-    model = FLOPROSFloodStandardOfProtection()
-    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
-    target = OscZarr(store=store, write_xarray_compatible_zarr=True)
-    model.onboard_single(target, test_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_csm_subsidence(onboarding_output_dir):
-    model = DavydzenkaEtAlLandSubsidence(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "csm_subsidence")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_ipcc_drought(onboarding_output_dir):
-    model = IPCCDrought(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "ipcc_drought")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_rain_european_storm(onboarding_output_dir):
-    model = RAINEuropeanWinterStorm(onboarding_output_dir)
-    download_dir = os.path.join(onboarding_output_dir, "downloads", "rain_proj")
-    if not os.path.exists(download_dir):
-        raise AssertionError(f"There is no source data in {download_dir}")
-    store = zarr.DirectoryStore(
-        os.path.join(onboarding_output_dir, "hazard", "hazard.zarr")
-    )
-    target = OscZarr(store=store)
-
-    model.onboard_single(target, onboarding_output_dir)
-
-
-@pytest.mark.skip(reason="on-boarding script")
-def test_wisc_european_storm(test_output_dir):
-    # source_dir = os.path.join(test_output_dir, "wisc")
-    store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
-    target = OscZarr(store=store)
-    # source = WISCWinterStormEventSource(source_dir)
-    model = WISCEuropeanWinterStorm()
-    # model.run_all(source, target)
-    model.create_maps(target, target)
