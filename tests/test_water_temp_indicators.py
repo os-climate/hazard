@@ -55,9 +55,7 @@ def test_water_temp_above_mocked():
     model.run_all(source, target)
 
     result = target.datasets[
-        "chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}".format(
-            gcm=gcm, scenario=scenario, year=year
-        )
+        f"chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}"
     ]
     threshold_temps_k = threshold_temps_c + 273.15
     with source.open_dataset_year(gcm, scenario, quantity, 2029) as y0:
