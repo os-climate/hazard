@@ -60,13 +60,14 @@ import zarr
 import zarr.storage.MemoryStore
 
 # create empty Zarr array containing return period data with 21600 latitudes and 43200 longitudes
-shape = (10, 21600, 43200) # ('return period', 'latitude', 'longitude')
+shape = (10, 21600, 43200)  # ('return period', 'latitude', 'longitude')
 store = zarr.storage.MemoryStore(root="hazard.zarr")
 root = zarr.open(store=store, mode="w")
-z = root.create_dataset("example_array_path",
+z = root.create_dataset(
+    "example_array_path",
     shape=(shape[0], shape[1], shape[2]),
     chunks=(shape[0], 1000, 1000),
-    dtype="f4"
+    dtype="f4",
 )
 ```
 
