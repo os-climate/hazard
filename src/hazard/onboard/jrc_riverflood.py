@@ -63,24 +63,9 @@ class JRCRiverFlood(Onboarder):
             "floodmap_EFAS_RP{}_C.tif".format(rp) for rp in self.return_periods_str
         ]
         self._resource = list(self.inventory())[0]
-        # self.tif_paths = [
-        #     os.path.join(self.path_to_extact_zip[axi], self.tif_filenames[axi])
-        #     for axi in range(len(self.return_periods))
-        # ]
-
-        # # zarr parameters
-        # hazard_type = "inundation_river"
-        # data_source_name = "jrc"
-        # version = "v1"
-        # dataset_name = "flood_depth_historical_1990"
-        # self.group_path_array = os.path.join(
-        #     hazard_type, data_source_name, version, dataset_name
-        # )
-
-        #
 
     @override
-    def prepare(self, download_dir=None, force_download=False):
+    def prepare(self, download_dir: str=None, force_download: bool=False):
         # if not os.path.exists(os.path.join(download_dir, self.source_files)):
         #     msg = f"{self.__class__.__name__} requires the file {self.source_files} to be in the download_dir.\nThe download_dir was {download_dir}."
         #     raise FileNotFoundError(msg)
@@ -187,12 +172,10 @@ class JRCRiverFlood(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(
             source,
             target,
             self._resource,
-            max_zoom=4,
         )
 
     def inventory(self) -> Iterable[HazardResource]:
@@ -212,7 +195,7 @@ class JRCRiverFlood(Onboarder):
                 and Black Seas in the Caucasus, Middle East and Northern Africa countries.
                 Cell values indicate water depth (in m).
                 """,
-                resolution=" 9800 m",
+                resolution="100m",
                 group_id="river_jrc",
                 display_groups=[],
                 map=MapInfo(

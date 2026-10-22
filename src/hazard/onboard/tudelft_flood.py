@@ -509,7 +509,6 @@ class TUDelftCoastalFlood(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self._resource)
 
     def inventory(self) -> Iterable[HazardResource]:
