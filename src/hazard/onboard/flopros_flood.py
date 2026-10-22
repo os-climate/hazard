@@ -271,7 +271,7 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
                     source="map_array_pyramid",
                 ),
                 units="years",
-                store_netcdf_coords=True,
+                store_netcdf_coords=False,
                 scenarios=[Scenario(id="historical", years=[1985])],
             )
             for k in ["RiverineInundation", "CoastalInundation"]

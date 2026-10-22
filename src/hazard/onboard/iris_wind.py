@@ -208,7 +208,7 @@ class IRISIndicator(Onboarder):
             path="wind/iris/v1/max_speed_{scenario}_{year}",
             params={},
             resolution="10 km",
-            display_name="Max wind speed (IRIS)",
+            display_name="Max 1 minute sustained wind speed (IRIS)",
             description=description,
             license="Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
             attribution="Sparks, N. & Toumi, R. (2023). IRIS: The Imperial College Storm Model Dataset (v1). Figshare. https://doi.org/10.6084/m9.figshare.c.6724251.v1",

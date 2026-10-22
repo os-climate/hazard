@@ -1,5 +1,5 @@
 
-Maximum 10 metre 3 second gust peak wind speed (note 3 second average; by default physrisk wind speeds are 1 minute average) for different return periods, inferred from the Copernicus WISC European storm event set. This allows events and return period maps to be used consistently.
+Maximum 10 metre 3 second gust peak wind speed (note 3 second average; by default physrisk wind speeds are 1 minute average) for different return periods, inferred from the Copernicus WISC European storm event set.
 
 https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
 

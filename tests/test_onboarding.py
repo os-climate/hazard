@@ -64,7 +64,7 @@ def onboarding_output_dir():
     yield temp_dir
 
 
-@pytest.mark.skip(reason="on-boarding script")
+@pytest.mark.manual
 def test_onboard_named_hazard_local(test_output_dir):
     """Used to onboard into a local directory a named hazard."""
     hazard_to_onboard = "JRCRiverFlood" # "WRIAqueductWaterRisk"
@@ -94,7 +94,7 @@ def test_onboard_named_hazard_local(test_output_dir):
     )
 
 
-@pytest.mark.skip(reason="on-boarding script")
+@pytest.mark.manual
 def test_sync_named_hazard(test_output_dir, s3_credentials):
     """Used to sync a named hazard to an S3 bucket.
 
@@ -123,7 +123,7 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
         s3_utilities.sync_local_to_prod(zarr_dir, array_path, dry_run=True)
 
 
-@pytest.mark.skip(reason="on-boarding script")
+@pytest.mark.manual
 def test_create_maps_from_prod_readonly(test_output_dir):
     """Generate maps locally from the array data already on the production bucket.
 

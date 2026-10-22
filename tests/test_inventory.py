@@ -5,28 +5,17 @@ import fsspec.implementations.local as local  # type: ignore
 import pytest
 import tempfile as temp
 
+from hazard import get_inventory_hazards
 from hazard.docs_store import DocStore
-from hazard.models.days_tas_above import DaysTasAboveIndicator
-from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
-from hazard.models.drought_index import DroughtIndicator
-from hazard.models.water_temp import WaterTemperatureAboveIndicator
-from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
-from hazard.models.work_loss import WorkLossIndicator
-from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
-from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
-from hazard.onboard.iris_wind import IRISIndicator
-from hazard.onboard.jupiter import Jupiter
-from hazard.onboard.probabilistic_european_wildfire import FireRiskIndicators
-from hazard.onboard.tudelft_flood import TUDelftRiverFlood
-from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
-from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
-from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
+from hazard.onboard.general_onboarding import initialize_class
 from hazard.utilities import zarr_utilities
 from hazard.utilities.s3_utilities import get_store  # type: ignore
 
 
 def test_create_inventory(test_output_dir):
-    """Create inventory for all indicators and write into the test output directory."""
+    """Create inventory for the published hazards and write into the test output
+    directory (see hazard.get_inventory_hazards for which hazards are included).
+    """
     # zarr_utilities.set_credential_env_variables()
 
     docs_store = DocStore(
@@ -35,23 +24,10 @@ def test_create_inventory(test_output_dir):
         )
     )
 
+    hazard_map = get_inventory_hazards()
     models = [
-        WRIAqueductFlood(),
-        DegreeDays(),
-        Jupiter(test_output_dir),
-        WorkLossIndicator(),
-        DaysTasAboveIndicator(),
-        IRISIndicator(test_output_dir),
-        HeatingCoolingDegreeDays(),
-        WaterTemperatureAboveIndicator(),
-        WetBulbGlobeTemperatureAboveIndicator(),
-        WRIAqueductWaterRisk(test_output_dir),
-        DroughtIndicator(None, test_output_dir),
-        TUDelftRiverFlood(test_output_dir),
-        FLOPROSFloodStandardOfProtection(test_output_dir),
-        DavydzenkaEtAlLandSubsidence(test_output_dir),
-        WISCEuropeanWinterStorm(test_output_dir),
-        FireRiskIndicators(test_output_dir),
+        initialize_class(hazard, hazard_map, source_dir_base=test_output_dir)
+        for hazard in hazard_map
     ]
 
     docs_store.write_new_empty_inventory()

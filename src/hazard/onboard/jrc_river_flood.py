@@ -37,11 +37,8 @@ class JRCRiverFlood(Onboarder):
         File type: Map (.tif)
 
         DATA DESCRIPTION:
-        The maps depict flood prone areas for river flood events for six different flood
-        frequencies (from 1-in-10-years to 1-in-500-years). The extent comprises most
-        of the geographical Europe and all the river basins entering the Mediterranean
-        and Black Seas in the Caucasus, Middle East and Northern Africa countries.
-        Cell values indicate water depth (in m).
+        See jrc_river_flood.md for the full description, including citation and
+        validation details.
         """
         self.fs = fs if fs else LocalFileSystem()
 
@@ -176,10 +173,15 @@ class JRCRiverFlood(Onboarder):
             source,
             target,
             self._resource,
+            nodata_as_zero_coarsening=True,
         )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
+        with open(
+            os.path.join(os.path.dirname(__file__), "jrc_river_flood.md"), "r"
+        ) as f:
+            description = f.read()
         return [
             HazardResource(
                 hazard_type="RiverineInundation",
@@ -187,14 +189,8 @@ class JRCRiverFlood(Onboarder):
                 indicator_model_gcm="historical",
                 path="inundation/jrc/v1/flood_depth_{scenario}_{year}",
                 params={},
-                display_name="River Flood Depth",
-                description="""
-                The maps depict flood prone areas for river flood events for six different flood
-                frequencies (from 1-in-10-years to 1-in-500-years). The extent comprises most
-                of the geographical Europe and all the river basins entering the Mediterranean
-                and Black Seas in the Caucasus, Middle East and Northern Africa countries.
-                Cell values indicate water depth (in m).
-                """,
+                display_name="Flood depth (JRC)",
+                description=description,
                 resolution="100m",
                 group_id="river_jrc",
                 display_groups=[],
