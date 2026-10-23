@@ -495,13 +495,13 @@ class WRIAqueductWaterRisk(Onboarder):
         resource_map = {
             "water_demand": {
                 "units": "centimetres/year",
-                "display": "Water demand in centimetres/year (Aqueduct 4.0)",
+                "display": "Water demand (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 75,
             },
             "water_supply": {
                 "units": "centimetres/year",
-                "display": "Water supply in centimetres/year (Aqueduct 4.0)",
+                "display": "Water supply (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 1500,
             },
