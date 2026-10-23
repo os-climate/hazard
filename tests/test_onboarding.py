@@ -67,8 +67,8 @@ def onboarding_output_dir():
 @pytest.mark.manual
 def test_onboard_named_hazard_local(test_output_dir):
     """Used to onboard into a local directory a named hazard."""
-    hazard_to_onboard = "JRCRiverFlood" # "WRIAqueductWaterRisk"
-    maps_only = True  # True to skip prepare/onboard and just regenerate maps
+    hazard_to_onboard = "DavydzenkaEtAlLandSubsidence" # "JRCRiverFlood" # "WRIAqueductWaterRisk"
+    maps_only = False  # True to skip prepare/onboard and just regenerate maps
     # from array data already in test_output_dir (e.g. while iterating on map code).
 
     store = zarr.DirectoryStore(
@@ -101,7 +101,9 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
     Run test_onboard_named_hazard first so that the data this looks for is actually
     present in test_output_dir.
     """
-    hazard_to_onboard = "WRIAqueductWaterRisk"
+    hazard_to_onboard = "DavydzenkaEtAlLandSubsidence"
+    dry_run = False 
+    maps_only = True  # True to sync only the map arrays (e.g. after regenerating maps).
 
     zarr_dir = os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
 
@@ -115,12 +117,13 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
     # holding every expanded variant is the parent of that template.
     array_paths = set()
     for resource in model.inventory():
-        array_paths.add(str(PurePosixPath(resource.path).parent))
+        if not maps_only:
+            array_paths.add(str(PurePosixPath(resource.path).parent))
         if resource.map is not None:
             array_paths.add(str(PurePosixPath(resource.map.path).parent))
 
     for array_path in sorted(array_paths):
-        s3_utilities.sync_local_to_prod(zarr_dir, array_path, dry_run=True)
+        s3_utilities.sync_local_to_prod(zarr_dir, array_path, dry_run=dry_run)
 
 
 @pytest.mark.manual
@@ -132,7 +135,7 @@ def test_create_maps_from_prod_readonly(test_output_dir):
     to: any attempted write would be rejected by S3 for lack of credentials, with no
     reliance on us getting read-only permissions/IAM policy right.
     """
-    hazard_to_onboard = "WRIAqueductWaterRisk"
+    hazard_to_onboard = "DavydzenkaEtAlLandSubsidence"
 
     anon_s3 = s3fs.S3FileSystem(anon=True)
     prod_store = s3fs.S3Map(

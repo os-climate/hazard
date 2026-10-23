@@ -299,7 +299,7 @@ class WRIAqueductFlood(Onboarder):
                 "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "historical",
-                "display_name": "Flood depth (WRI/baseline)",
+                "display_name": "Flood depth (WRI/Historical)",
                 "description": """
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
@@ -711,7 +711,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
             },
         ]
         resources = TypeAdapter(List[HazardResource]).validate_python(
-            wri_riverine_inundation_models + wri_coastal_inundation_models
+            [
+                {**model, "display_groups": ["Flood depth (WRI)"]}
+                for model in wri_riverine_inundation_models
+                + wri_coastal_inundation_models
+            ]
         )
         return resources  # self._expand_resources(resources)
 

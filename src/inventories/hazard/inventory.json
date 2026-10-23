@@ -8,8 +8,10 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "historical",
             "params": {},
-            "display_name": "Flood depth (WRI/baseline)",
-            "display_groups": [],
+            "display_name": "Flood depth (WRI/Historical)",
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -74,7 +76,9 @@
             "indicator_model_gcm": "NorESM1-M",
             "params": {},
             "display_name": "Flood depth (WRI/NorESM1-M)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resources Institute Aqueduct Floods riverine model using GCM model from\nBjerknes Centre for Climate Research, Norwegian Meteorological Institute.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -151,7 +155,9 @@
             "indicator_model_gcm": "GFDL-ESM2M",
             "params": {},
             "display_name": "Flood depth (WRI/GFDL-ESM2M)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nGeophysical Fluid Dynamics Laboratory (NOAA).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -228,7 +234,9 @@
             "indicator_model_gcm": "HadGEM2-ES",
             "params": {},
             "display_name": "Flood depth (WRI/HadGEM2-ES)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model:\nMet Office Hadley Centre.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -305,7 +313,9 @@
             "indicator_model_gcm": "IPSL-CM5A-LR",
             "params": {},
             "display_name": "Flood depth (WRI/IPSL-CM5A-LR)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nInstitut Pierre Simon Laplace\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -382,7 +392,9 @@
             "indicator_model_gcm": "MIROC-ESM-CHEM",
             "params": {},
             "display_name": "Flood depth (WRI/MIROC-ESM-CHEM)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "World Resource Institute Aqueduct Floods riverine model using\n GCM model from Atmosphere and Ocean Research Institute\n (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency\n for Marine-Earth Science and Technology.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -459,7 +471,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, no subsidence (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -526,7 +540,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, no subsidence, 95th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -603,7 +619,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, no subsidence, 5th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -680,7 +698,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, no subsidence, 50th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -757,7 +777,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, with subsidence (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -824,7 +846,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, with subsidence, 95th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -901,7 +925,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, with subsidence, 5th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -978,7 +1004,9 @@
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Flood depth, with subsidence, 50th percentile (WRI)",
-            "display_groups": [],
+            "display_groups": [
+                "Flood depth (WRI)"
+            ],
             "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "license": "WRI Open Data Commitment: https://www.wri.org/data/open-data-commitment",
             "source": "WRI",
@@ -1063,7 +1091,7 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Mean degree days above 32\u00b0C/{gcm}",
+            "display_name": "Mean degree days above 32\u00b0C ({gcm})",
             "display_groups": [
                 "Mean degree days"
             ],
@@ -1735,7 +1763,7 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Mean work loss, {intensity} intensity/{gcm}",
+            "display_name": "Mean work loss, {intensity} intensity ({gcm})",
             "display_groups": [
                 "Mean work loss"
             ],
@@ -1844,7 +1872,7 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Days with average temperature above {temp_c}\u00b0C/{gcm}",
+            "display_name": "Days with average temperature above {temp_c}\u00b0C ({gcm})",
             "display_groups": [
                 "Days with average temperature above"
             ],
@@ -2022,7 +2050,7 @@
                     "ACCESS-CM2"
                 ]
             },
-            "display_name": "Mean degree days above index value/{gcm}",
+            "display_name": "Mean degree days above threshold in \u00b0C ({gcm})",
             "display_groups": [
                 "Mean degree days"
             ],
@@ -2125,7 +2153,7 @@
                     "NorESM"
                 ]
             },
-            "display_name": "Weeks with average water temperature above threshold in \u00b0C/{gcm}",
+            "display_name": "Weeks with average water temperature above threshold in \u00b0C ({gcm})",
             "display_groups": [
                 "Weeks with average water temperature above threshold in \u00b0C"
             ],
@@ -2253,7 +2281,7 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "E2O",
             "params": {},
-            "display_name": "Weeks with average water temperature above threshold in \u00b0C/E2O",
+            "display_name": "Weeks with average water temperature above threshold in \u00b0C (E2O)",
             "display_groups": [
                 "Weeks with average water temperature above threshold in \u00b0C"
             ],
@@ -2338,7 +2366,7 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Days with wet-bulb globe temperature above threshold in \u00b0C/{gcm}",
+            "display_name": "Days with wet-bulb globe temperature above threshold in \u00b0C ({gcm})",
             "display_groups": [
                 "Days with wet-bulb globe temperature above threshold in \u00b0C"
             ],
@@ -3022,7 +3050,7 @@
                     "TaiESM1"
                 ]
             },
-            "display_name": "Months 12m SPEI below threshold/{gcm}",
+            "display_name": "Months 12m SPEI below threshold ({gcm})",
             "display_groups": [
                 "Months 12m SPEI below threshold"
             ],
@@ -3244,9 +3272,9 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "historical",
             "params": {},
-            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_name": "Land subsidence rate (Davydzenka)",
             "display_groups": [],
-            "description": "# Global map of land subsidence rates (Davydzenka et al. (2024))\n\nLand subsidence rate (millimetres/year), a global map for the historical period at a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator), estimated with a deep learning model trained on observed subsidence and environmental covariates (see [paper](https://doi.org/10.1029/2023GL104497)).\n\nLand subsidence -- gradual settlement or rapid sinking of the ground -- can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater abstraction, mining, subsurface energy extraction).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
+            "description": "Land subsidence rate (millimetres/year), a global map for the historical period at a spatial resolution of 30\u00d730 arc seconds (approx. 1 km at the equator), estimated with a deep learning model trained on observed subsidence and environmental covariates (see [paper](https://doi.org/10.1029/2023GL104497)).\n\nLand subsidence -- gradual settlement or rapid sinking of the ground -- can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater abstraction, mining, subsurface energy extraction).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
             "license": "Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
             "source": "https://zenodo.org/records/10223637",
             "attribution": "Davydzenka,\u00a0T.,\u00a0Tahmasebi,\u00a0P., &\u00a0Shokri,\u00a0N.\u00a0(2024).\u00a0Unveiling the global extent of land subsidence: The sinking crisis.\u00a0Geophysical Research Letters,\u00a051, e2023GL104497.\u00a0https://doi.org/10.1029/2023GL104497",

@@ -132,7 +132,7 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
                 "gcm": list(self.gcms),
             },
             path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
-            display_name="Days with average temperature above {temp_c}°C/{gcm}",
+            display_name="Days with average temperature above {temp_c}°C ({gcm})",
             description=description,
             display_groups=[
                 "Days with average temperature above"

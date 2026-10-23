@@ -348,7 +348,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 "gcm": [gcm for gcm in self.gcms if gcm != "E2O"],
             },
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
-            display_name="Weeks with average water temperature above threshold in °C/{gcm}",
+            display_name="Weeks with average water temperature above threshold in °C ({gcm})",
             description=description,
             resolution="400 m",
             license="Creative Commons",
