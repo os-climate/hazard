@@ -89,8 +89,10 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
-        create_tiles_for_resource(source, target, self.resource)
+        # source has an all-nodata column at ~40.65E; avoid propagating it to coarser zoom levels
+        create_tiles_for_resource(
+            source, target, self.resource, nan_aware_coarsening=True
+        )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
@@ -106,7 +108,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
                 indicator_model_gcm="historical",
                 path="subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
                 params={},
-                display_name="Land subsidence rate (Davydzenka et Al (2024))",
+                display_name="Land subsidence rate (Davydzenka)",
                 description=description,
                 group_id="",
                 source="https://zenodo.org/records/10223637",

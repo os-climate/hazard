@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import PurePosixPath
 import posixpath
+import warnings
 from typing import Any, Optional, Sequence, Tuple
 
 import mercantile
@@ -33,6 +34,7 @@ def create_tiles_for_resource(
     nodata=None,
     nodata_as_zero=False,
     nodata_as_zero_coarsening=False,
+    nan_aware_coarsening=False,
     check_fill=False,
 ):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the Slippy Map standard.
@@ -50,6 +52,9 @@ def create_tiles_for_resource(
         nodata_as_zero_coarsening (bool, optional): If True, nodata is set to zero for generating coarser tiles from
             the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
             Defaults to False.
+        nan_aware_coarsening (bool, optional): If True, coarser tiles are the mean of the non-NaN pixels
+            in each 2x2 block (NaN only if all four are NaN), so isolated gaps in the data do not persist
+            at lower zoom levels. Defaults to False.
         check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
 
     """
@@ -80,6 +85,7 @@ def create_tiles_for_resource(
                     nodata=nodata,
                     nodata_as_zero=nodata_as_zero,
                     nodata_as_zero_coarsening=nodata_as_zero_coarsening,
+                    nan_aware_coarsening=nan_aware_coarsening,
                     check_fill=check_fill,
                 )
 
@@ -191,6 +197,7 @@ def create_tile_set(
     nodata: Optional[float] = None,
     nodata_as_zero: bool = False,
     nodata_as_zero_coarsening: bool = False,
+    nan_aware_coarsening: bool = False,
     check_fill: bool = False,
 ):
     """Create a set of EPSG:3857 (i.e. Web Mercator) tiles according to the Slippy Map standard.
@@ -217,6 +224,9 @@ def create_tile_set(
         nodata_as_zero_coarsening (bool, optional): If True, nodata is set to zero for generating coarser tiles from
             the highest zoom level image. Use, e.g. for flood maps if nodata is NaN and represents no flood risk.
             Defaults to False.
+        nan_aware_coarsening (bool, optional): If True, coarser tiles are the mean of the non-NaN pixels
+            in each 2x2 block (NaN only if all four are NaN), so isolated gaps in the data do not persist
+            at lower zoom levels. Defaults to False.
         check_fill (bool, optional): If True treat infinity values as nodata. Defaults to False.
 
     """
@@ -290,6 +300,7 @@ def create_tile_set(
         (left, bottom, right, top),
         indices,
         nodata_as_zero_coarsening=nodata_as_zero_coarsening,
+        nan_aware_coarsening=nan_aware_coarsening,
     )
 
 
@@ -459,6 +470,7 @@ def _coarsen(
     indices: Optional[Sequence[int]],
     max_tile_batch_size: int = 16,
     nodata_as_zero_coarsening: bool = False,
+    nan_aware_coarsening: bool = False,
 ):
     pixels_per_tile = 256
     bbox = rasterio.coords.BoundingBox(*bounds)
@@ -502,12 +514,28 @@ def _coarsen(
                         if not np.all(np.isnan(zslice)):
                             zslice[np.isnan(zslice)] = 0
 
-                    zslice = (
-                        zslice[::2, ::2]
-                        + zslice[1::2, ::2]
-                        + zslice[::2, 1::2]
-                        + zslice[1::2, 1::2]
-                    ) / 4
+                    if nan_aware_coarsening:
+                        with warnings.catch_warnings():
+                            # blocks that are entirely NaN stay NaN; suppress "Mean of empty slice"
+                            warnings.simplefilter("ignore", category=RuntimeWarning)
+                            zslice = np.nanmean(
+                                np.stack(
+                                    [
+                                        zslice[::2, ::2],
+                                        zslice[1::2, ::2],
+                                        zslice[::2, 1::2],
+                                        zslice[1::2, 1::2],
+                                    ]
+                                ),
+                                axis=0,
+                            )
+                    else:
+                        zslice = (
+                            zslice[::2, ::2]
+                            + zslice[1::2, ::2]
+                            + zslice[::2, 1::2]
+                            + zslice[1::2, 1::2]
+                        ) / 4
                     target.write_slice(
                         next_zoom_level_path,
                         slice(index, index + 1),
