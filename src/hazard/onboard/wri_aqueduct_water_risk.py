@@ -43,7 +43,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         Data type: baseline and future projection indicators of water-related risk
         Hazard indicator: water-related risk
         Region: Global
-        Resolution: 10km
+        Resolution: 10 km
         Scenarios: business-as-usual SSP 3 RCP 7.0, optimistic SSP 1 RCP 2.6, and pessimistic SSP 5 RCP 8.5
         Time range: 1979-2019, 2030, 2050, 2080
         File type: CSV
@@ -231,7 +231,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         Data type: baseline and future projection indicators of water-related risk
         Hazard indicator: water-related risk
         Region: Global
-        Resolution: 22km
+        Resolution: 22 km
         Scenarios: optimistic SSP 2 RCP 4.5, business-as-usual SSP 2 RCP 8.5, and pessimistic SSP 3 RCP 8.5
         Time range: 2020, 2030, 2040
         File type: Shape File (.shx)
@@ -489,14 +489,14 @@ class WRIAqueductWaterRisk(Onboarder):
         """Create resource."""
         resource_map = {
             "water_demand": {
-                "units": "centimeters/year",
-                "display": "Water demand in centimeters/year (Aqueduct 4.0)",
+                "units": "centimetres/year",
+                "display": "Water demand in centimetres/year (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 75,
             },
             "water_supply": {
-                "units": "centimeters/year",
-                "display": "Water supply in centimeters/year (Aqueduct 4.0)",
+                "units": "centimetres/year",
+                "display": "Water supply in centimetres/year (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 1500,
             },

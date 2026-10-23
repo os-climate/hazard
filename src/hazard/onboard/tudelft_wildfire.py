@@ -31,7 +31,7 @@ class TUDelftFire(Onboarder):
         Data type: historical and scenario probability
         Hazard indicator: Probability of Fire Weather Index (FWI) > 20 and > 45.
         Region: Pan-Europe
-        Resolution: 49km
+        Resolution: 49 km
         Time range: 1971-2000,2021-2050,2071-2100
         Scenarios: RCP4.5, 8.5
         File type: Map (.nc)

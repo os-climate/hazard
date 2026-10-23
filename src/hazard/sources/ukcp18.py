@@ -269,6 +269,6 @@ class Ukcp18(OpenDataset):
         converted = quantity_data + 273.15
         converted.attrs["units"] = "K"
         converted.attrs["label_units"] = "K"
-        converted.attrs["plot_label"] = "Mean air temperature at 1.5m (K)"
+        converted.attrs["plot_label"] = "Mean air temperature at 1.5 m (K)"
         dataset[quantity] = converted
         return dataset

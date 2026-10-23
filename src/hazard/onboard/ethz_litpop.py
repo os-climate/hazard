@@ -39,7 +39,7 @@ class ETHZurichLitPop(Onboarder):
         Data type: historical
         Hazard indicator: LitPop
         Region: Global
-        Resolution: 30 arc-seconds (or 1km roughly)
+        Resolution: 30 arc-seconds (or 1 km roughly)
         Time range: 2014
         File type: File type: CSV
 

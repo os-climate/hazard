@@ -38,7 +38,7 @@ class JRCLandslides(Onboarder):
     - **Data Type**: Historical susceptibility scores
     - **Hazard Indicator**: Landslide Susceptibility Score
     - **Region**: Europe
-    - **Resolution**: 200m
+    - **Resolution**: 200 m
     - **Time Range**: 1980
     - **File Format**: GeoTIFF (.tif)
 

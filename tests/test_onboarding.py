@@ -67,8 +67,8 @@ def onboarding_output_dir():
 @pytest.mark.manual
 def test_onboard_named_hazard_local(test_output_dir):
     """Used to onboard into a local directory a named hazard."""
-    hazard_to_onboard = "DavydzenkaEtAlLandSubsidence" # "JRCRiverFlood" # "WRIAqueductWaterRisk"
-    maps_only = False  # True to skip prepare/onboard and just regenerate maps
+    hazard_to_onboard = "JRCRiverFlood" # "DavydzenkaEtAlLandSubsidence" # "JRCRiverFlood" # "WRIAqueductWaterRisk"
+    maps_only = True # True to skip prepare/onboard and just regenerate maps
     # from array data already in test_output_dir (e.g. while iterating on map code).
 
     store = zarr.DirectoryStore(

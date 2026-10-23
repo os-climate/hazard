@@ -29,7 +29,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
         Data type: historical
         Hazard indicator: land subsidence rate
         Region: Global
-        Resolution: 30 arc-seconds (or 1km roughly)
+        Resolution: 30 arc-seconds (or 1 km roughly)
         Scenarios: historical
         File type: Map (.tif)
 
@@ -116,7 +116,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
                 license="Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
                 attribution="Davydzenka, T., Tahmasebi, P., & Shokri, N. (2024). Unveiling the global extent of land subsidence: The sinking crisis. Geophysical Research Letters, 51, e2023GL104497. https://doi.org/10.1029/2023GL104497",
                 display_groups=[],
-                resolution="300 m",
+                resolution="30 arcsec",
                 map=MapInfo(
                     bounds=[
                         (-180.0, 85.0),

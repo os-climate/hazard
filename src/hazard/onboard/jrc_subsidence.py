@@ -44,7 +44,7 @@ class JRCSubsidence(Onboarder):
         Data type: historical susceptibility score
         Hazard indicator: Susceptibility category of subsidence
         Region: Europe
-        Resolution: 1km
+        Resolution: 1 km
         Time range: 1980
         File type: Restructured Text (.rst)
 

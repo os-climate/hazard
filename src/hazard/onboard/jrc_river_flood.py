@@ -31,7 +31,7 @@ class JRCRiverFlood(Onboarder):
         Data type: historical return period
         Hazard indicator: flood depth
         Region: Pan-Europe
-        Resolution: 100m
+        Resolution: 100 m
         Return periods: 10,20,50,100,200,500
         Time range: 1990-2016
         File type: Map (.tif)
@@ -174,6 +174,7 @@ class JRCRiverFlood(Onboarder):
             target,
             self._resource,
             nodata_as_zero_coarsening=True,
+            max_zoom=10
         )
 
     def inventory(self) -> Iterable[HazardResource]:
@@ -191,7 +192,7 @@ class JRCRiverFlood(Onboarder):
                 params={},
                 display_name="Flood depth (JRC)",
                 description=description,
-                resolution="100m",
+                resolution="100 m",
                 group_id="river_jrc",
                 display_groups=[],
                 map=MapInfo(
@@ -208,12 +209,12 @@ class JRCRiverFlood(Onboarder):
                         name="flare",
                         min_value=0.0,
                         max_value=5.0,
-                        units="meters",
+                        units="metres",
                     ),
                     path="maps/inundation/jrc/flood_depth_{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
-                units="none",
+                units="metres",
                 store_netcdf_coords=False,
                 scenarios=[
                     Scenario(id="historical", years=[1990]),

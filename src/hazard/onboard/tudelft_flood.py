@@ -32,7 +32,7 @@ class TUDelftRiverFlood(Onboarder):
         Data type: historical and scenario return period
         Hazard indicator: flood depth
         Region: Pan-Europe
-        Resolution: 100m
+        Resolution: 100 m
         Return periods: 10, 30, 100, 300, 1000
         Scenarios: RCP4.5, 8.5
         Time range: 1971-2000, 2050, 2070, 2100
@@ -87,9 +87,9 @@ class TUDelftRiverFlood(Onboarder):
         The protected extent (assuming flood depth curve all non-zero) would then be the maximum SoP. In the UK,
         for example, the SoP is between 100 years and 300 years. It it tempting to set protected flood depths which are less
         than the maximum SoP to zero, however this will not give us the behaviour we want in calculations.
-        Say we have 30, 100, 300 and 1000 year flood depths of 0.2, 0.4, 0.5 and 0.6m and we know the SoP is between 100 years and 300 years.
-        Unprotected we would have a probability of (1/100 - 1/300) of a depth between 0.4 and 0.5m and (1/300 - 1/1000) of a depth between 0.5 and 0.6m.
-        Protected, we either want to set our probability of depth between 0.4 and 0.5m to zero or - more likely - some
+        Say we have 30, 100, 300 and 1000 year flood depths of 0.2, 0.4, 0.5 and 0.6 m and we know the SoP is between 100 years and 300 years.
+        Unprotected we would have a probability of (1/100 - 1/300) of a depth between 0.4 and 0.5 m and (1/300 - 1/1000) of a depth between 0.5 and 0.6 m.
+        Protected, we either want to set our probability of depth between 0.4 and 0.5 m to zero or - more likely - some
         lower value to reflect the uncertainty of the SoP. In neither case do we get the desired result by setting the flood depth to zero.
         In summary, we think it's best to provide data sets of
         - unprotected depth
@@ -354,7 +354,7 @@ class TUDelftCoastalFlood(Onboarder):
         Data type: historical and scenario return period
         Hazard indicator: flood depth
         Region: Pan-Europe
-        Resolution: 100m
+        Resolution: 100 m
         Return periods: 10, 30, 100, 300, 1000
         Scenarios: RCP4.5, 8.5
         Time range: 1971-2000, 2050, 2070, 2100
