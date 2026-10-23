@@ -119,7 +119,7 @@ class FireRiskIndicators(Onboarder):
                 # path="fire/probabilistic_pan_european_wildfire/{scenario}_{year}",
                 path="fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}",
                 params={},
-                display_name="Probabilistic Pan-European Wildfire Map",
+                display_name="Fire probability (Alpha-Klima)",
                 resolution="2500 m",
                 # to add, but not displaying properly in UI
                 # [![Logo](https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png)](https://alpha-klima.com/)

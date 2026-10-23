@@ -224,7 +224,12 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
     """Manages baseline and future projections of water demand and supply indicators."""
 
     def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
-        """Built baseline water demand/supply from the future values as well as their change from baseline.
+        """Build approximate baseline water demand/supply from the future values as well as their change from baseline.
+
+        Aqueduct 4.0 does not publish baseline water demand or supply, so the historical values are
+        the Aqueduct 4.0 ssp126/2030 values multiplied by the inverse of this (2015) dataset's
+        2030 change-from-baseline ratio (SSP2 RCP4.5). The two use different scenarios and
+        hydrological model generations, so the result is approximate.
 
         METADATA:
         Link: https://www.wri.org/data/aqueduct-water-stress-projections-data
