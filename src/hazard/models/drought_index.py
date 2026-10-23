@@ -529,7 +529,7 @@ class DroughtIndicator(IndicatorModel[BatchItem]):
             indicator_model_gcm="{gcm}",
             params={"gcm": [MULTI_MODEL_ID] + list(self.gcms)},
             path="drought/osc/v2/months_spei12m_below_threshold_{gcm}_{scenario}_{year}",
-            display_name="Months 12m SPEI below threshold/{gcm}",
+            display_name="Months 12m SPEI below threshold ({gcm})",
             description=description,
             display_groups=[
                 "Months 12m SPEI below threshold"
