@@ -127,7 +127,8 @@ def _create_image_set(
     nodata=None,
 ):
     return_periods = source.index.data
-    index_slice = slice(-1, None)
+    if index_slice is None:
+        index_slice = slice(-1, None)
     src_crs = CRS.from_epsg(4326)
     dst_crs = CRS.from_epsg(3857)
     src_left, src_bottom, src_right, src_top = source.rio.bounds()
@@ -204,7 +205,7 @@ def create_tile_set(
         indices (Sequence[int], optional): Indices for which map should be generated.
         max_tile_batch_size (int, optional): Maximum number of tiles in x and y direction
         that can be processed simultaneously.
-            Defaults to 64 i.e. max image size is 256 * 64 x 256 * 64 pixels.
+            Defaults to 32 i.e. max image size is 256 * 32 x 256 * 32 pixels.
         reprojection_threads (int, optional): Number of threads to use to perform reprojection
         to EPSG:3857.
             Defaults to 8.
@@ -385,8 +386,8 @@ def _write_zoom_level(
                     lry,
                     lrx,
                     uly,
-                    (y_slice.stop - y_slice.start) * pixels_per_tile,
                     (x_slice.stop - x_slice.start) * pixels_per_tile,
+                    (y_slice.stop - y_slice.start) * pixels_per_tile,
                 )
                 # at this point, we could take just the portion of the source
                 # that covers the batch of tiles
@@ -545,7 +546,7 @@ def trim_array(da_index: xr.DataArray, crs, left, bottom, right, top):
     y = np.where((da_index[y_dim] >= da_bottom) & (da_index[y_dim] <= da_top))[0]
     if len(x) == 0 or len(y) == 0:
         return None
-    # add a 2 pixel buffer
-    xmin, xmax = max(0, x[0] - 2), min(len(da_index[x_dim]), x[-1] + 2)
-    ymin, ymax = max(0, y[0] - 2), min(len(da_index[y_dim]), y[-1] + 2)
+    # add a 2 pixel buffer (slice stop is exclusive, so +3 gives 2 pixels past the last match)
+    xmin, xmax = max(0, x[0] - 2), min(len(da_index[x_dim]), x[-1] + 3)
+    ymin, ymax = max(0, y[0] - 2), min(len(da_index[y_dim]), y[-1] + 3)
     return da_index[ymin:ymax, xmin:xmax]

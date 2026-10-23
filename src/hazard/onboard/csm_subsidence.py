@@ -62,28 +62,29 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
     @override
     def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return Path(PurePath(self.source_dir + "ds03.tif")).exists()
+        return self.fs.exists(PurePath(self.source_dir + "ds03.tif"))
 
     @override
     def onboard(self, target):
         """Process a single batch item, writing data to the Zarr store."""
         assert target is None or isinstance(target, OscZarr)
-        da = xr.open_dataarray(self.resource, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
-        z = target.create_empty(
-            self.resource.path.format(
-                scenario=self.resource.scenarios[0].id,
-                year=self.resource.scenarios[0].years[0],
-            ),
-            len(da.x),
-            len(da.y),
-            da.rio.transform(),
-            str(da.crs.replace("+init=", "")),
-        )
-        values = (
-            da.values
-        )  # will load into memory; assume source not chunked efficiently
-        values[values == -9999.0] = float("nan")
-        z[0, :, :] = values
+        with self.fs.open(PurePath(self.source_dir + "ds03.tif"), "rb") as fd:
+            da = xr.open_dataarray(fd, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+            z = target.create_empty(
+                self.resource.path.format(
+                    scenario=self.resource.scenarios[0].id,
+                    year=self.resource.scenarios[0].years[0],
+                ),
+                len(da.x),
+                len(da.y),
+                da.rio.transform(),
+                str(da.rio.crs),
+            )
+            values = (
+                da.values
+            )  # will load into memory; assume source not chunked efficiently
+            values[values == -9999.0] = float("nan")
+            z[0, :, :] = values
 
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):

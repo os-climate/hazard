@@ -35,14 +35,14 @@ class JRCSubsidence(Onboarder):
         The data must be requested submitting a form in the next link:
         https://esdac.jrc.ec.europa.eu/content/european-soil-database-derived-data
 
-        Then, an email with instructions to downloading the data will be recieved.
+        Then, an email with instructions to downloading the data will be received.
         The data will be provided in Idrisi Raster Format (.rst) file type.
 
         METADATA:
         Link: https://esdac.jrc.ec.europa.eu/content/european-soil-database-derived-data
         Hazard subtype: from Drought
-        Data type: historical susceptability score
-        Hazard indicator: Susceptability category of subsidence
+        Data type: historical susceptibility score
+        Hazard indicator: Susceptibility category of subsidence
         Region: Europe
         Resolution: 1km
         Time range: 1980
@@ -56,7 +56,7 @@ class JRCSubsidence(Onboarder):
         carbon, Bulk Density, Coarse fragments.
 
         IMPORTANT NOTES:
-        To build the hazard indicator in the form of susceptability categories the next reference was used:
+        To build the hazard indicator in the form of susceptibility categories the next reference was used:
         https://publications.jrc.ec.europa.eu/repository/handle/JRC114120 (page 32)
 
         The categories depend on the percentage of soil and sand. The next categories are used:
