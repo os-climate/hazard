@@ -310,9 +310,7 @@ def _copy_local_to_bucket(
 
     if not dry_run:
         with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
-            futures = [
-                executor.submit(copy_file, path) for path in relative_file_paths
-            ]
+            futures = [executor.submit(copy_file, path) for path in relative_file_paths]
             completed = 0
             for future in concurrent.futures.as_completed(futures):
                 future.result()
@@ -420,9 +418,7 @@ def _sync_local_to_bucket(
     target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
 
     checked = set(relative_file_paths)
-    missing = set(
-        path for path in relative_file_paths if key(path) not in target_etags
-    )
+    missing = set(path for path in relative_file_paths if key(path) not in target_etags)
     different = set(
         path
         for path in relative_file_paths

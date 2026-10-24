@@ -1,7 +1,7 @@
 
 Maximum 10 metre 3 second gust peak wind speed (note 3 second average; by default physrisk wind speeds are 1 minute average) for different return periods, inferred from the Copernicus WISC European storm event set.
 
-https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview
+<https://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview>
 
 The WISC dataset contains a set of synthetic windstorm events consisting of 22,980 individual
 storm footprints over Europe. These are a physically realistic set of plausible windstorm

@@ -62,10 +62,14 @@ class JRCRiverFlood(Onboarder):
         self._resource = list(self.inventory())[0]
 
     @override
-    def prepare(self, download_dir: str=None, force_download: bool=False):
+    def prepare(self, download_dir: Optional[str] = None, force_download: bool = False):
         # if not os.path.exists(os.path.join(download_dir, self.source_files)):
         #     msg = f"{self.__class__.__name__} requires the file {self.source_files} to be in the download_dir.\nThe download_dir was {download_dir}."
         #     raise FileNotFoundError(msg)
+        if download_dir is None:
+            raise ValueError(
+                f"{self.__class__.__name__} requires a download_dir for the downloaded archives."
+            )
 
         self.fs.makedirs(self.source_dir, exist_ok=True)
 
@@ -170,11 +174,7 @@ class JRCRiverFlood(Onboarder):
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
         create_tiles_for_resource(
-            source,
-            target,
-            self._resource,
-            nodata_as_zero_coarsening=True,
-            max_zoom=10
+            source, target, self._resource, nodata_as_zero_coarsening=True, max_zoom=10
         )
 
     def inventory(self) -> Iterable[HazardResource]:

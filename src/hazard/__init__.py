@@ -85,10 +85,12 @@ _inventory_classes: list[Type[Onboarder]] = [
     DavydzenkaEtAlLandSubsidence,
     WISCEuropeanWinterStorm,
     FireRiskIndicators,
-    JRCRiverFlood
+    JRCRiverFlood,
 ]
 
-hazard_map: Dict[str, Type[Onboarder]] = {cls.__name__: cls for cls in _onboarder_classes}
+hazard_map: Dict[str, Type[Onboarder]] = {
+    cls.__name__: cls for cls in _onboarder_classes
+}
 inventory_hazard_map: Dict[str, Type[Onboarder]] = {
     cls.__name__: cls for cls in _inventory_classes
 }

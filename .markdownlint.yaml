@@ -8,3 +8,6 @@ default: true
 extends: null
 
 MD013: false
+
+# Description files (e.g. src/hazard/**/*.md) are fragments embedded in the inventory, not standalone documents
+MD041: false

@@ -116,7 +116,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             include_fields=["aq30_id", "pfaf_id", "geometry"],
         )
 
-        self.geometry: Dict[str, pd.DataFrame] = dict()
+        self.geometry: Dict[str, pd.DataFrame] = {}
 
         # The jointure is based on aq30_id for the baseline:
         geo = geometry.drop(columns=["pfaf_id"])
@@ -195,7 +195,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
 
-        da: Dict[str, xr.DataArray] = dict()
+        da: Dict[str, xr.DataArray] = {}
         for column in [column for column in df.columns if column != "geometry"]:
             shapes = [
                 (geometry, value)
@@ -372,7 +372,9 @@ class WRIAqueductWaterRisk(Onboarder):
         self.central_year_historical = central_year_historical
         self.resources = self._resources()
         self.sources: List[
-            Union[WRIAqueductWaterRiskSource, WRIAqueductWaterSupplyDemandBaselineSource]
+            Union[
+                WRIAqueductWaterRiskSource, WRIAqueductWaterSupplyDemandBaselineSource
+            ]
         ] = [
             WRIAqueductWaterRiskSource(
                 source_dir_base=self.source_dir, fs=local.LocalFileSystem()
@@ -536,7 +538,7 @@ class WRIAqueductWaterRisk(Onboarder):
         ) as f:
             description = f.read()
 
-        resources: Dict[str, HazardResource] = dict()
+        resources: Dict[str, HazardResource] = {}
         for key in resource_map:
             indicator = key.replace("_category", "")
             if indicator in self.indicators:

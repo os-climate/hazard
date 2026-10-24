@@ -199,7 +199,7 @@ class ETHZurichLitPop(Onboarder):
 
     def _resources(self) -> Dict[str, HazardResource]:
         """Create resource."""
-        resources: Dict[str, HazardResource] = dict()
+        resources: Dict[str, HazardResource] = {}
         resource_map = {
             "country_code": {
                 "units": "",

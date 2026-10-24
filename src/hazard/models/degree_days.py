@@ -402,7 +402,8 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 indicator_id=f"mean_degree_days/{above_below}/index",
                 indicator_model_gcm="{gcm}",
                 path=path,
-                display_name=f"Mean degree days {above_below}" + " threshold in °C ({gcm})",
+                display_name=f"Mean degree days {above_below}"
+                + " threshold in °C ({gcm})",
                 attribution="",
                 description=description,
                 params={"gcm": ["ACCESS-CM2"]},

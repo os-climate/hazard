@@ -67,8 +67,8 @@ def onboarding_output_dir():
 @pytest.mark.manual
 def test_onboard_named_hazard_local(test_output_dir):
     """Used to onboard into a local directory a named hazard."""
-    hazard_to_onboard = "JRCRiverFlood" # "DavydzenkaEtAlLandSubsidence" # "JRCRiverFlood" # "WRIAqueductWaterRisk"
-    maps_only = True # True to skip prepare/onboard and just regenerate maps
+    hazard_to_onboard = "JRCRiverFlood"  # "DavydzenkaEtAlLandSubsidence" # "JRCRiverFlood" # "WRIAqueductWaterRisk"
+    maps_only = True  # True to skip prepare/onboard and just regenerate maps
     # from array data already in test_output_dir (e.g. while iterating on map code).
 
     store = zarr.DirectoryStore(
@@ -102,7 +102,7 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
     present in test_output_dir.
     """
     hazard_to_onboard = "DavydzenkaEtAlLandSubsidence"
-    dry_run = False 
+    dry_run = True
     maps_only = True  # True to sync only the map arrays (e.g. after regenerating maps).
 
     zarr_dir = os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
@@ -161,7 +161,7 @@ def test_create_maps_from_prod_readonly(test_output_dir):
 
 
 def copy_iris_files(s3_credentials):
-    bucket = os.environ["OSC_S3_BUCKET_DEV"] 
+    bucket = os.environ["OSC_S3_BUCKET_DEV"]
     s3 = s3_utilities.get_s3_fs()
     files = [
         "/wind/IRIS/return_value_maps/IRIS_return_value_map_README.txt",
