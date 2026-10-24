@@ -206,7 +206,7 @@ class JRCLandslides(Onboarder):
                 indicator_model_gcm="historical",
                 path="landslide/landslide_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
-                display_name="Landslide Susceptability (JRC)",
+                display_name="Landslide Susceptibility (JRC)",
                 resolution="400 m",
                 source="JRC",
                 version="Version 2",

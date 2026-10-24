@@ -390,7 +390,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         # for above_below in ["above", "below"]:
         for above_below in ["above"]:
             with open(
-                os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"
+                os.path.join(os.path.dirname(__file__), "degree_days_tas.md"), "r"
             ) as f:
                 description = f.read()
             path = (

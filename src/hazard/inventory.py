@@ -1,9 +1,10 @@
 """Hazard Inventory Management Module."""
 
 import json
+import re
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # region HazardModel
@@ -107,6 +108,15 @@ class HazardResource(BaseModel):
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
+
+    @field_validator("description")
+    @classmethod
+    def _normalise_description(cls, description: str) -> str:
+        # descriptions are often indented triple-quoted strings; remove the indentation (which
+        # Markdown would render as a code block) and surrounding/repeated blank lines
+        lines = [line.strip() for line in description.strip().splitlines()]
+        return re.sub(r"\n{3,}", "\n\n", "\n".join(lines))
+
     license: Optional[str] = Field(
         default="",
         description="The license under which the indicator or dataset is distributed. This defines how the data can be used, shared, or modified.",

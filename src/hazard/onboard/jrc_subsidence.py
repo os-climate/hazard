@@ -269,14 +269,18 @@ class JRCSubsidence(Onboarder):
                 indicator_model_gcm="historical",
                 path="subsidence/subsidence_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
-                display_name="Subsidence Susceptability (JRC)",
+                display_name="Subsidence Susceptibility (JRC)",
                 resolution="1000 m",
                 description="""
-                A number of layers for soil properties have been created based on data from the European
-                Soil Database in combination with data from the Harmonized World Soil Database (HWSD)
-                and Soil-Terrain Database (SOTER). The available layers include: Total available water
-                content, Depth available to roots, Clay content, Silt content, Sand content, Organic
-                carbon, Bulk Density, Coarse fragments.
+                Susceptibility of the ground to subsidence caused by shrinking and swelling of clay soils,
+                as a category from 1 to 4: 1, no risk (coarse soil texture); 2, low risk (medium texture);
+                3, medium risk (medium-fine texture); 4, high risk (fine and very fine texture). Coverage
+                is Europe at 1 km resolution. The category is derived from the subsoil clay and sand
+                content layers of the European Soil Database derived data, produced by the European
+                Commission's Joint Research Centre (JRC) from the European Soil Database together with the
+                Harmonized World Soil Database (HWSD) and Soil-Terrain Database (SOTER), following the
+                texture classes of JRC Technical Report JRC114120
+                (https://publications.jrc.ec.europa.eu/repository/handle/JRC114120).
                 """,
                 version="-",
                 attribution="European Commission, Joint Research Centre (2016): Ground deformation mapping and monitoring by satellite based multi-temporal DInSAR technique (2016-10-17). [Dataset]. PID: http://data.europa.eu/89h/f539651c-1c40-4362-8e9a-fe360923dbd3",

@@ -552,7 +552,7 @@ class WRIAqueductWaterRisk(Onboarder):
                     version="",
                     source="WRI",
                     attribution="Source: WRI Aqueduct 4.0, CC-BY-4.0",
-                    resolution="400 m",
+                    resolution="5 arcmin",
                     display_name=str(resource_map[key]["display"]),
                     description=description,
                     display_groups=[str(resource_map[key]["display"])],

@@ -350,7 +350,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
             display_name="Weeks with average water temperature above threshold in °C ({gcm})",
             description=description,
-            resolution="400 m",
+            resolution="5 arcmin",
             license="Creative Commons",
             source="",
             version="",
