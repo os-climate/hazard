@@ -170,7 +170,7 @@ class WetBulbGlobeTemperatureAboveIndicator(
             indicator_model_gcm="{gcm}",
             params={"gcm": list(self.gcms)},
             path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
-            display_name="Days with wet-bulb globe temperature above threshold in °C/{gcm}",
+            display_name="Days with wet-bulb globe temperature above threshold in °C ({gcm})",
             description=description,
             resolution="0.25°",
             license="Creative Commons",

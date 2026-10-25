@@ -35,16 +35,16 @@ class JRCSubsidence(Onboarder):
         The data must be requested submitting a form in the next link:
         https://esdac.jrc.ec.europa.eu/content/european-soil-database-derived-data
 
-        Then, an email with instructions to downloading the data will be recieved.
+        Then, an email with instructions to downloading the data will be received.
         The data will be provided in Idrisi Raster Format (.rst) file type.
 
         METADATA:
         Link: https://esdac.jrc.ec.europa.eu/content/european-soil-database-derived-data
         Hazard subtype: from Drought
-        Data type: historical susceptability score
-        Hazard indicator: Susceptability category of subsidence
+        Data type: historical susceptibility score
+        Hazard indicator: Susceptibility category of subsidence
         Region: Europe
-        Resolution: 1km
+        Resolution: 1 km
         Time range: 1980
         File type: Restructured Text (.rst)
 
@@ -56,7 +56,7 @@ class JRCSubsidence(Onboarder):
         carbon, Bulk Density, Coarse fragments.
 
         IMPORTANT NOTES:
-        To build the hazard indicator in the form of susceptability categories the next reference was used:
+        To build the hazard indicator in the form of susceptibility categories the next reference was used:
         https://publications.jrc.ec.europa.eu/repository/handle/JRC114120 (page 32)
 
         The categories depend on the percentage of soil and sand. The next categories are used:
@@ -107,7 +107,7 @@ class JRCSubsidence(Onboarder):
         self.crs = "3035"
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         if not os.path.exists(os.path.join(download_dir, self.dataset_filename)):
             msg = f"{self.__class__.__name__} requires the file {self.dataset_filename} to be in the download_dir.\nThe download_dir was {download_dir}."
             raise FileNotFoundError(msg)
@@ -133,14 +133,14 @@ class JRCSubsidence(Onboarder):
         shutil.rmtree(extracted_folder)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
         missing_files = {
             a
             for a in self.source_files
             if not self.fs.exists(PurePosixPath(self.source_dir, a))
         }
-        return len(missing_files) == 0 and not force
+        return len(missing_files) == 0
 
     def read_raw_data(self, filename: str) -> xr.DataArray:
         """Read raw raster data from the specified filename.
@@ -269,14 +269,18 @@ class JRCSubsidence(Onboarder):
                 indicator_model_gcm="historical",
                 path="subsidence/subsidence_jrc/v1/susceptability_{scenario}_{year}",
                 params={},
-                display_name="Subsidence Susceptability (JRC)",
+                display_name="Subsidence Susceptibility (JRC)",
                 resolution="1000 m",
                 description="""
-                A number of layers for soil properties have been created based on data from the European
-                Soil Database in combination with data from the Harmonized World Soil Database (HWSD)
-                and Soil-Terrain Database (SOTER). The available layers include: Total available water
-                content, Depth available to roots, Clay content, Silt content, Sand content, Organic
-                carbon, Bulk Density, Coarse fragments.
+                Susceptibility of the ground to subsidence caused by shrinking and swelling of clay soils,
+                as a category from 1 to 4: 1, no risk (coarse soil texture); 2, low risk (medium texture);
+                3, medium risk (medium-fine texture); 4, high risk (fine and very fine texture). Coverage
+                is Europe at 1 km resolution. The category is derived from the subsoil clay and sand
+                content layers of the European Soil Database derived data, produced by the European
+                Commission's Joint Research Centre (JRC) from the European Soil Database together with the
+                Harmonized World Soil Database (HWSD) and Soil-Terrain Database (SOTER), following the
+                texture classes of JRC Technical Report JRC114120
+                (https://publications.jrc.ec.europa.eu/repository/handle/JRC114120).
                 """,
                 version="-",
                 attribution="European Commission, Joint Research Centre (2016): Ground deformation mapping and monitoring by satellite based multi-temporal DInSAR technique (2016-10-17). [Dataset]. PID: http://data.europa.eu/89h/f539651c-1c40-4362-8e9a-fe360923dbd3",

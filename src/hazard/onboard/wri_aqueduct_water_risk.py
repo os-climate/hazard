@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import PurePath
-from typing import Sequence
+from typing import List, Sequence, Union
 from typing_extensions import Dict, Iterable, Optional, override
 import fsspec.implementations.local as local
 
@@ -43,7 +43,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         Data type: baseline and future projection indicators of water-related risk
         Hazard indicator: water-related risk
         Region: Global
-        Resolution: 10km
+        Resolution: 10 km
         Scenarios: business-as-usual SSP 3 RCP 7.0, optimistic SSP 1 RCP 2.6, and pessimistic SSP 5 RCP 8.5
         Time range: 1979-2019, 2030, 2050, 2080
         File type: CSV
@@ -92,8 +92,15 @@ class WRIAqueductWaterRiskSource(OpenDataset):
             },
         }
         self.scenario_map = {"ssp126": "opt", "ssp370": "bau", "ssp585": "pes"}
+        self.file_dir = os.path.join(
+            os.path.join(
+                self.source_dir,
+                "aqueduct-4-0-water-risk-data",
+                "Aqueduct40_waterrisk_download_Y2023M07D05",
+            )
+        )
 
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         if (
             not self.fs.exists(self.source_dir)
@@ -104,20 +111,12 @@ class WRIAqueductWaterRiskSource(OpenDataset):
                 self.zip_url, self.source_dir, self.zip_url.split("/")[-1].split(".")[0]
             )
 
-        self.file_dir = os.path.join(
-            os.path.join(
-                self.source_dir,
-                "aqueduct-4-0-water-risk-data",
-                "Aqueduct40_waterrisk_download_Y2023M07D05",
-            )
-        )
-
         geometry = gpd.read_file(
             os.path.join(os.path.join(self.file_dir, "GDB"), "Aq40_Y2023D07M05.gdb"),
             include_fields=["aq30_id", "pfaf_id", "geometry"],
         )
 
-        self.geometry: Dict[str, pd.DataFrame] = dict()
+        self.geometry: Dict[str, pd.DataFrame] = {}
 
         # The jointure is based on aq30_id for the baseline:
         geo = geometry.drop(columns=["pfaf_id"])
@@ -138,13 +137,9 @@ class WRIAqueductWaterRiskSource(OpenDataset):
 
         self.geometry["pfaf_id"] = geo
 
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return (
-            os.path.exists(os.path.join(self.file_dir, "CVS"))
-            and not force
-            and not force_download
-        )
+        return False
 
     def open_dataset_year(
         self,
@@ -200,7 +195,7 @@ class WRIAqueductWaterRiskSource(OpenDataset):
         _, transform = global_crs_transform(width, height)
         coords = affine_to_coords(transform, width, height, x_dim="lon", y_dim="lat")
 
-        da: Dict[str, xr.DataArray] = dict()
+        da: Dict[str, xr.DataArray] = {}
         for column in [column for column in df.columns if column != "geometry"]:
             shapes = [
                 (geometry, value)
@@ -229,14 +224,19 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
     """Manages baseline and future projections of water demand and supply indicators."""
 
     def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
-        """Built baseline water demand/supply from the future values as well as their change from baseline.
+        """Build approximate baseline water demand/supply from the future values as well as their change from baseline.
+
+        Aqueduct 4.0 does not publish baseline water demand or supply, so the historical values are
+        the Aqueduct 4.0 ssp126/2030 values multiplied by the inverse of this (2015) dataset's
+        2030 change-from-baseline ratio (SSP2 RCP4.5). The two use different scenarios and
+        hydrological model generations, so the result is approximate.
 
         METADATA:
         Link: https://www.wri.org/data/aqueduct-water-stress-projections-data
         Data type: baseline and future projection indicators of water-related risk
         Hazard indicator: water-related risk
         Region: Global
-        Resolution: 22km
+        Resolution: 22 km
         Scenarios: optimistic SSP 2 RCP 4.5, business-as-usual SSP 2 RCP 8.5, and pessimistic SSP 3 RCP 8.5
         Time range: 2020, 2030, 2040
         File type: Shape File (.shx)
@@ -254,7 +254,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         """
         self.fs = fs if fs else LocalFileSystem()
         self.source_dir = (
-            PurePath(source_dir_base, "wri_aqueducti_water_supply_demmand").as_posix()
+            PurePath(source_dir_base, "wri_aqueducti_water_supply_demand").as_posix()
             + "/"
         )
 
@@ -276,7 +276,7 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
             "aqueduct_projections_20150309.shx",
         )
 
-    def prepare(self, force=None, download_dir=None, force_download=None):
+    def prepare(self, download_dir=None, force_download=None):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         # e.g. we are copying to S3;  download to specified working directory, but then copy to self.source_dir
         download_and_unzip(
@@ -284,9 +284,9 @@ class WRIAqueductWaterSupplyDemandBaselineSource(OpenDataset):
         )
         # os.remove(PurePath(self.source_dir, self.zip_url.split("/")[-1]).as_posix())
 
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return os.path.exists(self.filename) and not force and not force_download
+        return os.path.exists(self.filename)
 
     def open_dataset_year(
         self, _: str, scenario: str, indicator: str, year: int, chunks=None
@@ -371,7 +371,11 @@ class WRIAqueductWaterRisk(Onboarder):
         self.central_years = central_years
         self.central_year_historical = central_year_historical
         self.resources = self._resources()
-        self.sources = [
+        self.sources: List[
+            Union[
+                WRIAqueductWaterRiskSource, WRIAqueductWaterSupplyDemandBaselineSource
+            ]
+        ] = [
             WRIAqueductWaterRiskSource(
                 source_dir_base=self.source_dir, fs=local.LocalFileSystem()
             ),
@@ -380,17 +384,23 @@ class WRIAqueductWaterRisk(Onboarder):
             ),
         ]
 
+    @staticmethod
+    def _is_multiplier_item(item) -> bool:
+        return (
+            item["indicator"] in ["water_demand", "water_supply"]
+            and item["scenario"] == "historical"
+        )
+
     @override
     def onboard(self, target):
         items = self._get_items_to_process()
+        # historical water_demand/water_supply items are multipliers applied to a
+        # reference ssp126/2030 value that another item writes; they must be
+        # processed after every other item so that reference value already exists.
+        items = sorted(items, key=self._is_multiplier_item)
         for item in items:
             indicator_suffix = ""
-            # Seleccionar la fuente apropiada automáticamente
-            # Selección automática de fuente
-            if (
-                item["indicator"] in ["water_demand", "water_supply"]
-                and item["scenario"] == "historical"
-            ):
+            if self._is_multiplier_item(item):
                 source = next(
                     s
                     for s in self.sources
@@ -398,13 +408,6 @@ class WRIAqueductWaterRisk(Onboarder):
                 )
                 indicator_suffix = "_multiplier"
             else:
-                # Ignorar casos no válidos para WRIAqueductWaterRiskSource
-                if (
-                    item["indicator"] in ["water_demand", "water_supply"]
-                    and item["scenario"] == "historical"
-                ):
-                    continue  # usar continue en vez de return para seguir con otros items
-
                 source = next(
                     s
                     for s in self.sources
@@ -468,19 +471,16 @@ class WRIAqueductWaterRisk(Onboarder):
         return items
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         for source in self.sources:
             source.prepare(
                 download_dir=download_dir,
+                force_download=force_download,
             )
 
     @override
-    def is_prepared(self, force=False, force_download=False):
-        for source in self.sources:
-            source.prepare(
-                force=force,
-                force_download=force_download,
-            )
+    def is_prepared(self) -> bool:
+        return all(source.is_prepared() for source in self.sources)
 
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
@@ -496,14 +496,14 @@ class WRIAqueductWaterRisk(Onboarder):
         """Create resource."""
         resource_map = {
             "water_demand": {
-                "units": "centimeters/year",
-                "display": "Water demand in centimeters/year (Aqueduct 4.0)",
+                "units": "centimetres/year",
+                "display": "Water demand (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 75,
             },
             "water_supply": {
-                "units": "centimeters/year",
-                "display": "Water supply in centimeters/year (Aqueduct 4.0)",
+                "units": "centimetres/year",
+                "display": "Water supply (Aqueduct 4.0)",
                 "min_value": 0.0,
                 "max_value": 1500,
             },
@@ -538,7 +538,7 @@ class WRIAqueductWaterRisk(Onboarder):
         ) as f:
             description = f.read()
 
-        resources: Dict[str, HazardResource] = dict()
+        resources: Dict[str, HazardResource] = {}
         for key in resource_map:
             indicator = key.replace("_category", "")
             if indicator in self.indicators:
@@ -554,7 +554,7 @@ class WRIAqueductWaterRisk(Onboarder):
                     version="",
                     source="WRI",
                     attribution="Source: WRI Aqueduct 4.0, CC-BY-4.0",
-                    resolution="400 m",
+                    resolution="5 arcmin",
                     display_name=str(resource_map[key]["display"]),
                     description=description,
                     display_groups=[str(resource_map[key]["display"])],

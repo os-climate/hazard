@@ -119,7 +119,7 @@ class WISCEuropeanWinterStorm(Onboarder):
         self.synth_set = 1.2
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         os.makedirs(self.source_dir, exist_ok=True)
 
         try:
@@ -184,9 +184,8 @@ class WISCEuropeanWinterStorm(Onboarder):
                 )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        # Si el directorio fuente no existe, retornamos False de inmediato
         if not self.fs.exists(PurePosixPath(self.source_dir)):
             return False
 
@@ -200,7 +199,7 @@ class WISCEuropeanWinterStorm(Onboarder):
             self.fs.exists(PurePosixPath(self.source_dir, year)) for year in years
         )
 
-        return file_exist and decompressed_dirs_exist or not force or not force_download
+        return file_exist and decompressed_dirs_exist
 
     @override
     def onboard(self, target: ReadWriteDataArray):

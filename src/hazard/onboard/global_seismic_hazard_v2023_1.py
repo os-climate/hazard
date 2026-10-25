@@ -51,7 +51,11 @@ class GEMSeismicHazard(Onboarder):
         self._resource: HazardResource = list(self.inventory())[0]
 
     @override
-    def prepare(self, download_dir: str | None = None) -> None:
+    def prepare(
+        self,
+        download_dir: str | None = None,
+        force_download: bool = False,
+    ) -> None:
         """Download and unzip the GeoTIFF if it is not already available."""
         self.fs.makedirs(self.source_dir, exist_ok=True)
 
@@ -61,7 +65,7 @@ class GEMSeismicHazard(Onboarder):
         tif_path = os.path.join(self.source_dir, tif_name)
 
         # Download
-        if not self.fs.exists(tif_path):
+        if force_download or not self.fs.exists(tif_path):
             logger.info("Downloading GEM GSHM dataset…")
             download_file(url=self.url, directory=self.source_dir, filename=zip_name)
 
@@ -77,10 +81,8 @@ class GEMSeismicHazard(Onboarder):
                 logger.warning("Temporary ZIP file could not be deleted.")
 
     @override
-    def is_prepared(self, force: bool = False, force_download: bool = False) -> bool:
+    def is_prepared(self) -> bool:
         """Check whether the GeoTIFF is ready."""
-        if force or force_download:
-            return False
         tif_path = os.path.join(self.source_dir, "v2023_1_pga_475_rock_3min.tif")
         return self.fs.exists(tif_path)
 

@@ -43,7 +43,7 @@ class FireRiskIndicators(Onboarder):
         self._resource = list(self.inventory())[0]
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         """Prepare the data for processing."""
         self.fs.makedirs(self.source_dir, exist_ok=True)
         items_to_process = self._get_items_to_process()
@@ -55,10 +55,8 @@ class FireRiskIndicators(Onboarder):
                 raise FileNotFoundError(msg)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if force or force_download:
-            return False
         items_to_process = self._get_items_to_process()
         return all(
             [
@@ -121,7 +119,7 @@ class FireRiskIndicators(Onboarder):
                 # path="fire/probabilistic_pan_european_wildfire/{scenario}_{year}",
                 path="fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}",
                 params={},
-                display_name="Probabilistic Pan-European Wildfire Map",
+                display_name="Fire probability (Alpha-Klima)",
                 resolution="2500 m",
                 # to add, but not displaying properly in UI
                 # [![Logo](https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png)](https://alpha-klima.com/)

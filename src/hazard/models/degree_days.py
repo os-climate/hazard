@@ -131,7 +131,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
             indicator_id=f"mean_degree_days/above/{self.threshold_c}c",
             indicator_model_gcm="{gcm}",
             path=path,
-            display_name=f"Mean degree days above {self.threshold_c}°C/" + "{gcm}",
+            display_name=f"Mean degree days above {self.threshold_c}°C" + " ({gcm})",
             description=description,
             params={"gcm": list(self.gcms)},
             group_id="",
@@ -390,7 +390,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         # for above_below in ["above", "below"]:
         for above_below in ["above"]:
             with open(
-                os.path.join(os.path.dirname(__file__), "degree_days.md"), "r"
+                os.path.join(os.path.dirname(__file__), "degree_days_tas.md"), "r"
             ) as f:
                 description = f.read()
             path = (
@@ -402,7 +402,8 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
                 indicator_id=f"mean_degree_days/{above_below}/index",
                 indicator_model_gcm="{gcm}",
                 path=path,
-                display_name=f"Mean degree days {above_below}" + " index value/{gcm}",
+                display_name=f"Mean degree days {above_below}"
+                + " threshold in °C ({gcm})",
                 attribution="",
                 description=description,
                 params={"gcm": ["ACCESS-CM2"]},

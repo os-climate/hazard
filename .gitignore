@@ -23,6 +23,7 @@ credentials*.json
 credentials*.env
 credentials*.toml
 config.toml
+!credentials_template.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

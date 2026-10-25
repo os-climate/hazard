@@ -62,17 +62,20 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
         self.archive_name = self.zip_url.split("/")[-1].split(".")[0]
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         """Prepare the FLOPROS dataset by downloading and extracting the data.
 
         Args:
             working_dir (Optional[str], optional): Temporary directory for extraction
                 if using a remote file system. Defaults to None.
+            force_download: If True, re-downloads and re-extracts even if already present.
 
         """
         os.makedirs(self.source_dir, exist_ok=True)
         # download and extract the data
-        download_and_unzip(self.zip_url, self.source_dir, self.archive_name)
+        download_and_unzip(
+            self.zip_url, self.source_dir, self.archive_name, overwrite=force_download
+        )
         logger.info("Reading database into GeoDataFrame")
         self.path = (
             Path(self.source_dir)
@@ -83,9 +86,9 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
         )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return Path(self.path).exists() is not None or not force or not force_download
+        return Path(self.path).exists() is not None
 
     @override
     def onboard(self, target):
@@ -268,7 +271,7 @@ class FLOPROSFloodStandardOfProtection(Onboarder):
                     source="map_array_pyramid",
                 ),
                 units="years",
-                store_netcdf_coords=True,
+                store_netcdf_coords=False,
                 scenarios=[Scenario(id="historical", years=[1985])],
             )
             for k in ["RiverineInundation", "CoastalInundation"]

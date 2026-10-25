@@ -61,7 +61,7 @@ subject to greater validation, and suitable for bottom-up risk analysis please c
         }
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         if not self.fs.exists(PurePath(download_dir, self.dataset_filename)):
             msg = f"{self.__class__.__name__} requires the file {self.dataset_filename} to be in the download_dir.\nThe download_dir was {download_dir}."
             raise FileNotFoundError(msg)
@@ -92,13 +92,10 @@ subject to greater validation, and suitable for bottom-up risk analysis please c
         shutil.rmtree(extracted_folder)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if force or force_download:
-            return False
         items_to_process = self._get_items_to_process()
 
-        # Extraer nombres únicos de CSV desde el dict
         csv_filenames = {csv for (csv, _) in items_to_process.values()}
 
         return all(

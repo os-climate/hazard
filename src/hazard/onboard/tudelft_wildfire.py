@@ -31,7 +31,7 @@ class TUDelftFire(Onboarder):
         Data type: historical and scenario probability
         Hazard indicator: Probability of Fire Weather Index (FWI) > 20 and > 45.
         Region: Pan-Europe
-        Resolution: 49km
+        Resolution: 49 km
         Time range: 1971-2000,2021-2050,2071-2100
         Scenarios: RCP4.5, 8.5
         File type: Map (.nc)
@@ -63,7 +63,7 @@ class TUDelftFire(Onboarder):
         self._resource_fwi45 = list(self.inventory())[1]
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         items = self._get_items_to_process()
         for item in items:
@@ -72,15 +72,14 @@ class TUDelftFire(Onboarder):
                 url=nc_url,
                 directory=self.source_dir,
                 filename=os.path.basename(item["input_dataset_filename"]),
-                force_download=False,
+                force_download=force_download,
             )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if not os.path.exists(self.source_dir) or force or force_download:
+        if not os.path.exists(self.source_dir):
             return False
-        # Listar todos los archivos en el directorio
         try:
             files = os.listdir(self.source_dir)
         except FileNotFoundError:
@@ -88,7 +87,7 @@ class TUDelftFire(Onboarder):
 
         nc_files = [file for file in files if file.endswith(".nc")]
 
-        # verificar que están los 10 .nc files
+        # expect 10 .nc files
         return len(nc_files) == 10
 
     @override

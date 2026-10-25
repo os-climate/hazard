@@ -82,6 +82,10 @@ class FutureStreamsSource(OpenDataset):
             2099,
         ]
 
+    def gcms(self) -> Iterable[str]:
+        """Not applicable; FutureStreamsSource takes the gcm per-call rather than owning a list."""
+        raise NotImplementedError()
+
     def from_year(self, gcm: str, year: int) -> int:
         """Return the starting year corresponding to an ending year in `to_years` for the specified model."""
         if year not in self.to_years:
@@ -344,9 +348,9 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 "gcm": [gcm for gcm in self.gcms if gcm != "E2O"],
             },
             path="chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
-            display_name="Weeks with average water temperature above threshold in °C/{gcm}",
+            display_name="Weeks with average water temperature above threshold in °C ({gcm})",
             description=description,
-            resolution="400 m",
+            resolution="5 arcmin",
             license="Creative Commons",
             source="",
             version="",

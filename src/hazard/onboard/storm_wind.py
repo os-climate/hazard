@@ -89,7 +89,7 @@ class STORMIndicator(Onboarder):
         self._expected_size = (3600, 1800)  # width, height
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
 
         if (
@@ -115,9 +115,9 @@ class STORMIndicator(Onboarder):
                     mifi.write(z.read(name=zname))
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        if not os.path.exists(self.source_dir) or force or force_download:
+        if not os.path.exists(self.source_dir):
             return False
 
         files = os.listdir(self.source_dir)
@@ -138,7 +138,7 @@ class STORMIndicator(Onboarder):
                         xr.open_dataarray(
                             os.path.join(self.source_dir, file_name),
                             engine="rasterio",
-                            chunks={"x": 512, "y": 512},  # o el chunk size que quieras
+                            chunks={"x": 512, "y": 512},
                         )  # type: ignore
                     )
                     # TODO: enforce that da follows standard conventions

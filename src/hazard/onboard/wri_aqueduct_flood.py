@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing_extensions import Iterable, List, override
+from typing_extensions import Iterable, List, Optional, override
 
 from affine import Affine
 from pydantic import TypeAdapter
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class WRIAqueductFlood(Onboarder):
     """On-board the WRI Aqueduct flood model data set from http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html."""
 
-    def __init__(self):
+    def __init__(self, source_dir_base: Optional[str] = None):
         """WRI Aqueduct Floods model of acute riverine and coastal flood hazards, providing flood intensities as return period maps.
 
         METADATA:
@@ -56,7 +56,9 @@ class WRIAqueductFlood(Onboarder):
         - Refer to OS-Climate Physical Climate Risk Methodology for methodology details and usage guidelines.
 
         Args:
-            None
+            source_dir_base: Unused. Present only so this class can be constructed the
+                same way as other Onboarders; source data is streamed directly from the
+                public WRI S3 bucket rather than downloaded to a local directory.
 
         """
         self.resources = {}
@@ -71,12 +73,13 @@ class WRIAqueductFlood(Onboarder):
         return self.resources[path]
 
     @override
-    def prepare(self, force, download_dir, force_download):
-        return super().prepare(force, download_dir, force_download)
+    def prepare(self, download_dir=None, force_download=False) -> None:
+        """No local preparation needed; source data is streamed directly from S3."""
 
     @override
-    def is_prepared(self, force=False, force_download=False):
-        return super().is_prepared(force, force_download)
+    def is_prepared(self) -> bool:
+        """No local preparation needed; source data is streamed directly from S3."""
+        return True
 
     def _get_items_to_process(self) -> Iterable[dict]:
         """Get a list of all batch items."""
@@ -185,7 +188,8 @@ class WRIAqueductFlood(Onboarder):
             f"inuncoast_{scenario}_{sub}_{year}_rp{{return_period:05d}}_{model}",
         )
 
-    def onboard(self, target, download_dir):
+    @override
+    def onboard(self, target):
         """Onboards a single hazard resource by running all batch items."""
         source = WRIAqueductSource()
         items = self._get_items_to_process()
@@ -295,7 +299,7 @@ class WRIAqueductFlood(Onboarder):
                 "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "historical",
-                "display_name": "Flood depth/baseline (WRI)",
+                "display_name": "Flood depth (WRI/Historical)",
                 "description": """
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
@@ -326,7 +330,7 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
                 "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "NorESM1-M",
-                "display_name": "Flood depth/NorESM1-M (WRI)",
+                "display_name": "Flood depth (WRI/NorESM1-M)",
                 "description": """
 World Resources Institute Aqueduct Floods riverine model using GCM model from
 Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
@@ -355,9 +359,9 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "GFDL-ESM2M",
-                "display_name": "Flood depth/GFDL-ESM2M (WRI)",
+                "display_name": "Flood depth (WRI/GFDL-ESM2M)",
                 "description": """
-World Resource Institute Aqueduct Floods riverine model using GCM model from
+World Resources Institute Aqueduct Floods riverine model using GCM model from
 Geophysical Fluid Dynamics Laboratory (NOAA).
 
                 """
@@ -384,9 +388,9 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "HadGEM2-ES",
-                "display_name": "Flood depth/HadGEM2-ES (WRI)",
+                "display_name": "Flood depth (WRI/HadGEM2-ES)",
                 "description": """
-World Resource Institute Aqueduct Floods riverine model using GCM model:
+World Resources Institute Aqueduct Floods riverine model using GCM model:
 Met Office Hadley Centre.
 
                 """
@@ -413,9 +417,9 @@ Met Office Hadley Centre.
                 "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "IPSL-CM5A-LR",
-                "display_name": "Flood depth/IPSL-CM5A-LR (WRI)",
+                "display_name": "Flood depth (WRI/IPSL-CM5A-LR)",
                 "description": """
-World Resource Institute Aqueduct Floods riverine model using GCM model from
+World Resources Institute Aqueduct Floods riverine model using GCM model from
 Institut Pierre Simon Laplace
 
                 """
@@ -442,8 +446,8 @@ Institut Pierre Simon Laplace
                 "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}",
                 "indicator_id": "flood_depth",
                 "indicator_model_gcm": "MIROC-ESM-CHEM",
-                "display_name": "Flood depth/MIROC-ESM-CHEM (WRI)",
-                "description": """World Resource Institute Aqueduct Floods riverine model using
+                "display_name": "Flood depth (WRI/MIROC-ESM-CHEM)",
+                "description": """World Resources Institute Aqueduct Floods riverine model using
  GCM model from Atmosphere and Ocean Research Institute
  (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency
  for Marine-Earth Science and Technology.
@@ -484,7 +488,7 @@ Institut Pierre Simon Laplace
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/baseline, no subsidence (WRI)",
+                "display_name": "Flood depth, no subsidence (WRI)",
                 "description": """
 World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.
 
@@ -511,9 +515,9 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub/95",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/95%, no subsidence (WRI)",
+                "display_name": "Flood depth, no subsidence, 95th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, excluding subsidence; 95th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -540,9 +544,9 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 95
                 "indicator_id": "flood_depth/nosub/5",
                 "indicator_model_id": "nosub/5",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/5%, no subsidence (WRI)",
+                "display_name": "Flood depth, no subsidence, 5th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -569,9 +573,9 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "nosub/50",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/50%, no subsidence (WRI)",
+                "display_name": "Flood depth, no subsidence, 50th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, excluding subsidence; 50th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -598,9 +602,9 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/baseline, with subsidence (WRI)",
+                "display_name": "Flood depth, with subsidence (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).
+World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model includes subsidence.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -624,9 +628,9 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/95",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/95%, with subsidence (WRI)",
+                "display_name": "Flood depth, with subsidence, 95th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, including subsidence; 95th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -653,9 +657,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/5",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/5%, with subsidence (WRI)",
+                "display_name": "Flood depth, with subsidence, 5th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, including subsidence; 5th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -682,9 +686,9 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 "indicator_id": "flood_depth",
                 "indicator_model_id": "wtsub/50",
                 "indicator_model_gcm": "unknown",
-                "display_name": "Flood depth/50%, with subsidence (WRI)",
+                "display_name": "Flood depth, with subsidence, 50th percentile (WRI)",
                 "description": """
-World Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.
+World Resources Institute Aqueduct Floods coastal model, including subsidence; 50th percentile sea level rise.
 
                 """
                 + aqueduct_description,  # noqa:W503
@@ -707,7 +711,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
             },
         ]
         resources = TypeAdapter(List[HazardResource]).validate_python(
-            wri_riverine_inundation_models + wri_coastal_inundation_models
+            [
+                {**model, "display_groups": ["Flood depth (WRI)"]}
+                for model in wri_riverine_inundation_models
+                + wri_coastal_inundation_models
+            ]
         )
         return resources  # self._expand_resources(resources)
 

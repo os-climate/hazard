@@ -51,7 +51,7 @@ class IPCCDrought(Onboarder):
         self.source_dir = PurePath(source_dir_base, "ipcc_drought").as_posix() + "/"
         os.makedirs(self.source_dir, exist_ok=True)
 
-        # Nuevas URLs para la descarga (se obtendrán archivos ZIP que contienen "map.nc")
+        # URLs for download (ZIP files containing "map.nc" will be fetched)
         self.urls = {
             "SPI6": {
                 "historical": {
@@ -91,13 +91,12 @@ class IPCCDrought(Onboarder):
         self._resources = list(self.inventory())
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         """Prepare the source data for the IPCC Drought model."""
         self.fs.makedirs(self.source_dir, exist_ok=True)
         for variable_name, scenarios in self.urls.items():
             for scenario, years in scenarios.items():
                 for year, url in years.items():
-                    # Descargar el archivo ZIP en memoria
                     response = requests.get(url)
                     response.raise_for_status()
                     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
@@ -116,9 +115,7 @@ class IPCCDrought(Onboarder):
                                     dest.write(source.read())
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
-        if force or force_download:
-            return False
+    def is_prepared(self) -> bool:
         return (
             self.fs.exists(self.source_dir)
             and len(self.fs.listdir(self.source_dir)) > 0
@@ -148,26 +145,26 @@ class IPCCDrought(Onboarder):
             except Exception as e:
                 logger.error(f"Error opening dataset {filename}: {e}")
                 return
-            # Lógica de escalado y combinación para SPI6
+            # scaling and combination logic for SPI6
             if variable_name == "spi6":
                 if item["scenario"].lower() == "historical":
                     da.values = da.values * 100
             elif variable_name == "spi6_anom":
-                # Escenario futuro: combinar la data histórica de referencia con la anomalía
+                # future scenario: combine the historical reference data with the anomaly
                 hist_file = Path(source_dir) / "SPI6_historical_1995.nc"
                 if not hist_file.exists():
                     logger.error(f"Historical file {hist_file} not found.")
                     return
                 ds_hist = xr.open_dataset(hist_file)
-                # Escalar el dataset histórico a 100
+                # scale the historical dataset to 100
                 ds_hist["spi6"] = ds_hist["spi6"] * 100
-                # Se asume que en el dataset futuro la anomalía se llama "spi6_anom"
+                # assumes the anomaly variable in the future dataset is named "spi6_anom"
                 if "spi6_anom" not in ds.variables:
                     logger.error(f"'spi6_anom' not found in dataset '{filename}'.")
                     return
                 da = ds_hist["spi6"] + ds_hist["spi6"] * np.abs(ds["spi6_anom"])
 
-            # Eliminar dimensiones redundantes y reordenar a (lat, lon) si es necesario
+            # drop redundant dimensions and reorder to (lat, lon) if needed
             da = da.squeeze().reset_coords(drop=True)
             if set(da.dims) != {"lat", "lon"}:
                 try:
@@ -179,7 +176,7 @@ class IPCCDrought(Onboarder):
                     )
             if variable_name == "spi6_anom":
                 variable_name = "spi6"
-            # Ajuste de límites (bounds) del recurso
+            # adjust the resource's bounds
             try:
                 resource = next(
                     res
@@ -357,7 +354,7 @@ class IPCCDrought(Onboarder):
                 version="",
                 display_groups=[],
                 map=MapInfo(
-                    bounds=[],  # Se asigna dinámicamente
+                    bounds=[],  # assigned dynamically
                     colormap=Colormap(
                         max_index=255,
                         min_index=1,
@@ -409,7 +406,7 @@ class IPCCDrought(Onboarder):
                 group_id="",
                 display_groups=[],
                 map=MapInfo(
-                    bounds=[],  # Se asigna dinámicamente
+                    bounds=[],  # assigned dynamically
                     colormap=Colormap(
                         max_index=255,
                         min_index=1,

@@ -29,7 +29,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
         Data type: historical
         Hazard indicator: land subsidence rate
         Region: Global
-        Resolution: 30 arc-seconds (or 1km roughly)
+        Resolution: 30 arc-seconds (or 1 km roughly)
         Scenarios: historical
         File type: Map (.tif)
 
@@ -51,48 +51,48 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
         )
 
     @override
-    def prepare(self, download_dir=None):
+    def prepare(self, download_dir=None, force_download=False):
         self.fs.makedirs(self.source_dir, exist_ok=True)
         download_file(
             url=self.download_url,
             directory=(Path((self.source_dir))),
+            force_download=force_download,
         )
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
-        return (
-            Path(PurePath(self.source_dir + "ds03.tif")).exists()
-            and not force
-            and not force_download
-        )
+        return self.fs.exists(PurePath(self.source_dir + "ds03.tif"))
 
     @override
     def onboard(self, target):
         """Process a single batch item, writing data to the Zarr store."""
         assert target is None or isinstance(target, OscZarr)
-        da = xr.open_dataarray(self.resource, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
-        z = target.create_empty(
-            self.resource.path.format(
-                scenario=self.resource.scenarios[0].id,
-                year=self.resource.scenarios[0].years[0],
-            ),
-            len(da.x),
-            len(da.y),
-            da.rio.transform(),
-            str(da.crs.replace("+init=", "")),
-        )
-        values = (
-            da.values
-        )  # will load into memory; assume source not chunked efficiently
-        values[values == -9999.0] = float("nan")
-        z[0, :, :] = values
+        with self.fs.open(PurePath(self.source_dir + "ds03.tif"), "rb") as fd:
+            da = xr.open_dataarray(fd, engine="rasterio").isel(band=0)  # type: ignore[attr-defined]
+            z = target.create_empty(
+                self.resource.path.format(
+                    scenario=self.resource.scenarios[0].id,
+                    year=self.resource.scenarios[0].years[0],
+                ),
+                len(da.x),
+                len(da.y),
+                da.rio.transform(),
+                str(da.rio.crs),
+            )
+            values = (
+                da.values
+            )  # will load into memory; assume source not chunked efficiently
+            values[values == -9999.0] = float("nan")
+            z[0, :, :] = values
 
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
-        create_tiles_for_resource(source, target, self.resource)
+        # source has an all-nodata column at ~40.65E; avoid propagating it to coarser zoom levels
+        create_tiles_for_resource(
+            source, target, self.resource, nan_aware_coarsening=True
+        )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the (unexpanded) HazardModel(s) that comprise the inventory."""
@@ -108,7 +108,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
                 indicator_model_gcm="historical",
                 path="subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
                 params={},
-                display_name="Land subsidence rate (Davydzenka et Al (2024))",
+                display_name="Land subsidence rate (Davydzenka)",
                 description=description,
                 group_id="",
                 source="https://zenodo.org/records/10223637",
@@ -116,7 +116,7 @@ class DavydzenkaEtAlLandSubsidence(Onboarder):
                 license="Creative Commons Attribution 4.0 International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/",
                 attribution="Davydzenka, T., Tahmasebi, P., & Shokri, N. (2024). Unveiling the global extent of land subsidence: The sinking crisis. Geophysical Research Letters, 51, e2023GL104497. https://doi.org/10.1029/2023GL104497",
                 display_groups=[],
-                resolution="300 m",
+                resolution="30 arcsec",
                 map=MapInfo(
                     bounds=[
                         (-180.0, 85.0),

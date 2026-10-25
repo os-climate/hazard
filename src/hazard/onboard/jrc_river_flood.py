@@ -31,17 +31,14 @@ class JRCRiverFlood(Onboarder):
         Data type: historical return period
         Hazard indicator: flood depth
         Region: Pan-Europe
-        Resolution: 100m
+        Resolution: 100 m
         Return periods: 10,20,50,100,200,500
         Time range: 1990-2016
         File type: Map (.tif)
 
         DATA DESCRIPTION:
-        The maps depict flood prone areas for river flood events for six different flood
-        frequencies (from 1-in-10-years to 1-in-500-years). The extent comprises most
-        of the geographical Europe and all the river basins entering the Mediterranean
-        and Black Seas in the Caucasus, Middle East and Northern Africa countries.
-        Cell values indicate water depth (in m).
+        See jrc_river_flood.md for the full description, including citation and
+        validation details.
         """
         self.fs = fs if fs else LocalFileSystem()
 
@@ -63,27 +60,16 @@ class JRCRiverFlood(Onboarder):
             "floodmap_EFAS_RP{}_C.tif".format(rp) for rp in self.return_periods_str
         ]
         self._resource = list(self.inventory())[0]
-        # self.tif_paths = [
-        #     os.path.join(self.path_to_extact_zip[axi], self.tif_filenames[axi])
-        #     for axi in range(len(self.return_periods))
-        # ]
-
-        # # zarr parameters
-        # hazard_type = "inundation_river"
-        # data_source_name = "jrc"
-        # version = "v1"
-        # dataset_name = "flood_depth_historical_1990"
-        # self.group_path_array = os.path.join(
-        #     hazard_type, data_source_name, version, dataset_name
-        # )
-
-        #
 
     @override
-    def prepare(self, force=False, download_dir=None, force_download=False):
+    def prepare(self, download_dir: Optional[str] = None, force_download: bool = False):
         # if not os.path.exists(os.path.join(download_dir, self.source_files)):
         #     msg = f"{self.__class__.__name__} requires the file {self.source_files} to be in the download_dir.\nThe download_dir was {download_dir}."
         #     raise FileNotFoundError(msg)
+        if download_dir is None:
+            raise ValueError(
+                f"{self.__class__.__name__} requires a download_dir for the downloaded archives."
+            )
 
         self.fs.makedirs(self.source_dir, exist_ok=True)
 
@@ -105,14 +91,14 @@ class JRCRiverFlood(Onboarder):
         shutil.rmtree(extracted_folder)
 
     @override
-    def is_prepared(self, force=False, force_download=False) -> bool:
+    def is_prepared(self) -> bool:
         """Check if the data is prepared."""
         missing_files = {
             a
             for a in self.source_files
             if not self.fs.exists(PurePosixPath(self.source_dir, a))
         }
-        return len(missing_files) == 0 and not force
+        return len(missing_files) == 0
 
     @override
     def onboard(self, target):
@@ -151,7 +137,7 @@ class JRCRiverFlood(Onboarder):
                     chunks={"x": chunk_size, "y": chunk_size},
                 )
 
-                # Si el raster tiene la dimensión 'band', seleccionamos la primera banda
+                # if the raster has a 'band' dimension, select the first band
                 if "band" in da_depth.dims:
                     da_depth = da_depth.isel(band=0)
 
@@ -170,7 +156,6 @@ class JRCRiverFlood(Onboarder):
                         z_depth[i, y:y_end, x:x_end] = block
                         del block
 
-                # Cerrar explícitamente el DataArray
                 da_depth.close()
 
                 logger.info(f"Processed {return_period}")
@@ -188,16 +173,16 @@ class JRCRiverFlood(Onboarder):
     @override
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(
-            source,
-            target,
-            self._resource,
-            max_zoom=4,
+            source, target, self._resource, nodata_as_zero_coarsening=True, max_zoom=10
         )
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
+        with open(
+            os.path.join(os.path.dirname(__file__), "jrc_river_flood.md"), "r"
+        ) as f:
+            description = f.read()
         return [
             HazardResource(
                 hazard_type="RiverineInundation",
@@ -205,15 +190,9 @@ class JRCRiverFlood(Onboarder):
                 indicator_model_gcm="historical",
                 path="inundation/jrc/v1/flood_depth_{scenario}_{year}",
                 params={},
-                display_name="River Flood Depth",
-                description="""
-                The maps depict flood prone areas for river flood events for six different flood
-                frequencies (from 1-in-10-years to 1-in-500-years). The extent comprises most
-                of the geographical Europe and all the river basins entering the Mediterranean
-                and Black Seas in the Caucasus, Middle East and Northern Africa countries.
-                Cell values indicate water depth (in m).
-                """,
-                resolution=" 9800 m",
+                display_name="Flood depth (JRC)",
+                description=description,
+                resolution="100 m",
                 group_id="river_jrc",
                 display_groups=[],
                 map=MapInfo(
@@ -230,12 +209,12 @@ class JRCRiverFlood(Onboarder):
                         name="flare",
                         min_value=0.0,
                         max_value=5.0,
-                        units="meters",
+                        units="metres",
                     ),
                     path="maps/inundation/jrc/flood_depth_{scenario}_{year}_map",
                     source="map_array_pyramid",
                 ),
-                units="none",
+                units="metres",
                 store_netcdf_coords=False,
                 scenarios=[
                     Scenario(id="historical", years=[1990]),

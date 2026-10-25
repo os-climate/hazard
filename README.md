@@ -25,6 +25,7 @@ pip install -e .
 
 We recommend using [uv](https://docs.astral.sh/uv/) for maintaining a consistent working environment.
 There are a number of [installation options](https://docs.astral.sh/uv/getting-started/installation/).
+
 ## Usage
 
 ### In a virtual environment
@@ -74,7 +75,7 @@ Copy `hazard_workflow_input_example.yml`, rename to `hazard_workflow_input.yml`,
 You can then invoke the CWL with:
 
 ```console
-$ cwltool hazard_workflow.cwl#produce-hazard-indicator hazard_workflow_input.yml
+cwltool hazard_workflow.cwl#produce-hazard-indicator hazard_workflow_input.yml
 ```
 
 If successful, you'll find indicators generated in `indicators/` in the repo root.
@@ -117,3 +118,15 @@ uv run pre-commit run --all-files
 ## Hazard modelling
 
 For more modelling-specific information, see `HAZARD.md`.
+
+## On Onboarders and IndicatorModels
+
+<https://us-east-1.console.aws.amazon.com/s3/buckets/os-climate-physical-risk>
+
+An Onboarder takes a hazard indicator data set and transforms it into a standard format. It does this typically by
+
+1) Downloading the raw data set from source; this is stored in a given location to provide data lineage. This location is specified by a directory name and an AbstractFileSystem; local file system and S3 are popular choices. This is the `prepare` step.
+2) Converting into the standard output. This is the `onboard` step.
+3) In addition an inventory entry and maps can be generated.
+
+An IndicatorModel takes environmental variables (particularly meteorological and physiographic) and generates hazard indicator data set from these. It is structured so that the source of the variables is separated from the generation/training step. An IndicatorModel is usually wrapped in an Onboarder, specifying a combination of source and IndicatorModel.

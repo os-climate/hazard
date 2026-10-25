@@ -120,7 +120,7 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             indicator_model_gcm="{gcm}",
             params={"intensity": ["low", "medium", "high"], "gcm": list(self.gcms)},
             path="chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
-            display_name="Mean work loss, {intensity} intensity/{gcm}",
+            display_name="Mean work loss, {intensity} intensity ({gcm})",
             description=description,
             display_groups=["Mean work loss"],  # display names of groupings
             # we want "Mean work loss" -> "Low intensity", "Medium intensity", "High intensity" -> "GCM1", "GCM2", ...
