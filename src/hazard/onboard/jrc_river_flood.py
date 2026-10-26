@@ -2,27 +2,29 @@
 
 import logging
 import os
-from pathlib import PurePosixPath, PurePath
 import shutil
-import rasterio
-from typing_extensions import Iterable, Optional, override
+from collections.abc import Iterable
+from pathlib import PurePath, PurePosixPath
+from typing import Optional
 
 import numpy as np
+import rasterio
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.download_utilities import download_and_unzip
+from hazard.utilities.tiles import create_tiles_for_resource
 
 logger = logging.getLogger(__name__)
 
 
 class JRCRiverFlood(Onboarder):
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Define every attribute of the onboarding class for the Joint Research Center (JRC)
         river flood data.
 
@@ -48,21 +50,19 @@ class JRCRiverFlood(Onboarder):
         self.return_periods_str = ["010", "020", "050", "100", "200", "500"]
         self.return_periods = [int(rt) for rt in self.return_periods_str]
         self.zip_urls = [
-            "https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/FLOODS/EuropeanMaps/floodMap_RP{}.zip".format(
-                rp
-            )
+            f"https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/FLOODS/EuropeanMaps/floodMap_RP{rp}.zip"
             for rp in self.return_periods_str
         ]
         self.zip_filenames = [url.split("/")[-1] for url in self.zip_urls]
 
         # Create tif files names and paths
         self.source_files = [
-            "floodmap_EFAS_RP{}_C.tif".format(rp) for rp in self.return_periods_str
+            f"floodmap_EFAS_RP{rp}_C.tif" for rp in self.return_periods_str
         ]
         self._resource = list(self.inventory())[0]
 
     @override
-    def prepare(self, download_dir: Optional[str] = None, force_download: bool = False):
+    def prepare(self, download_dir: str | None = None, force_download: bool = False):
         # if not os.path.exists(os.path.join(download_dir, self.source_files)):
         #     msg = f"{self.__class__.__name__} requires the file {self.source_files} to be in the download_dir.\nThe download_dir was {download_dir}."
         #     raise FileNotFoundError(msg)

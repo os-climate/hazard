@@ -1,13 +1,14 @@
 import logging
 import os
 import sys
+import tempfile as temp
 from pathlib import Path, PurePosixPath
 
-import fsspec.implementations.local as local  # type: ignore
 import pytest
 import s3fs
-import tempfile as temp
 import zarr
+from fsspec.implementations import local  # type: ignore
+
 from hazard import get_hazards_onboarding
 from hazard.docs_store import DocStore
 from hazard.onboard.general_onboarding import initialize_class, onboard_hazards_to

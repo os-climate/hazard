@@ -5,7 +5,6 @@ Contains the get_hazards_onboarding functions.
 
 from typing import Dict, Type
 
-from hazard.onboarder import Onboarder
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
 from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
@@ -33,9 +32,10 @@ from hazard.onboard.tudelft_wind import TUDelftConvectiveWindstorm
 from hazard.onboard.wisc_european_winter_storm import WISCEuropeanWinterStorm
 from hazard.onboard.wri_aqueduct_flood import WRIAqueductFlood
 from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
+from hazard.onboarder import Onboarder
 
 # Every hazard that can be onboarded via onboard_hazards/the CLI.
-_onboarder_classes: list[Type[Onboarder]] = [
+_onboarder_classes: list[type[Onboarder]] = [
     DavydzenkaEtAlLandSubsidence,
     DaysTasAboveIndicator,
     DegreeDays,
@@ -68,7 +68,7 @@ _onboarder_classes: list[Type[Onboarder]] = [
 # (see get_inventory_hazards) -- e.g. excludes hazards still being worked on. Order
 # matches the original hand-written list in test_create_inventory, preserved here so
 # regenerating inventory.json produces a diffable result rather than a full reorder.
-_inventory_classes: list[Type[Onboarder]] = [
+_inventory_classes: list[type[Onboarder]] = [
     WRIAqueductFlood,
     DegreeDays,
     Jupiter,
@@ -88,20 +88,20 @@ _inventory_classes: list[Type[Onboarder]] = [
     JRCRiverFlood,
 ]
 
-hazard_map: Dict[str, Type[Onboarder]] = {
+hazard_map: dict[str, type[Onboarder]] = {
     cls.__name__: cls for cls in _onboarder_classes
 }
-inventory_hazard_map: Dict[str, Type[Onboarder]] = {
+inventory_hazard_map: dict[str, type[Onboarder]] = {
     cls.__name__: cls for cls in _inventory_classes
 }
 
 
-def get_hazards_onboarding() -> Dict[str, Type[Onboarder]]:
+def get_hazards_onboarding() -> dict[str, type[Onboarder]]:
     """Return a dictionary with the hazards that can be onboarded."""
     return hazard_map
 
 
-def get_inventory_hazards() -> Dict[str, Type[Onboarder]]:
+def get_inventory_hazards() -> dict[str, type[Onboarder]]:
     """Return the subset of onboardable hazards considered ready to be published in
     the inventory/catalog -- see _inventory_classes.
     """

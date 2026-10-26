@@ -8,9 +8,8 @@ the same onboard_hazards pipeline as any other hazard.
 """
 
 import os
+from collections.abc import Iterable
 from typing import Optional
-
-from typing_extensions import Iterable
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource
@@ -63,31 +62,31 @@ class IndicatorModelOnboarder(Onboarder):
 
 
 class DaysTasAboveIndicator(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _DaysTasAboveIndicator()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
 
 class DegreeDays(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _DegreeDays()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
 
 class HeatingCoolingDegreeDays(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _HeatingCoolingDegreeDays()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
 
 class WetBulbGlobeTemperatureAboveIndicator(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _WetBulbGlobeTemperatureAboveIndicator()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
 
 class WorkLossIndicator(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _WorkLossIndicator()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 

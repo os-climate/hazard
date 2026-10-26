@@ -7,13 +7,14 @@ and handles parallelized copy operations.
 """
 
 import concurrent.futures
-from glob import iglob
 import hashlib
 import logging
 import os
 import pathlib
 import sys
-from typing import Callable, List, Optional, Sequence, Set, Tuple
+from collections.abc import Callable, Sequence
+from glob import iglob
+from typing import List, Optional, Set, Tuple
 
 try:
     ## python >3.11 includes tomllib
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_s3_fs(
-    use_dev: bool = True, extra_s3fs_kwargs: Optional[dict] = None, **kwargs
+    use_dev: bool = True, extra_s3fs_kwargs: dict | None = None, **kwargs
 ) -> s3fs.S3FileSystem:
     """Return a S3FileSystem object.
 
@@ -75,10 +76,10 @@ def get_s3_fs(
 
 
 def get_store(
-    s3: Optional[s3fs.S3FileSystem] = None,
+    s3: s3fs.S3FileSystem | None = None,
     use_dev: bool = True,
-    extra_s3fs_kwargs: Optional[dict] = None,
-    bucket: Optional[str] = None,
+    extra_s3fs_kwargs: dict | None = None,
+    bucket: str | None = None,
     group_path_suffix: str = "hazard/hazard.zarr",
     *_,
 ) -> FSMap:
@@ -118,7 +119,7 @@ def get_store(
     return store
 
 
-def load_s3_parameters(toml_path: Optional[str] = None) -> dict:
+def load_s3_parameters(toml_path: str | None = None) -> dict:
     """Load the parameters (mostly credentials) for the S3 utilities from a TOML file.
 
     The env_vars_override dictionary will be poped and use to override the environment.
@@ -202,7 +203,7 @@ def _get_boto3_client_and_bucket(use_dev: bool):
 
 def _local_zarr_relative_file_paths(
     root_path: pathlib.Path, array_path: str
-) -> List[str]:
+) -> list[str]:
     """List files (including dotfiles) under array_path within a local Zarr group.
 
     Returned paths are relative to root_path, using posix separators.
@@ -261,7 +262,7 @@ def _copy_local_to_bucket(
     target_bucket_name: str,
     zarr_group_prefix: str,
     dry_run: bool = False,
-    relative_file_paths: Optional[Sequence[str]] = None,
+    relative_file_paths: Sequence[str] | None = None,
 ):
     """Copy a local Zarr array to the given bucket using the given S3 client.
 
@@ -383,7 +384,7 @@ def _sync_local_to_bucket(
     target_bucket_name: str,
     zarr_group_prefix: str,
     dry_run: bool = True,
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize a local Zarr array to the given bucket based on ETag differences.
 
     Like sync_buckets, but the source is a local directory rather than another S3
@@ -454,7 +455,7 @@ def _sync_local_to_bucket(
 
 def sync_local_to_dev(
     zarr_dir: str, array_path: str, dry_run: bool = True
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize a local Zarr array to the development bucket based on ETag
     differences, only uploading files that are missing or different.
     Requires environment variables:
@@ -486,7 +487,7 @@ def sync_local_to_dev(
 
 def sync_local_to_prod(
     zarr_dir: str, array_path: str, dry_run: bool = True
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize a local Zarr array to the production (public) bucket based on
     ETag differences, only uploading files that are missing or different.
 
@@ -667,7 +668,7 @@ def copy_objects(
     source_bucket_name: str,
     s3_target_client,
     target_bucket_name: str,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Copy objects from one S3 bucket to another.
 
@@ -758,7 +759,7 @@ def sync_buckets(
     target_bucket_name: str,
     prefix: str,
     dry_run=True,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Synchronize files between two S3 buckets based on ETag differences.
 
