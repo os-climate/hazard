@@ -7,20 +7,22 @@ data management, file processing, and integration with the hazard resource inven
 """
 
 import io
-import requests
 import logging
 import os
-from pathlib import Path, PurePath, PurePosixPath
 import zipfile
-from typing_extensions import Iterable, Optional, override
+from collections.abc import Iterable
+from pathlib import Path, PurePath, PurePosixPath
+from typing import Optional
 
 import numpy as np
+import requests
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
 
@@ -39,7 +41,7 @@ class IPCCDrought(Onboarder):
 
     """
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Initialize the IPCCDrought model.
 
         Args:
