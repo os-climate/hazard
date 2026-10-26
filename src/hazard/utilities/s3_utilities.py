@@ -13,7 +13,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Callable, List, Optional, Sequence, Set, Tuple
+from typing import Callable, Iterable, List, Optional, Sequence, Set, Tuple
 
 try:
     ## python >3.11 includes tomllib
@@ -437,6 +437,9 @@ def _sync_local_to_bucket(
         f"Copying {len(different)} different files to {target_bucket_name}: "
         + _first_5_last_5(list(different))
     )
+    logger.info(
+        f"Total size of files to copy: {format_size(local_files_size(zarr_dir, missing | different))}"
+    )
 
     if not dry_run:
         _copy_local_to_bucket(
@@ -834,6 +837,21 @@ def sync_buckets(
 
 def _first_5_last_5(items):
     return ", ".join(items[0:5]) + ", ..., " + ", ".join(items[-5:-1])
+
+
+def local_files_size(zarr_dir: str, relative_file_paths: Iterable[str]) -> int:
+    """Total size in bytes of the given files, as paths relative to zarr_dir."""
+    root_path = pathlib.Path(zarr_dir)
+    return sum((root_path / path).stat().st_size for path in relative_file_paths)
+
+
+def format_size(num_bytes: float) -> str:
+    """Format a size in bytes for display, e.g. 1536 -> '1.5 KiB'."""
+    for unit in ["B", "KiB", "MiB", "GiB"]:
+        if abs(num_bytes) < 1024:
+            return f"{num_bytes:.1f} {unit}" if unit != "B" else f"{int(num_bytes)} B"
+        num_bytes /= 1024
+    return f"{num_bytes:.1f} TiB"
 
 
 def get_input_onboarding_data(download_dir=None):

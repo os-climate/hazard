@@ -124,7 +124,10 @@ class JRCRiverFlood(Onboarder):
                 height,
                 transform,
                 str(crs),
+                index_name="return_period",
                 index_values=self.return_periods,
+                index_units="years",
+                units=self._resource.units,
             )
 
             # Process each return period
