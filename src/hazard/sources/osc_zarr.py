@@ -102,8 +102,14 @@ class OscZarr(ReadWriteDataArray):
         index_name: Optional[str] = "index",
         index_values: Any = None,
         chunks=None,
+        index_units: str = "",
+        units: Optional[str] = None,
     ):
-        """Create an empty Zarr array with specified dimensions and geospatial properties."""
+        """Create an empty Zarr array with specified dimensions and geospatial properties.
+
+        index_units are the units of the index (non-spatial) dimension values, e.g. "years" for
+        return periods; units are the units of the array values themselves, e.g. "metres".
+        """
         if index_values is None:
             index_values = [0]
         return self._zarr_create(
@@ -115,6 +121,8 @@ class OscZarr(ReadWriteDataArray):
             index_name=index_name,
             index_values=index_values,
             chunks=chunks,
+            index_units=index_units,
+            units=units,
         )
 
     def remove(self, path: str):
@@ -384,6 +392,8 @@ class OscZarr(ReadWriteDataArray):
         index_name: Optional[str] = None,
         index_values: Any = None,
         chunks=None,
+        index_units: str = "",
+        units: Optional[str] = None,
     ):
         """Create Zarr array with given shape and affine transform."""
         if path in self.root:
@@ -419,9 +429,42 @@ class OscZarr(ReadWriteDataArray):
         ]:
             index_values = [int(i) for i in index_values]
         self._add_attributes(
-            z.attrs, transform, crs, index_name=index_name, index_values=index_values
+            z.attrs,
+            transform,
+            crs,
+            index_name=index_name,
+            index_values=index_values,
+            index_units=index_units,
+            units=units,
         )
         return z
+
+    def rename_index_dimension(
+        self,
+        path: str,
+        index_name: str,
+        index_units: str = "",
+        units: Optional[str] = None,
+    ):
+        """Rename the index (non-spatial) dimension of an existing array, in place.
+
+        Only the attributes are changed: the index values are moved to "{index_name}_values" and
+        "{index_name}_units" is set; if given, units (of the array values) is also set. The array
+        data is not rewritten.
+        """
+        z = self.root[path]
+        attrs = z.attrs.asdict()
+        dimensions = attrs["dimensions"]
+        old_name = dimensions[0]
+        index_values = attrs.pop(f"{old_name}_values", None)
+        attrs.pop(f"{old_name}_units", None)
+        attrs["dimensions"] = [index_name] + list(dimensions[1:])
+        if index_values is not None:
+            attrs[f"{index_name}_values"] = index_values
+        attrs[f"{index_name}_units"] = index_units
+        if units is not None:
+            attrs["units"] = units
+        z.attrs.put(attrs)
 
     def _add_attributes(
         self,
@@ -431,6 +474,7 @@ class OscZarr(ReadWriteDataArray):
         index_name: Optional[str] = None,
         index_values: Any = None,
         index_units: str = "",
+        units: Optional[str] = None,
     ):
         trans_members = [
             transform.a,
@@ -450,6 +494,8 @@ class OscZarr(ReadWriteDataArray):
         if index_values is not None:
             attrs[f"{index_name}_values"] = list(index_values)
             attrs[f"{index_name}_units"] = index_units
+        if units is not None:
+            attrs["units"] = units
 
     def _chunks(self, index_values: List[Any]):
         chunk_dim = 1000 if len(index_values) < 10 else 500

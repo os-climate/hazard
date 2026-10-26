@@ -276,6 +276,8 @@ def create_tile_set(
         chunk_size,
         index_name=str(da.dims[0]),
         index_values=index_values,
+        index_units=da[da.dims[0]].attrs.get("units", ""),
+        units=da.attrs.get("units"),
     )
 
     # here we reproject and write the maximum zoom level
@@ -311,6 +313,8 @@ def _create_empty_tile_pyramid(
     chunk_size: int,
     index_name: str = "index",
     index_values: Sequence[Any] = [0],
+    index_units: str = "",
+    units: Optional[str] = None,
 ):
     pixels_per_tile: int = 256
     ulx, uly = mercantile.xy(*mercantile.ul(mercantile.Tile(x=0, y=0, z=0)))
@@ -335,6 +339,8 @@ def _create_empty_tile_pyramid(
             index_name=index_name,
             index_values=index_values,
             chunks=(1, chunk_size, chunk_size),
+            index_units=index_units,
+            units=units,
         )
 
 

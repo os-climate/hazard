@@ -13,7 +13,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Callable, List, Optional, Sequence, Set, Tuple
+from typing import Callable, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 try:
     ## python >3.11 includes tomllib
@@ -378,23 +378,25 @@ def copy_local_to_prod(zarr_dir: str, array_path: str, dry_run=False):
 
 def _sync_local_to_bucket(
     zarr_dir: str,
-    array_path: str,
+    array_paths: Union[str, Iterable[str]],
     s3_target_client,
     target_bucket_name: str,
     zarr_group_prefix: str,
     dry_run: bool = True,
 ) -> Tuple[Set[str], Set[str], Set[str]]:
-    """Synchronize a local Zarr array to the given bucket based on ETag differences.
+    """Synchronize local Zarr arrays to the given bucket based on ETag differences.
 
     Like sync_buckets, but the source is a local directory rather than another S3
     bucket: only files that are missing from the bucket, or whose ETag differs from
-    the local file's computed ETag (see _local_etag), are uploaded.
+    the local file's computed ETag (see _local_etag), are uploaded. The total size of
+    the files to copy, across all array paths, is logged.
 
     Shared implementation for sync_local_to_dev and sync_local_to_prod.
 
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
-        array_path (str): The path of the array or data set within the group.
+        array_paths (Union[str, Iterable[str]]): The path(s) of the arrays or data sets
+        within the group.
         s3_target_client: boto3 S3 client to sync to.
         target_bucket_name (str): Name of the target bucket.
         zarr_group_prefix (str): Bucket-side location of the zarr group (see
@@ -408,54 +410,72 @@ def _sync_local_to_bucket(
         missing is present locally but not in the bucket; different is present in
         both but with differing content.
     """
+    if isinstance(array_paths, str):
+        array_paths = [array_paths]
     root_path = pathlib.Path(zarr_dir)
-    relative_file_paths = _local_zarr_relative_file_paths(root_path, array_path)
 
     def key(path: str) -> str:
         return _hazard_zarr_key(path, zarr_group_prefix)
 
-    prefix = key(array_path)
-    target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
+    all_checked: Set[str] = set()
+    all_missing: Set[str] = set()
+    all_different: Set[str] = set()
+    for array_path in array_paths:
+        relative_file_paths = _local_zarr_relative_file_paths(root_path, array_path)
+        prefix = key(array_path)
+        target_etags = list_object_etags(s3_target_client, target_bucket_name, prefix)
 
-    checked = set(relative_file_paths)
-    missing = set(path for path in relative_file_paths if key(path) not in target_etags)
-    different = set(
-        path
-        for path in relative_file_paths
-        if path not in missing
-        and target_etags[key(path)] != _local_etag(root_path / path)
-    )
-
-    logger.info(
-        f"Checked {len(checked)} local files from {zarr_dir}/{array_path} against bucket {target_bucket_name}"
-    )
-    logger.info(
-        f"Copying {len(missing)} missing files to {target_bucket_name}: "
-        + _first_5_last_5(list(missing))
-    )
-    logger.info(
-        f"Copying {len(different)} different files to {target_bucket_name}: "
-        + _first_5_last_5(list(different))
-    )
-
-    if not dry_run:
-        _copy_local_to_bucket(
-            zarr_dir,
-            array_path,
-            s3_target_client,
-            target_bucket_name,
-            zarr_group_prefix,
-            dry_run=False,
-            relative_file_paths=list(missing | different),
+        checked = set(relative_file_paths)
+        missing = set(
+            path for path in relative_file_paths if key(path) not in target_etags
+        )
+        different = set(
+            path
+            for path in relative_file_paths
+            if path not in missing
+            and target_etags[key(path)] != _local_etag(root_path / path)
         )
 
-    return checked, missing, different
+        logger.info(
+            f"Checked {len(checked)} local files from {zarr_dir}/{array_path} against bucket {target_bucket_name}"
+        )
+        logger.info(
+            f"Copying {len(missing)} missing files to {target_bucket_name}: "
+            + _first_5_last_5(list(missing))
+        )
+        logger.info(
+            f"Copying {len(different)} different files to {target_bucket_name}: "
+            + _first_5_last_5(list(different))
+        )
+        logger.info(
+            f"Size of files to copy: {format_size(local_files_size(zarr_dir, missing | different))}"
+        )
+
+        if not dry_run:
+            _copy_local_to_bucket(
+                zarr_dir,
+                array_path,
+                s3_target_client,
+                target_bucket_name,
+                zarr_group_prefix,
+                dry_run=False,
+                relative_file_paths=list(missing | different),
+            )
+
+        all_checked |= checked
+        all_missing |= missing
+        all_different |= different
+
+    logger.info(
+        f"Total size of files to copy: {format_size(local_files_size(zarr_dir, all_missing | all_different))}"
+    )
+    return all_checked, all_missing, all_different
 
 
 def sync_local_to_dev(
-    zarr_dir: str, array_path: str, dry_run: bool = True
+    zarr_dir: str, array_paths: Union[str, Iterable[str]], dry_run: bool = True
 ) -> Tuple[Set[str], Set[str], Set[str]]:
-    """Synchronize a local Zarr array to the development bucket based on ETag
+    """Synchronize local Zarr arrays to the development bucket based on ETag
     differences, only uploading files that are missing or different.
     Requires environment variables:
     OSC_S3_BUCKET_DEV=physrisk-hazard-indicators-dev01
@@ -464,7 +484,8 @@ def sync_local_to_dev(
 
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
-        array_path (str): The path of the array or data set within the group.
+        array_paths (Union[str, Iterable[str]]): The path(s) of the arrays or data sets
+        within the group.
         dry_run (bool, optional): If True, log actions without executing them. Defaults to True.
 
     Returns:
@@ -476,7 +497,7 @@ def sync_local_to_dev(
     )
     return _sync_local_to_bucket(
         zarr_dir,
-        array_path,
+        array_paths,
         s3_target_client,
         target_bucket_name,
         zarr_group_prefix,
@@ -485,9 +506,9 @@ def sync_local_to_dev(
 
 
 def sync_local_to_prod(
-    zarr_dir: str, array_path: str, dry_run: bool = True
+    zarr_dir: str, array_paths: Union[str, Iterable[str]], dry_run: bool = True
 ) -> Tuple[Set[str], Set[str], Set[str]]:
-    """Synchronize a local Zarr array to the production (public) bucket based on
+    """Synchronize local Zarr arrays to the production (public) bucket based on
     ETag differences, only uploading files that are missing or different.
 
     Note the bucket-side zarr group is at "hazard-indicators/hazard.zarr", not
@@ -501,7 +522,8 @@ def sync_local_to_prod(
 
     Args:
         zarr_dir (str): Directory of the Zarr group, i.e. /<path>/hazard/hazard.zarr.
-        array_path (str): The path of the array or data set within the group.
+        array_paths (Union[str, Iterable[str]]): The path(s) of the arrays or data sets
+        within the group.
         dry_run (bool, optional): If True, log actions without executing them. Defaults to True.
 
     Returns:
@@ -513,7 +535,7 @@ def sync_local_to_prod(
     )
     return _sync_local_to_bucket(
         zarr_dir,
-        array_path,
+        array_paths,
         s3_target_client,
         target_bucket_name,
         zarr_group_prefix,
@@ -834,6 +856,21 @@ def sync_buckets(
 
 def _first_5_last_5(items):
     return ", ".join(items[0:5]) + ", ..., " + ", ".join(items[-5:-1])
+
+
+def local_files_size(zarr_dir: str, relative_file_paths: Iterable[str]) -> int:
+    """Total size in bytes of the given files, as paths relative to zarr_dir."""
+    root_path = pathlib.Path(zarr_dir)
+    return sum((root_path / path).stat().st_size for path in relative_file_paths)
+
+
+def format_size(num_bytes: float) -> str:
+    """Format a size in bytes for display, e.g. 1536 -> '1.5 KiB'."""
+    for unit in ["B", "KiB", "MiB", "GiB"]:
+        if abs(num_bytes) < 1024:
+            return f"{num_bytes:.1f} {unit}" if unit != "B" else f"{int(num_bytes)} B"
+        num_bytes /= 1024
+    return f"{num_bytes:.1f} TiB"
 
 
 def get_input_onboarding_data(download_dir=None):

@@ -177,6 +177,10 @@ def data_array_from_zarr(z: zarr.array) -> xr.DataArray:
     else:
         da.rio.write_crs(crs, inplace=True)
         da = da.rename({"dim_0": index_name, "dim_1": "y", "dim_2": "x"})
+    if index_name + "_units" in z.attrs:
+        da[index_name].attrs["units"] = z.attrs[index_name + "_units"]
+    if "units" in z.attrs:
+        da.attrs["units"] = z.attrs["units"]
     return da
 
 
