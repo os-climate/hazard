@@ -103,7 +103,9 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
     """
     hazard_to_onboard = "JRCRiverFlood"
     dry_run = False
-    maps_only = False  # True to sync only the map arrays (e.g. after regenerating maps).
+    maps_only = (
+        False  # True to sync only the map arrays (e.g. after regenerating maps).
+    )
 
     zarr_dir = os.path.join(test_output_dir, "hazard-indicators", "hazard.zarr")
 
@@ -122,16 +124,7 @@ def test_sync_named_hazard(test_output_dir, s3_credentials):
         if resource.map is not None:
             array_paths.add(str(PurePosixPath(resource.map.path).parent))
 
-    total_size = 0
-    for array_path in sorted(array_paths):
-        _, missing, different = s3_utilities.sync_local_to_prod(
-            zarr_dir, array_path, dry_run=dry_run
-        )
-        total_size += s3_utilities.local_files_size(zarr_dir, missing | different)
-    logging.info(
-        f"Total size of files to copy across {len(array_paths)} array path(s): "
-        f"{s3_utilities.format_size(total_size)}"
-    )
+    s3_utilities.sync_local_to_prod(zarr_dir, sorted(array_paths), dry_run=dry_run)
 
 
 @pytest.mark.manual
