@@ -134,18 +134,24 @@ def test_days_wbgt_v3_mocked():
         hurs = source.open_dataset_year(gcms[0], scenario, "hurs", y).hurs
         vpp = (hurs / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))
         scale = 365.0 / len(tas_c.time)
-        return {
+        days = {
             key: np.stack(
                 [
                     scale * ((0.567 * t + 0.393 * vpp + 3.94) > th).sum(dim="time")
                     for th in thresholds
                 ]
             )
-            for key, t in [("mean", tas_c), ("max", tasmax_c)]
+            for key, t in [
+                ("mean", tas_c),
+                ("max", tasmax_c),
+                ("halfway", (tas_c + tasmax_c) / 2.0),
+            ]
         }
+        days["444"] = (days["mean"] + days["halfway"] + days["max"]) / 3.0
+        return days
 
     y0, y1 = expected_days_above(2029), expected_days_above(2030)
-    for key in ["mean", "max"]:
+    for key in ["mean", "max", "444"]:
         expected = (y0[key] + y1[key]) / 2.0
         for gcm in gcms + [MULTI_MODEL_ID]:
             result = target.datasets[
@@ -159,6 +165,9 @@ def test_days_wbgt_v3_mocked():
     # the test data should exercise the thresholds: not all zero or all 365
     assert 0 < y0["max"].mean() < 365
     assert (y0["max"] >= y0["mean"]).all() and (y0["max"] > y0["mean"]).any()
+    # the working-day indicator lies between the two, and differs from their mean
+    assert (y0["mean"] <= y0["444"]).all() and (y0["444"] <= y0["max"]).all()
+    assert not np.allclose(y0["444"], (y0["mean"] + y0["max"]) / 2.0)
 
 
 def test_days_wbgt_v3_multi_model_missing():
@@ -189,8 +198,8 @@ def test_days_wbgt_v3_multi_model_missing():
     [
         (
             DaysWBGTAboveIndicator,
-            ["days_wbgt_mean_above", "days_wbgt_max_above"],
-            [[20, 24, 26, 28, 30, 32, 34, 36, 38, 40, 44]] * 2,
+            ["days_wbgt_mean_above", "days_wbgt_max_above", "days_wbgt_444_above"],
+            [[20, 24, 26, 28, 30, 32, 34, 36, 38, 40, 44]] * 3,
         ),
         (
             DaysTasAboveIndicator,

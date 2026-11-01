@@ -19,7 +19,7 @@ def test_create_inventory(test_output_dir):
 
     With heat_v3, the v3 chronic heat indicators replace the v2 ones.
     """
-    heat_v3 = False
+    heat_v3 = True
     # zarr_utilities.set_credential_env_variables()
 
     docs_store = DocStore(
