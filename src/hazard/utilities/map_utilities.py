@@ -4,9 +4,10 @@ import hashlib
 import json
 import logging
 import os
+from collections.abc import Sequence
 from math import atan, exp, log, pi, tan
 from time import sleep
-from typing import Sequence, Tuple
+from typing import Tuple
 
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
@@ -62,7 +63,7 @@ def epsg4326_to_epsg3857(lon, lat):
 def generate_map(
     path: str,
     map_path: str,
-    bounds: Sequence[Tuple[float, float]],
+    bounds: Sequence[tuple[float, float]],
     target: ReadWriteDataArray,
 ):
     """Generate a map projection and write it to file.
@@ -84,7 +85,6 @@ def generate_map(
         raise ValueError("invalid range")
     logger.info(f"Writing map file {map_path}")
     target.write(map_path, reprojected, spatial_coords=False)
-    return
 
 
 def transform_epsg4326_to_epsg3857(src: xr.DataArray):
@@ -131,7 +131,7 @@ def transform_epsg4326_to_epsg3857(src: xr.DataArray):
 
 def highest_zoom_slippy_maps(src: xr.DataArray):
     """Calculate the highest zoom level for Slippy Map tiles based on the source data."""
-    ...  # noqa:E704
+    # noqa:E704
 
 
 def check_map_bounds(da: xr.DataArray):
@@ -238,9 +238,8 @@ def load_s3(s3_source, path, target_width=None):
         tuple: Data array and metadata of the raster file.
 
     """
-    with s3_source.open(path) as f:
-        with rasterio.open(f) as dataset:
-            return load_dataset(dataset, target_width)
+    with s3_source.open(path) as f, rasterio.open(f) as dataset:
+        return load_dataset(dataset, target_width)
 
 
 def load_dataset(dataset, target_width=None):
@@ -459,9 +458,8 @@ def write_map_geotiff_data(
         dst.write(a[result], 4)
 
     if s3 is not None:
-        with s3.open(path_out, "w") as f:
-            with rasterio.open(f, "w", **profile) as dst:
-                write_dataset(dst)
+        with s3.open(path_out, "w") as f, rasterio.open(f, "w", **profile) as dst:
+            write_dataset(dst)
     else:
         with rasterio.open(path_out, "w", **profile) as dst:
             write_dataset(dst)

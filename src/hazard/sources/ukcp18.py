@@ -3,8 +3,9 @@ import logging
 import os
 import re
 from base64 import b64encode
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import fsspec
 import numpy as np
@@ -57,7 +58,7 @@ class Ukcp18(OpenDataset):
         self._domain = domain
         self._resolution = resolution
 
-        # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to # noqa
+        # Refer to https://www.metoffice.gov.uk/binaries/content/assets/metofficegovuk/pdf/research/ukcp/ukcp18-guidance-data-availability-access-and-formats.pdf on what these values refer to
         self._dataset_member_id = dataset_member_id
         self._dataset_frequency = dataset_frequency
         self._dataset_version = _COLLECTION_AND_DOMAIN_TO_LATEST_DATA_MAPPINGS[
@@ -66,9 +67,7 @@ class Ukcp18(OpenDataset):
 
     def fetch_ceda_token(self):
         ceda_post_token = b64encode(
-            f"{os.environ['CEDA_USERNAME']}:{os.environ['CEDA_PASSWORD']}".encode(
-                "utf-8"
-            )
+            f"{os.environ['CEDA_USERNAME']}:{os.environ['CEDA_PASSWORD']}".encode()
         ).decode("ascii")
         response = requests.post(
             _CEDA_TOKEN_API_URL, headers={"Authorization": f"Basic {ceda_post_token}"}
@@ -76,7 +75,7 @@ class Ukcp18(OpenDataset):
         response.raise_for_status()
         return response.json()["access_token"]
 
-    def gcms(self) -> List[str]:
+    def gcms(self) -> list[str]:
         return list("ukcp18")
 
     @contextmanager
@@ -87,10 +86,10 @@ class Ukcp18(OpenDataset):
         quantity: str = "tas",
         year: int = 1981,
         chunks=None,
-        catalog_url: Optional[str] = None,
-        collection_id: Optional[str] = None,  # type: ignore
+        catalog_url: str | None = None,
+        collection_id: str | None = None,  # type: ignore
     ) -> Generator[xr.Dataset, None, None]:
-        files_available_for_quantity: List[str] = (
+        files_available_for_quantity: list[str] = (
             self._get_files_available_for_quantity_and_year(
                 gcm, scenario, quantity, year
             )
@@ -111,15 +110,14 @@ class Ukcp18(OpenDataset):
         yield converted_to_kelvin
 
     def _combine_all_files_data(
-        self, files_available_for_quantity: List[str]
-    ) -> Tuple[xr.Dataset, rasterio.CRS]:
+        self, files_available_for_quantity: list[str]
+    ) -> tuple[xr.Dataset, rasterio.CRS]:
         datasets = []
         crs = None
         for file in files_available_for_quantity:
-            with self._fs.open(file, "rb") as f:
-                with io.BytesIO(f.read()) as file_in_memory:
-                    file_in_memory.seek(0)
-                    datasets.append(xr.open_dataset(file_in_memory).load())
+            with self._fs.open(file, "rb") as f, io.BytesIO(f.read()) as file_in_memory:
+                file_in_memory.seek(0)
+                datasets.append(xr.open_dataset(file_in_memory).load())
             if crs is None:
                 with self._fs.open(file, "rb") as crs_f:
                     with rasterio.MemoryFile(crs_f.read(), ext=".nc") as crs_mem:
@@ -128,7 +126,7 @@ class Ukcp18(OpenDataset):
 
     def _get_list_of_files_in_json_directory_listing(
         self, json_directory_listing: str
-    ) -> List[str]:
+    ) -> list[str]:
         response = requests.get(json_directory_listing)
         response.raise_for_status()
         return [
@@ -139,7 +137,7 @@ class Ukcp18(OpenDataset):
 
     def _get_files_available_for_quantity_and_year(
         self, gcm: str, scenario: str, quantity: str, year: int
-    ) -> List[str]:
+    ) -> list[str]:
         data_host = "https://data.ceda.ac.uk"
         dap_host = "https://dap.ceda.ac.uk"
         ceda_directory_structure = (
@@ -164,7 +162,7 @@ class Ukcp18(OpenDataset):
         return files_that_contain_year
 
     def _prepare_data_array(
-        self, data_array: xr.DataArray, crs: Union[str, CRS], drop_vars: List[str]
+        self, data_array: xr.DataArray, crs: str | CRS, drop_vars: list[str]
     ) -> xr.DataArray:
         squeezed = data_array.squeeze()
         dropped_vars = squeezed.drop_vars(drop_vars, errors="ignore")

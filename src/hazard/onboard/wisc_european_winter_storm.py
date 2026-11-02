@@ -1,25 +1,25 @@
 import glob
 import logging
 import os
-from pathlib import Path, PurePath, PurePosixPath
-from typing_extensions import Iterable, Optional, override
 import warnings
 import zipfile
-
+from collections.abc import Iterable
+from pathlib import Path, PurePath, PurePosixPath
+from typing import Optional
 
 import cdsapi
-from fsspec.implementations.local import LocalFileSystem
-from fsspec.spec import AbstractFileSystem
 import numpy as np
 import xarray as xr
+from fsspec.implementations.local import LocalFileSystem
+from fsspec.spec import AbstractFileSystem
 
 # import cartopy.crs as ccrs
 # import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from typing_extensions import override
 
-
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class WISCEuropeanWinterStorm(Onboarder):
     """On-board the Peak 3s gust wind speed for different return periods inferred from the WISC event set."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """Peak 3s gust wind speed for different return periods inferred from the WISC event set.
 
         METADATA:
