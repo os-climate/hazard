@@ -3,11 +3,12 @@
 import logging
 import os
 import tempfile as temp
+from collections.abc import Sequence
 from pathlib import Path
-from typing_extensions import Dict, Optional, Sequence, Type
+from typing import Dict, Optional, Type
 
-import fsspec.implementations.local as local
 import zarr
+from fsspec.implementations import local
 
 from hazard import get_hazards_onboarding
 from hazard.docs_store import DocStore
@@ -21,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 def onboard_hazards(
     local: bool = False,
-    credentials_path: Optional[str] = None,
-    source_dir_base: Optional[str] = None,
+    credentials_path: str | None = None,
+    source_dir_base: str | None = None,
     hazards: Sequence[str] = [],
-    download_dir: Optional[str] = None,
+    download_dir: str | None = None,
     force_download=False,
     force_prepare=False,
 ):
@@ -91,7 +92,7 @@ def onboard_hazards_to(
     doc_store: DocStore,
     source_dir_base: str,
     hazards: Sequence[str] = [],
-    download_dir: Optional[str] = None,
+    download_dir: str | None = None,
     force_download=False,
     force_prepare=False,
 ) -> None:
@@ -125,7 +126,7 @@ def onboard_hazards_to(
 
     """
     updt_inv_hazards = []
-    hazard_map: Dict[str, Type[Onboarder]] = get_hazards_onboarding()
+    hazard_map: dict[str, type[Onboarder]] = get_hazards_onboarding()
     failed_hazards = []
 
     for hazard in hazards:
@@ -172,7 +173,7 @@ def onboard_hazards_to(
 
 def initialize_class(
     hazard: str,
-    hazard_map: Dict[str, Type[Onboarder]],
+    hazard_map: dict[str, type[Onboarder]],
     source_dir_base: str,
 ) -> Onboarder:
     """Initialize the hazard model class based on the hazard name, passing directory if needed."""

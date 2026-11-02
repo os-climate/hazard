@@ -2,11 +2,11 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from contextlib import ExitStack
 from enum import Enum
 from pathlib import PosixPath, PurePosixPath
-from typing import Sequence
-from typing_extensions import Dict, Iterable, List, Optional
+from typing import Dict, List, Optional
 
 import xarray as xr
 from dask.distributed import Client
@@ -20,8 +20,8 @@ from hazard.models.multi_year_average import (
     MultiYearAverageIndicatorBase,
     ThresholdBasedAverageIndicator,
 )
-from hazard.sources.osc_zarr import OscZarr
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
+from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.description_utilities import get_indicator_period_descriptions
 from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
@@ -35,7 +35,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def __init__(
         self,
         threshold: float = 32,
-        window_years: Optional[int] = 20,
+        window_years: int | None = 20,
         gcms: Sequence[str] = [
             "ACCESS-CM2",
             "CMCC-ESM2",
@@ -194,7 +194,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         average_deg_days = self._average_degree_days(client, source, target, item)
         average_deg_days.attrs["crs"] = CRS.from_epsg(4326)
         pp = self._item_path(item)
-        logger.info(f"Writing array to {str(pp)}")
+        logger.info(f"Writing array to {pp!s}")
         target.write(str(pp), average_deg_days)
 
     def _average_degree_days(
@@ -313,7 +313,7 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
@@ -384,9 +384,9 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
         for resource in self.inventory():
             create_tiles_for_resource(source, target, resource)
 
-    def _resource(self) -> Dict[str, HazardResource]:  # type: ignore[override]
+    def _resource(self) -> dict[str, HazardResource]:  # type: ignore[override]
         # Unsure why this returns a dict vs a single resource
-        resources: Dict[str, HazardResource] = {}
+        resources: dict[str, HazardResource] = {}
         # for above_below in ["above", "below"]:
         for above_below in ["above"]:
             with open(
