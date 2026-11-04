@@ -2,9 +2,15 @@
 
 import json
 import re
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence, Tuple
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
 
 # region HazardModel
@@ -30,6 +36,23 @@ class Colormap(BaseModel):
     name: str = Field(description="Name of colormap, e.g. 'flare', 'heating'.")
     nodata_index: Optional[int] = Field(0, description="Index used for no data.")
     units: str = Field(description="Units, e.g. 'degree days', 'metres'.")
+    scaling: Literal["linear", "log"] = Field(
+        "linear",
+        description="Preferred value-to-colour scaling: 'linear' (default) or 'log'. "
+        "'log' requires min_value > 0.",
+    )
+
+    @model_validator(mode="after")
+    def _check_log_scaling(self) -> "Colormap":
+        if self.scaling == "log" and not self.min_value > 0:
+            raise ValueError(
+                f"log scaling requires min_value > 0 (min_value is {self.min_value})"
+            )
+        if self.scaling == "log" and not self.max_value > self.min_value:
+            raise ValueError(
+                f"log scaling requires max_value > min_value (max_value is {self.max_value})"
+            )
+        return self
 
 
 class MapInfo(BaseModel):
@@ -39,9 +62,9 @@ class MapInfo(BaseModel):
     path: str = Field(
         description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
     )
-    bounds: List[Tuple[float, float]] = Field(
-        [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
-        description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
+    bounds: Optional[List[Tuple[float, float]]] = Field(
+        None,
+        description="Deprecated: use bbox. Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS. Omitted from the inventory if None.",  # noqa
     )
     bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
     index_values: Optional[Sequence[Any]] = Field(
@@ -56,6 +79,14 @@ class MapInfo(BaseModel):
                             'mapbox'.
                             """
     )
+
+    @model_serializer(mode="wrap")
+    def _omit_bounds_if_none(self, handler):
+        # bounds is deprecated in favour of bbox: leave it out of the inventory unless given
+        data = handler(self)
+        if data.get("bounds") is None:
+            data.pop("bounds", None)
+        return data
 
 
 class Period(BaseModel):

@@ -4,8 +4,19 @@ from datetime import datetime
 import time
 import logging
 import os
+import threading
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterable, Iterator, MutableMapping, Protocol, Sequence
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    MutableMapping,
+    Protocol,
+    Sequence,
+    Tuple,
+)
 
 import boto3
 from botocore import UNSIGNED
@@ -57,7 +68,8 @@ def download_single(path: str, cache_dir: Path, client: Any):
 
 def download_paths(paths: Sequence[str], cache_dir: Path, client: Any):
     result = {}
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+    executor = futures.ThreadPoolExecutor(max_workers=8)
+    try:
         future_to_key = {
             executor.submit(download_single, p, cache_dir, client): p for p in paths
         }
@@ -68,6 +80,11 @@ def download_paths(paths: Sequence[str], cache_dir: Path, client: Any):
                 result[key] = exception
             else:
                 result[key] = future.result()
+    except BaseException:
+        # e.g. KeyboardInterrupt: do not start the queued downloads (those in progress still complete)
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+    executor.shutdown()
     if any(isinstance(v, Exception) for v in result.values()):
         for k, v in result.items():
             if isinstance(v, Exception):
@@ -76,18 +93,52 @@ def download_paths(paths: Sequence[str], cache_dir: Path, client: Any):
     return result
 
 
+# One lock per cached file, so that a file is downloaded only once if opened by several threads.
+# These are module-level so that they are shared by all copies of a NexGddpCmip6CachedSource in
+# the process (dask, for example, gives each task its own copy of the arguments).
+_download_locks: Dict[str, threading.Lock] = {}
+_download_locks_lock = threading.Lock()
+
+
+def _download_lock(local_file: Path) -> threading.Lock:
+    with _download_locks_lock:
+        return _download_locks.setdefault(str(local_file), threading.Lock())
+
+
 class NexGddpCmip6CachedSource(CachingSource):
+    """NEX-GDDP-CMIP6 source that caches the files it reads in a local directory.
+
+    open_dataset_year opens the file for the year from the cache, first downloading it (anonymously,
+    from the public bucket) if it is not there. download_to_cache can be used to download many
+    files in parallel up front.
+
+    The source can be pickled (as dask does with the arguments of tasks); the S3 client is not
+    pickled, a copy creating the default (anonymous) client when it needs one.
+    """
+
     def __init__(self, cache_dir: Path, client=None):
         self.cache_dir = cache_dir
         self.source = NexGddpCmip6()
         self.path_for_year = self.source.path
-        self.client = (
-            boto3.client(
+        self._client = client
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = boto3.client(
                 "s3", config=Config(signature_version=UNSIGNED, max_pool_connections=50)
             )
-            if client is None
-            else client
-        )
+        return self._client
+
+    def __getstate__(self):
+        # the S3 client cannot be pickled
+        state = self.__dict__.copy()
+        state["_client"] = None
+        return state
+
+    @property
+    def resolution(self) -> str:
+        return self.source.resolution
 
     def gcms(self) -> Iterable[str]:
         return self.source.gcms()
@@ -95,16 +146,19 @@ class NexGddpCmip6CachedSource(CachingSource):
     @contextmanager
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
-    ) -> Iterator[xr.Dataset]:
-        try:
-            ds = xr.open_dataset(
-                self.cache_dir
-                / Path(self._path(gcm, scenario, quantity, year)).parts[-1]
-            )
+    ) -> Generator[xr.Dataset, None, None]:
+        local_file = self._cached_file(self._path(gcm, scenario, quantity, year))
+        with xr.open_dataset(local_file, chunks=chunks) as ds:
             yield ds
-        finally:
-            if ds is not None:
-                ds.close()
+
+    def _cached_file(self, path: str) -> Path:
+        """Local path of the file in the cache, downloading it first if it is not there."""
+        local_file = self.cache_dir / Path(path).parts[-1]
+        if local_file.exists():
+            return local_file
+        with _download_lock(local_file):
+            # download_single does nothing if another thread has downloaded the file meanwhile
+            return download_single(path, self.cache_dir, self.client)
 
     def download_to_cache(
         self,
@@ -122,6 +176,49 @@ class NexGddpCmip6CachedSource(CachingSource):
         ]
         download_paths(paths, self.cache_dir, self.client)
 
+    def download_inputs(
+        self, inputs: Iterable[Tuple[str, str, str, int]], dry_run: bool = False
+    ) -> List[str]:
+        """Download, in parallel, the files of inputs (GCM, scenario, quantity, year) not already in the cache.
+
+        Returns:
+            List[str]: Paths of the files that were (with dry_run, would be) downloaded.
+        """
+        if not dry_run:
+            self.remove_stale_downloads()
+        paths = sorted({self._path(*i) for i in inputs})
+        missing = [p for p in paths if not (self.cache_dir / Path(p).name).exists()]
+        logger.info(
+            f"{len(paths)} files needed: {len(paths) - len(missing)} in the cache {self.cache_dir}, "
+            f"{len(missing)} to download"
+        )
+        if not dry_run and missing:
+            download_paths(missing, self.cache_dir, self.client)
+        return missing
+
+    def remove_stale_downloads(self, max_age_s: float = 3600) -> List[Path]:
+        """Remove the partial (.download) files of interrupted downloads not modified for max_age_s.
+
+        Partial files are never used (a download starts again from the beginning), so this only
+        tidies the cache. Recently modified ones are kept, as another process may be downloading them.
+
+        Returns:
+            List[Path]: The files removed.
+        """
+        now = time.time()
+        stale = [
+            f
+            for f in self.cache_dir.glob("*.download")
+            if now - f.stat().st_mtime > max_age_s
+        ]
+        for f in stale:
+            f.unlink(missing_ok=True)
+        if stale:
+            logger.info(
+                f"removed {len(stale)} partial file(s) of interrupted downloads from {self.cache_dir}"
+            )
+        return stale
+
     def _path(self, gcm: str, scenario: str, quantity: str, year: int):
         if year < 2015:
             return self.path_for_year(
@@ -131,14 +228,6 @@ class NexGddpCmip6CachedSource(CachingSource):
             return self.path_for_year(
                 gcm=gcm, scenario=scenario, quantity=quantity, year=year
             )[0]
-
-
-#     ds = xr.open_zarr(
-#         store=self.prechunked_zarr_store,
-#         group=quantity + "_" + gcm + "_" + scenario,
-#         consolidated=False
-#     )
-#     yield ds.sel(time=slice(datetime(year, 1, 1), datetime(year + 1, 1, 1)))
 
 
 class Prechunker:

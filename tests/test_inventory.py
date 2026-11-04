@@ -7,6 +7,7 @@ import tempfile as temp
 
 from hazard import get_inventory_hazards
 from hazard.docs_store import DocStore
+from hazard.inventory import Colormap, MapInfo
 from hazard.onboard.general_onboarding import initialize_class
 from hazard.utilities import zarr_utilities
 from hazard.utilities.s3_utilities import get_store  # type: ignore
@@ -15,7 +16,10 @@ from hazard.utilities.s3_utilities import get_store  # type: ignore
 def test_create_inventory(test_output_dir):
     """Create inventory for the published hazards and write into the test output
     directory (see hazard.get_inventory_hazards for which hazards are included).
+
+    With heat_v3, the v3 chronic heat indicators replace the v2 ones.
     """
+    heat_v3 = True
     # zarr_utilities.set_credential_env_variables()
 
     docs_store = DocStore(
@@ -24,7 +28,7 @@ def test_create_inventory(test_output_dir):
         )
     )
 
-    hazard_map = get_inventory_hazards()
+    hazard_map = get_inventory_hazards(heat_v3=heat_v3)
     models = [
         initialize_class(hazard, hazard_map, source_dir_base=test_output_dir)
         for hazard in hazard_map
@@ -34,6 +38,31 @@ def test_create_inventory(test_output_dir):
     # docs_store.write_inventory_json(json_str)
     for model in models:
         docs_store.update_inventory(model.inventory())
+
+
+def test_colormap_scaling():
+    """Colormaps are linear by default; log scaling requires a positive minimum below the maximum."""
+    args = dict(name="heating", max_value=100.0, units="m")
+    assert Colormap(min_value=0.0, **args).scaling == "linear"
+    assert Colormap(min_value=0.1, scaling="log", **args).scaling == "log"
+    with pytest.raises(ValueError, match="min_value > 0"):
+        Colormap(min_value=0.0, scaling="log", **args)
+    with pytest.raises(ValueError, match="max_value > min_value"):
+        Colormap(min_value=200.0, scaling="log", **args)
+
+
+def test_map_info_bounds_omitted_if_none():
+    """bounds (deprecated in favour of bbox) is in the inventory JSON only if given."""
+    colormap = Colormap(name="heating", min_value=0.0, max_value=1.0, units="m")
+    without = MapInfo(colormap=colormap, path="p_map", source="map_array_pyramid")
+    assert "bounds" not in without.model_dump() and "bbox" in without.model_dump()
+    with_bounds = MapInfo(
+        colormap=colormap,
+        path="p_map",
+        source="map_array_pyramid",
+        bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
+    )
+    assert with_bounds.model_dump()["bounds"] == with_bounds.bounds
 
 
 @pytest.mark.skip(reason="just example")

@@ -1,208 +1,73 @@
 """Module for calculating indicators of days exceeding wet-bulb globe temperature (WBGT) thresholds."""
 
 import logging
-import os
-from contextlib import ExitStack
-from pathlib import PurePosixPath
-from typing import Sequence
-from typing_extensions import List
+from typing_extensions import Dict
 
 import numpy as np
 import xarray as xr
 
-from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.inventory import HazardResource
 
 from hazard.models.multi_year_average import (
-    BatchItem,
-    Indicator,
     ThresholdBasedAverageIndicator,
 )
-from hazard.protocols import OpenDataset
-from hazard.sources.osc_zarr import OscZarr
-from hazard.utilities.tiles import create_tiles_for_resource
+from hazard.models.indicator_conventions import (
+    indicator_description,
+    threshold_indicator_resource,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class WetBulbGlobeTemperatureAboveIndicator(
-    ThresholdBasedAverageIndicator,
-):
-    """Calculates days exceeding specified WBGT temperature thresholds based on climate data for various scenarios and years, storing results for global heat risk assessment.
+class DaysWBGTAboveIndicator(ThresholdBasedAverageIndicator):
+    """Days per year with daily-mean and daily-maximum wet-bulb globe temperature (WBGT) above thresholds.
 
-    Attributes
-        threshold_temps_c : List[float]
-            Temperature thresholds in Celsius for calculating exceedance days.
-        window_years : int
-            Number of years over which to average data.
-        gcms : Iterable[str]
-            Climate models to use for data analysis.
-        scenarios : Iterable[str]
-            Emission scenarios to consider for projections.
-        central_year_historical : int
-            Central year for historical scenario calculations.
-        central_years : Iterable[int]
-            Central years for projected scenario calculations.
-
+    Three indicators are produced. "mean" and "max" are from the daily mean and daily maximum
+    of near-surface temperature respectively, the water vapour partial pressure being
+    taken to be constant through the day. "444" is for the ILO's 4+4+4 model of hourly WBGT
+    during a 12-hour working day (4 hours at the maximum, 4 at the mean and 4 halfway between):
+    days per year, each day counting as the fraction of its working hours above the threshold
+    (see wet_bulb_globe_temp.md).
     """
 
-    def __init__(
-        self,
-        threshold_temps_c: Sequence[float] = [
-            5,
-            10,
-            15,
-            20,
-            25,
-            30,
-            35,
-            40,
-            45,
-            50,
-            55,
-            60,
-        ],
-        window_years: int = 20,
-        gcms: Sequence[str] = [
-            "ACCESS-CM2",
-            "CMCC-ESM2",
-            "CNRM-CM6-1",
-            "MPI-ESM1-2-LR",
-            "MIROC6",
-            "NorESM2-MM",
-        ],
-        scenarios: Sequence[str] = [
-            "historical",
-            "ssp126",
-            "ssp245",
-            "ssp370",
-            "ssp585",
-        ],
-        central_year_historical: int = 2005,
-        central_years: Sequence[int] = [2030, 2040, 2050, 2060, 2070, 2080, 2090],
-    ):
-        """Initialize the WBGT indicator with specified thresholds, climate models, and scenarios.
+    quantities = ["tas", "tasmax", "hurs"]
 
-        Args:
-            threshold_temps_c : Sequence[float]
-                Temperature thresholds for exceedance calculations in Celsius.
-            window_years : int
-                Number of years for averaging data.
-            gcms : Sequence[str]
-                Global Climate Models to include.
-            scenarios : Sequence[str]
-                Emission scenarios to evaluate.
-            central_year_historical : int
-                Central year for historical averages.
-            central_years : Sequence[int]
-                Target years for future scenario calculations.
+    # WBGT thresholds in °C: 2 °C steps where the ILO work-capacity curves are steep, 4 °C where flat
+    default_thresholds = [20, 24, 26, 28, 30, 32, 34, 36, 38, 40, 44]
 
-        """
-        super().__init__(
-            window_years=window_years,
-            gcms=gcms,
-            scenarios=scenarios,
-            central_year_historical=central_year_historical,
-            central_years=central_years,
-        )
-        self.threshold_temps_c = threshold_temps_c
-
-    def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
-        logger.info(f"Starting calculation for year {year}")
-        with ExitStack() as stack:
-            tas = stack.enter_context(
-                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
-            ).tas
-            hurs = stack.enter_context(
-                source.open_dataset_year(item.gcm, item.scenario, "hurs", year)
-            ).hurs
-            results = self._days_wbgt_above_indicators(tas, hurs)
-        path = item.resource.path.format(
-            gcm=item.gcm, scenario=item.scenario, year=item.central_year
-        )
-        assert isinstance(item.resource.map, MapInfo)
-        result = [
-            Indicator(
-                results,
-                PurePosixPath(path),
-                item.resource.map.bounds,
-            )
-        ]
-        logger.info(f"Calculation complete for year {year}")
-        return result
-
-    def _days_wbgt_above_indicators(
-        self, tas: xr.DataArray, hurs: xr.DataArray
-    ) -> xr.DataArray:
-        """Create DataArrays containing indicators the thresholds for a single year."""
-        tas_c = tas - 273.15  # convert from K to C
-        # vpp is water vapour partial pressure in kPa
+    def _single_year_arrays(
+        self, inputs: Dict[str, xr.DataArray]
+    ) -> Dict[str, xr.DataArray]:
+        tas_c = inputs["tas"] - 273.15  # convert from K to °C
+        # water vapour partial pressure in hPa, from the daily mean temperature and relative
+        # humidity; taken to be constant through the day, so used for the maximum as well
+        hurs = inputs["hurs"].clip(0.0, 100.0)
         vpp = (hurs / 100.0) * 6.105 * np.exp((17.27 * tas_c) / (237.7 + tas_c))
-        wbgt = 0.567 * tas_c + 0.393 * vpp + 3.94
-        scale = 365.0 / len(wbgt.time)
-        if any(coord not in wbgt.coords.keys() for coord in ["lat", "lon", "time"]):
-            raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
-        coords = {
-            "index": self.threshold_temps_c,
-            "lat": wbgt.coords["lat"].values,
-            "lon": wbgt.coords["lon"].values,
+        wbgt_mean = 0.567 * tas_c + 0.393 * vpp + 3.94
+        del tas_c, hurs  # limit peak memory
+        wbgt_max = 0.567 * (inputs["tasmax"] - 273.15) + 0.393 * vpp + 3.94
+        mean, max_ = self._days_above(wbgt_mean), self._days_above(wbgt_max)
+        halfway = self._days_above((wbgt_mean + wbgt_max) / 2.0)
+        return {"mean": mean, "max": max_, "444": (mean + halfway + max_) / 3.0}
+
+    def _resources(self) -> Dict[str, HazardResource]:
+        description = indicator_description("wet_bulb_globe_temp.md", self.run)
+        display_names = {
+            "mean": "Days with daily-mean wet-bulb globe temperature above threshold in °C ({gcm})",
+            "max": "Days with daily-maximum wet-bulb globe temperature above threshold in °C ({gcm})",
+            "444": "Working days with wet-bulb globe temperature above threshold in °C, ILO 4+4+4 ({gcm})",
         }
-        output = xr.DataArray(coords=coords, dims=list(coords.keys()))
-        for i, threshold_c in enumerate(self.threshold_temps_c):
-            output[i, :, :] = xr.where(wbgt > threshold_c, scale, 0.0).sum(dim=["time"])
-        return output
-
-    def create_maps(self, source: OscZarr, target: OscZarr):
-        """Create map images."""
-        create_tiles_for_resource(source, target, self._resource())
-
-    def _resource(self) -> HazardResource:
-        """Create resource."""
-        with open(
-            os.path.join(os.path.dirname(__file__), "wet_bulb_globe_temp.md"), "r"
-        ) as f:
-            description = f.read().replace("\u00c2\u00b0", "\u00b0")
-        resource = HazardResource(
-            hazard_type="ChronicHeat",
-            indicator_id="days_wbgt_above",
-            indicator_model_id=None,
-            indicator_model_gcm="{gcm}",
-            params={"gcm": list(self.gcms)},
-            path="chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}",
-            display_name="Days with wet-bulb globe temperature above threshold in °C ({gcm})",
-            description=description,
-            resolution="0.25°",
-            license="Creative Commons",
-            source="",
-            version="",
-            display_groups=[
-                "Days with wet-bulb globe temperature above threshold in °C"
-            ],  # display names of groupings
-            group_id="",
-            map=MapInfo(  # type: ignore[call-arg] # has a default value for bbox
-                colormap=Colormap(
-                    name="heating",
-                    nodata_index=0,
-                    min_index=1,
-                    min_value=0.0,
-                    max_value=365,
-                    max_index=255,
-                    units="days/year",
-                ),
-                bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
-                bbox=[-180.0, -85.0, 180.0, 85.0],
-                path="maps/chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}_map",
-                index_values=self.threshold_temps_c,
-                source="map_array_pyramid",
-            ),
-            units="days/year",
-            scenarios=[
-                Scenario(id="historical", years=[self.central_year_historical]),
-                Scenario(id="ssp126", years=list(self.central_years)),
-                Scenario(id="ssp245", years=list(self.central_years)),
-                Scenario(id="ssp370", years=list(self.central_years)),
-                Scenario(id="ssp585", years=list(self.central_years)),
-            ],
-        )
-        return resource
+        return {
+            key: threshold_indicator_resource(
+                run=self.run,
+                thresholds=self.thresholds,
+                indicator_id=f"days_wbgt_{key}_above",
+                path_name=f"days_wbgt_{key}_above",
+                display_name=display_name,
+                display_group="Days with wet-bulb globe temperature above threshold in °C",
+                description=description,
+                units="days/year",
+                max_value=365.0,
+            )
+            for key, display_name in display_names.items()
+        }

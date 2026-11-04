@@ -284,8 +284,12 @@ class OscZarr(ReadWriteDataArray):
                 da_norm.dims[0]
             ].data,  # the index dimension; allow to have name other than 'index'
             chunks=chunks,
+            index_units=da_norm[da_norm.dims[0]].attrs.get("units", ""),
+            units=da_norm.attrs.get("units"),
         )
-        z[:, :, :] = data[:, :, :]
+        # np.asarray computes lazy (e.g. dask) data, such as arrays read from a store: zarr
+        # does not convert values that cover whole chunks, so fails to encode those itself
+        z[:, :, :] = np.asarray(data)
 
     def write_slice(
         self, path, z_slice: slice, y_slice: slice, x_slice: slice, da: np.ndarray

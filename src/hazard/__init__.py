@@ -12,9 +12,12 @@ from hazard.onboard.flopros_flood import FLOPROSFloodStandardOfProtection
 from hazard.onboard.global_seismic_hazard_v2023_1 import GEMSeismicHazard
 from hazard.onboard.indicator_model_onboarder import (
     DaysTasAboveIndicator,
+    DaysTasAboveIndicatorDeprecated,
+    DaysWBGTAboveIndicator,
     DegreeDays,
     DroughtIndicator,
     HeatingCoolingDegreeDays,
+    HeatingCoolingDegreeDaysDeprecated,
     WaterTemperatureAboveIndicator,
     WetBulbGlobeTemperatureAboveIndicator,
     WorkLossIndicator,
@@ -38,6 +41,8 @@ from hazard.onboard.wri_aqueduct_water_risk import WRIAqueductWaterRisk
 _onboarder_classes: list[Type[Onboarder]] = [
     DavydzenkaEtAlLandSubsidence,
     DaysTasAboveIndicator,
+    DaysTasAboveIndicatorDeprecated,
+    DaysWBGTAboveIndicator,
     DegreeDays,
     DroughtIndicator,
     ETHZurichLitPop,
@@ -45,6 +50,7 @@ _onboarder_classes: list[Type[Onboarder]] = [
     FLOPROSFloodStandardOfProtection,
     GEMSeismicHazard,
     HeatingCoolingDegreeDays,
+    HeatingCoolingDegreeDaysDeprecated,
     IPCCDrought,
     IRISIndicator,
     JRCLandslides,
@@ -73,9 +79,9 @@ _inventory_classes: list[Type[Onboarder]] = [
     DegreeDays,
     Jupiter,
     WorkLossIndicator,
-    DaysTasAboveIndicator,
+    DaysTasAboveIndicatorDeprecated,
     IRISIndicator,
-    HeatingCoolingDegreeDays,
+    HeatingCoolingDegreeDaysDeprecated,
     WaterTemperatureAboveIndicator,
     WetBulbGlobeTemperatureAboveIndicator,
     WRIAqueductWaterRisk,
@@ -87,6 +93,14 @@ _inventory_classes: list[Type[Onboarder]] = [
     FireRiskIndicators,
     JRCRiverFlood,
 ]
+
+# v3 replacements of the v2 chronic heat indicators: used in place of these in the inventory
+# when get_inventory_hazards is called with heat_v3=True
+_inventory_heat_v3_replacements: Dict[Type[Onboarder], Type[Onboarder]] = {
+    DaysTasAboveIndicatorDeprecated: DaysTasAboveIndicator,
+    HeatingCoolingDegreeDaysDeprecated: HeatingCoolingDegreeDays,
+    WetBulbGlobeTemperatureAboveIndicator: DaysWBGTAboveIndicator,
+}
 
 hazard_map: Dict[str, Type[Onboarder]] = {
     cls.__name__: cls for cls in _onboarder_classes
@@ -101,8 +115,17 @@ def get_hazards_onboarding() -> Dict[str, Type[Onboarder]]:
     return hazard_map
 
 
-def get_inventory_hazards() -> Dict[str, Type[Onboarder]]:
+def get_inventory_hazards(heat_v3: bool = False) -> Dict[str, Type[Onboarder]]:
     """Return the subset of onboardable hazards considered ready to be published in
     the inventory/catalog -- see _inventory_classes.
+
+    Args:
+        heat_v3 (bool, optional): If True, the v3 chronic heat indicators replace the v2 ones
+            (see _inventory_heat_v3_replacements), in the same positions. Defaults to False.
     """
-    return inventory_hazard_map
+    if not heat_v3:
+        return inventory_hazard_map
+    classes = [
+        _inventory_heat_v3_replacements.get(cls, cls) for cls in _inventory_classes
+    ]
+    return {cls.__name__: cls for cls in classes}

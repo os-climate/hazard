@@ -497,37 +497,37 @@ class WRIAqueductWaterRisk(Onboarder):
         resource_map = {
             "water_demand": {
                 "units": "centimetres/year",
-                "display": "Water demand (Aqueduct 4.0)",
+                "display": "Water demand (WRI)",
                 "min_value": 0.0,
                 "max_value": 75,
             },
             "water_supply": {
                 "units": "centimetres/year",
-                "display": "Water supply (Aqueduct 4.0)",
+                "display": "Water supply (WRI)",
                 "min_value": 0.0,
                 "max_value": 1500,
             },
             "water_stress": {
                 "units": "",
-                "display": "Water stress (Aqueduct 4.0)",
+                "display": "Water stress (WRI)",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
             "water_depletion": {
                 "units": "",
-                "display": "Water depletion (Aqueduct 4.0)",
+                "display": "Water depletion (WRI)",
                 "min_value": 0.0,
                 "max_value": 2.0,
             },
             "water_stress_category": {
                 "units": "",
-                "display": "Water stress category (Aqueduct 4.0)",
+                "display": "Water stress category (WRI)",
                 "min_value": -1,
                 "max_value": 4,
             },
             "water_depletion_category": {
                 "units": "",
-                "display": "Water depletion category (Aqueduct 4.0)",
+                "display": "Water depletion category (WRI)",
                 "min_value": -5,
                 "max_value": 5,
             },

@@ -2,7 +2,7 @@ import logging
 import posixpath
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Dict, Generator, Iterator, List, Optional
+from typing import Dict, Generator, List, Optional
 
 import fsspec
 import s3fs  # type: ignore
@@ -28,6 +28,8 @@ class NexGddpCmip6(OpenDataset):
     """
 
     bucket: str = "nex-gddp-cmip6"
+    # resolution of the (downscaled) data
+    resolution: str = "0.25°"
 
     def __init__(
         self,
@@ -129,7 +131,7 @@ class NexGddpCmip6(OpenDataset):
         chunks=None,
         catalog_url: Optional[str] = None,
         collection_id: Optional[str] = None,  # type: ignore
-    ) -> Iterator[xr.Dataset]:
+    ) -> Generator[xr.Dataset, None, None]:
         # use "s3://bucket/root" ?
         if catalog_url is not None or collection_id is not None:
             assert catalog_url is not None and collection_id is not None
@@ -139,17 +141,10 @@ class NexGddpCmip6(OpenDataset):
         else:
             path, _ = self.path(gcm, scenario, quantity, year)
         logger.info(f"Opening DataSet, relative path={path}, chunks={chunks}")
-        ds: Optional[xr.Dataset] = None
-        f = None
-        try:
-            f = self.fs.open(path, "rb")
-            ds = xr.open_dataset(f, chunks=chunks)
+        # the file must stay open while the (lazily read) dataset is used; both are closed on exit,
+        # the dataset first
+        with self.fs.open(path, "rb") as f, xr.open_dataset(f, chunks=chunks) as ds:
             yield ds
-        finally:
-            if ds is not None:
-                ds.close()
-            if f is not None:
-                f.close()
 
     def search_stac_items(
         self, catalog_url: str, search_params: Dict

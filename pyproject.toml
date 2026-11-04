@@ -124,7 +124,7 @@ all = { composite = ["lint", "mypy", "pytest"] }
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [project.scripts]
-os_climate_hazard = "hazard.cli:cli"
+os_climate_hazard = "hazard.cli.cli_legacy:cli"
 osc_hazard = "hazard.cli:app"
 
 [tool.ruff]

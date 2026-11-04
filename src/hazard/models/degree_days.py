@@ -2,9 +2,7 @@
 
 import logging
 import os
-from contextlib import ExitStack
-from enum import Enum
-from pathlib import PosixPath, PurePosixPath
+from pathlib import PurePosixPath
 from typing import Sequence
 from typing_extensions import Dict, Iterable, List, Optional
 
@@ -16,9 +14,12 @@ from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import (
     BatchItem,
-    Indicator,
-    MultiYearAverageIndicatorBase,
+    RunConfig,
     ThresholdBasedAverageIndicator,
+)
+from hazard.models.indicator_conventions import (
+    indicator_description,
+    threshold_indicator_resource,
 )
 from hazard.sources.osc_zarr import OscZarr
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
@@ -27,6 +28,100 @@ from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
+
+
+class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
+    """Cooling and heating degree days: the time integral of daily-mean temperature above or below thresholds.
+
+    Two indicators are produced, "above" (cooling degree days) and "below" (heating degree
+    days), from the daily mean near-surface temperature ('tas'), each with its own reference
+    temperatures (thresholds).
+    """
+
+    quantities = ["tas"]
+
+    # reference temperatures in °C. Heating: from 10 °C, the balance point of well-insulated buildings
+    # with high internal gains, through the UK base of 15.5 °C and 18 °C (about 65 °F, the US base),
+    # to 22 °C for buildings heated to high internal temperatures or with low internal gains
+    default_heating_thresholds = [10, 12, 14, 15.5, 18, 22]
+    default_cooling_thresholds = [18, 22, 24]
+
+    def __init__(
+        self,
+        heating_thresholds: Optional[Sequence[float]] = None,
+        cooling_thresholds: Optional[Sequence[float]] = None,
+        run: Optional[RunConfig] = None,
+    ):
+        """Construct the model.
+
+        Args:
+            heating_thresholds (Optional[Sequence[float]], optional): Reference temperatures of the heating
+                degree days in °C. Defaults to default_heating_thresholds.
+            cooling_thresholds (Optional[Sequence[float]], optional): Reference temperatures of the cooling
+                degree days in °C. Defaults to default_cooling_thresholds.
+            run (Optional[RunConfig], optional): GCMs, scenarios, periods and source dataset of the
+                run. Defaults to RunConfig(), i.e. the v3 settings.
+
+        """
+        self.heating_thresholds = list(
+            self.default_heating_thresholds
+            if heating_thresholds is None
+            else heating_thresholds
+        )
+        self.cooling_thresholds = list(
+            self.default_cooling_thresholds
+            if cooling_thresholds is None
+            else cooling_thresholds
+        )
+        # the thresholds of the model: all of those of the resources
+        super().__init__(
+            thresholds=sorted(set(self.heating_thresholds + self.cooling_thresholds)),
+            run=run,
+        )
+
+    def resource_thresholds(self, key: str) -> List[float]:
+        """Thresholds of the cooling ("above") or heating ("below") degree days."""
+        return self.cooling_thresholds if key == "above" else self.heating_thresholds
+
+    def _single_year_arrays(
+        self, inputs: Dict[str, xr.DataArray]
+    ) -> Dict[str, xr.DataArray]:
+        tas_c = inputs["tas"] - 273.15  # convert from K to °C
+        scale = 365.0 / len(tas_c["time"])  # normalize to 365 days
+        return {
+            "above": self._stack_thresholds(
+                lambda threshold: scale
+                * (tas_c - threshold).clip(min=0.0).sum(dim="time"),
+                self.cooling_thresholds,
+            ),
+            "below": self._stack_thresholds(
+                lambda threshold: scale
+                * (threshold - tas_c).clip(min=0.0).sum(dim="time"),
+                self.heating_thresholds,
+            ),
+        }
+
+    def _resources(self) -> Dict[str, HazardResource]:
+        description = indicator_description("heating_cooling_degree_days.md", self.run)
+        return {
+            key: threshold_indicator_resource(
+                run=self.run,
+                thresholds=self.resource_thresholds(key),
+                indicator_id=f"{name}_degree_days",
+                path_name=f"{name}_degree_days",
+                display_name=f"{name.capitalize()} degree days ({key} threshold in °C) "
+                + "({gcm})",
+                display_group="Degree days",
+                description=description,
+                # parsable by pint as a temperature difference times time ("degree days" is not)
+                units="°C day",
+                max_value=max_value,
+            )
+            for key, name, max_value in [
+                ("above", "cooling", 2000.0),
+                ("below", "heating", 5000.0),
+            ]
+        }
 
 
 class DegreeDays(IndicatorModel[BatchItem]):
@@ -252,191 +347,3 @@ class DegreeDays(IndicatorModel[BatchItem]):
                 gcm=item.gcm, scenario=item.scenario, year=item.central_year
             )
         )
-
-
-class AboveBelow(Enum):
-    """Enumeration for threshold comparison results.
-
-    Attributes
-        BELOW (int): Represents a value below the threshold.
-        ABOVE (int): Represents a value above the threshold.
-
-    """
-
-    BELOW = 0
-    ABOVE = 1
-
-
-class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
-    """Computes heating and cooling degree days based on temperature thresholds."""
-
-    def __init__(
-        self,
-        threshold_temps_c: Sequence[float] = [16, 20, 24],
-        window_years: int = MultiYearAverageIndicatorBase._default_window_years,
-        gcms: Iterable[str] = MultiYearAverageIndicatorBase._default_gcms,
-        scenarios: Iterable[str] = MultiYearAverageIndicatorBase._default_scenarios,
-        central_year_historical: int = MultiYearAverageIndicatorBase._default_central_year_historical,
-        central_years: Iterable[
-            int
-        ] = MultiYearAverageIndicatorBase._default_central_years,
-    ):
-        """Create indicators based on average number of days above different temperature thresholds.
-
-        Args:
-            threshold_temps_c (Sequence[float], optional): Temperature thresholds in degrees C.
-            Defaults to [14, 16, 20, 24, 28].
-            window_years (int, optional): Number of years for average. Defaults to 20.
-            gcms (Iterable[str], optional): Global Circulation Models to include in calculation.
-            Defaults to ["ACCESS-CM2", "CMCC-ESM2", "CNRM-CM6-1", "MPI-ESM1-2-LR", "MIROC6", "NorESM2-MM"].
-            scenarios (Iterable[str], optional): Scenarios to include in calculation.
-            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
-            central_year_historical (int): Central year to include in calculation for historical scenario.
-            Defaults to 2005.
-            central_years (Iterable[int], optional): Central years to include in calculation.
-            Defaults to [2010, 2030, 2040, 2050].
-
-        """
-        super().__init__(
-            window_years=window_years,
-            gcms=gcms,
-            scenarios=scenarios,
-            central_year_historical=central_year_historical,
-            central_years=central_years,
-        )
-        self.threshold_temps_c = threshold_temps_c
-        self.resource = self._resource()
-
-    def inventory(self) -> Iterable[HazardResource]:
-        """Get the inventory item(s)."""
-        return list(self._resource().values())
-
-    def _calculate_single_year_indicators(
-        self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
-        """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
-        logger.info(f"Starting calculation for year {year}")
-        with ExitStack() as stack:
-            tas = stack.enter_context(
-                source.open_dataset_year(item.gcm, item.scenario, "tas", year)
-            ).tas
-            above = self._degree_days_indicator(tas, year, AboveBelow.ABOVE)
-            below = self._degree_days_indicator(tas, year, AboveBelow.BELOW)
-        logger.info(f"Calculation complete for year {year}")
-        bounds_above = (
-            self.resource["above"].map.bounds if self.resource["above"].map else []
-        )
-        bounds_below = (
-            self.resource["below"].map.bounds if self.resource["below"].map else []
-        )
-        return [
-            Indicator(
-                above,
-                PurePosixPath(
-                    self.resource["above"].path.format(
-                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
-                    )
-                ),
-                bounds_above,
-            ),
-            Indicator(
-                below,
-                PurePosixPath(
-                    self.resource["below"].path.format(
-                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
-                    )
-                ),
-                bounds_below,
-            ),
-        ]
-
-    def _degree_days_indicator(
-        self, tas: xr.DataArray, year: int, above_below: AboveBelow
-    ) -> xr.DataArray:
-        if any(coord not in tas.coords.keys() for coord in ["lat", "lon", "time"]):
-            raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
-        if (tas["time"].dt.year != year).any():
-            raise ValueError("unexpected year found")
-        # normalize to 365 days
-        scale = 365.0 / len(tas["time"])
-        # will raise error if tas not present
-        da = xr.DataArray(
-            coords={
-                "index": self.threshold_temps_c,
-                "lat": tas.coords["lat"],
-                "lon": tas.coords["lon"],
-            },
-            dims=["index", "lat", "lon"],
-        )
-        for i, threshold in enumerate(self.threshold_temps_c):
-            threshold_k = 273.15 + threshold
-            da[i, :, :] = (
-                scale
-                * xr.where(tas > threshold_k, tas - threshold_k, 0).sum(dim=["time"])
-                if above_below == AboveBelow.ABOVE
-                else scale
-                * xr.where(tas < threshold_k, threshold_k - tas, 0).sum(dim=["time"])
-            )
-        return da
-
-    def create_maps(self, source: OscZarr, target: OscZarr):
-        """Create map images."""
-        for resource in self.inventory():
-            create_tiles_for_resource(source, target, resource)
-
-    def _resource(self) -> Dict[str, HazardResource]:  # type: ignore[override]
-        # Unsure why this returns a dict vs a single resource
-        resources: Dict[str, HazardResource] = {}
-        # for above_below in ["above", "below"]:
-        for above_below in ["above"]:
-            with open(
-                os.path.join(os.path.dirname(__file__), "degree_days_tas.md"), "r"
-            ) as f:
-                description = f.read()
-            path = (
-                f"chronic_heat/osc/v2/mean_degree_days_{above_below}"
-                + "_index_{gcm}_{scenario}_{year}"
-            )
-            resource = HazardResource(
-                hazard_type="ChronicHeat",
-                indicator_id=f"mean_degree_days/{above_below}/index",
-                indicator_model_gcm="{gcm}",
-                path=path,
-                display_name=f"Mean degree days {above_below}"
-                + " threshold in °C ({gcm})",
-                attribution="",
-                description=description,
-                params={"gcm": ["ACCESS-CM2"]},
-                group_id="",
-                display_groups=["Mean degree days"],
-                resolution="0.25°",
-                map=MapInfo(  # type:ignore
-                    colormap=Colormap(
-                        name="heating",
-                        nodata_index=0,
-                        min_index=1,
-                        min_value=0.0,
-                        max_index=255,
-                        max_value=2000.0,
-                        units="degree days",
-                    ),
-                    bounds=[
-                        (-180.0, 85.0),
-                        (180.0, 85.0),
-                        (180.0, -60.0),
-                        (-180.0, -60.0),
-                    ],
-                    index_values=self.threshold_temps_c,
-                    path=path + "_map",
-                    source="map_array",
-                ),
-                units="degree days",
-                scenarios=[
-                    Scenario(id="historical", years=[self.central_year_historical]),
-                    Scenario(id="ssp126", years=list(self.central_years)),
-                    Scenario(id="ssp245", years=list(self.central_years)),
-                    Scenario(id="ssp585", years=list(self.central_years)),
-                ],
-            )
-            resources[above_below] = resource
-        return resources

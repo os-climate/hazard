@@ -13,18 +13,40 @@ from pytest import approx
 
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.docs_store import DocStore
-from hazard.models.degree_days import BatchItem, DegreeDays, HeatingCoolingDegreeDays
+from hazard.models.degree_days import (
+    BatchItem,
+    DegreeDays,
+    HeatingCoolingDegreeDays,
+)
+from hazard.models.deprecated_v2 import HeatingCoolingDegreeDaysDeprecated
+from hazard.models.multi_year_average import MULTI_MODEL_ID, RunConfig
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr
-from tests.conftest import (
+from tests.mocks import (
     TestSource,
     TestTarget,
-    _create_test_dataset_averaged,
-    _create_test_datasets_tas,
+    create_test_datasets_hurs,
+    create_test_datasets_tas,
+    create_test_source_tas_tasmax_hurs,
 )
 
-from .conftest import _create_test_datasets_hurs
+
+def _create_test_dataset_averaged() -> xr.Dataset:
+    """An example 3x3 array that might result from some operation averaging over time."""
+    temperature = np.array(
+        [[293.0, 298.0, 310.0], [304.0, 302.0, 300.0], [308.0, 290.0, 294.0]]
+    )
+    lat = np.arange(3.0, 0.0, -1.0)
+    lon = np.arange(0.0, 3.0, 1.0)
+    ds = xr.Dataset(
+        data_vars=dict(
+            tasmax=(["lat", "lon"], temperature),
+        ),
+        coords=dict(lat=lat, lon=lon),
+        attrs=dict(description="Test array"),
+    )
+    return ds
 
 
 def test_degree_days_mocked():
@@ -32,7 +54,7 @@ def test_degree_days_mocked():
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
-    source = TestSource(_create_test_datasets_tas(), [gcm])
+    source = TestSource(create_test_datasets_tas(), [gcm])
     target = TestTarget()
     # cut down the transform
     model = DegreeDays(
@@ -56,13 +78,67 @@ def test_degree_days_mocked():
     )
 
 
+def test_heating_cooling_degree_days_v3_mocked():
+    """Test the cooling (above) and heating (below) degree days indicators, including the multi-model mean."""
+    gcms = ["ACCESS-CM2", "EC-Earth3"]
+    scenario = "ssp585"
+    year = 2030
+    # different thresholds for heating and cooling
+    thresholds = {"cooling": [18.0, 24.0], "heating": [10.0, 15.5, 18.0]}
+    source = create_test_source_tas_tasmax_hurs(gcms)
+    target = TestTarget()
+    model = HeatingCoolingDegreeDays(
+        heating_thresholds=thresholds["heating"],
+        cooling_thresholds=thresholds["cooling"],
+        run=RunConfig(
+            window_years=2,
+            gcms=gcms,
+            scenarios=[scenario],
+            central_years=[year],
+        ),
+    )
+    model.run_all(source, target, debug_mode=True)
+    expected = {"cooling": 0.0, "heating": 0.0}
+    for y in [2029, 2030]:
+        tas = source.open_dataset_year(gcms[0], scenario, "tas", y).tas
+        scale = 365.0 / len(tas.time)
+        for name, sign in [("cooling", 1.0), ("heating", -1.0)]:
+            expected[name] = (
+                expected[name]
+                + np.stack(
+                    [
+                        scale
+                        * xr.where(
+                            sign * (tas - (th + 273.15)) > 0,
+                            sign * (tas - (th + 273.15)),
+                            0.0,
+                        ).sum(dim="time")
+                        for th in thresholds[name]
+                    ]
+                )
+                / 2.0
+            )
+    # the test data should give both cooling and heating degree days
+    assert (expected["cooling"] > 0).any() and (expected["heating"] > 0).any()
+    for name in ["cooling", "heating"]:
+        for gcm in gcms + [MULTI_MODEL_ID]:
+            result = target.datasets[
+                f"chronic_heat/osc/v3/{name}_degree_days_{gcm}_{scenario}_{year}"
+            ]
+            assert result.dims[0] == "threshold"
+            assert list(result["threshold"].values) == thresholds[name]
+            assert result["threshold"].attrs["units"] == "°C"
+            assert result.attrs["units"] == "°C day"
+            np.testing.assert_allclose(result.values, expected[name], rtol=1e-5)
+
+
 def test_work_loss_mocked() -> None:
     """Test degree days calculation based on mocked data."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
-    test_sets = _create_test_datasets_tas(quantity="tas")
-    test_sets.update(_create_test_datasets_hurs())
+    test_sets = create_test_datasets_tas(quantity="tas")
+    test_sets.update(create_test_datasets_hurs())
     alpha_light = (32.98, 17.81)
     alpha_medium = (30.94, 16.64)
     alpha_heavy = (24.64, 22.72)
@@ -138,7 +214,7 @@ def test_degree_days(test_output_dir):  # noqa: F811
     store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard", "hazard.zarr"))
     target = OscZarr(store=store)
     # cut down the model and run
-    model = HeatingCoolingDegreeDays(
+    model = HeatingCoolingDegreeDaysDeprecated(
         window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]]
     )
     # model = DegreeDays(window_years=1, gcms=[gcm], scenarios=[scenario], central_years=[years[0]])

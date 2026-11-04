@@ -76,6 +76,11 @@ class Ukcp18(OpenDataset):
         response.raise_for_status()
         return response.json()["access_token"]
 
+    @property
+    def resolution(self) -> str:
+        """Resolution of the data, e.g. "12 km"."""
+        return self._resolution.replace("km", " km")
+
     def gcms(self) -> List[str]:
         return list("ukcp18")
 

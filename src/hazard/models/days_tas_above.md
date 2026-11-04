@@ -1,10 +1,7 @@
-Days per year for which the average near-surface temperature 'tas' is above a threshold specified in °C.
+Days per year for which the daily-mean near-surface temperature 'tas' or the daily-maximum near-surface temperature 'tasmax' is above a threshold specified in °C:
 
 $$
-I = \frac{365}{n_y} \sum_{d = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^\text{avg}_d > T^\text{ref}}, \qquad i = \mathbb{E}(I) \nonumber
+I^\text{mean}(T^\text{ref}) = \frac{365}{n_y} \sum_{d = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^\text{avg}_d > T^\text{ref}}, \qquad I^\text{max}(T^\text{ref}) = \frac{365}{n_y} \sum_{d = 1}^{n_y} \boldsymbol{\mathbb{1}}_{\; \, T^\text{max}_d > T^\text{ref}}
 $$
 
-$i$ is the indicator and $I$ the number of days above the threshold in a single year, $T^\text{avg}_d$ is the daily average near-surface temperature for day index $d$ in °C, $n_y$ is the number of days in the year
-and $T^\text{ref}$ is the reference temperature.
-
-The expectation is estimated by averaging over a 20-year window.
+$T^\text{avg}_d$ and $T^\text{max}_d$ are the daily mean and daily maximum near-surface temperature in °C for day index $d$, $n_y$ is the number of days in the year and $T^\text{ref}$ is the threshold (reference) temperature. The indicators are the expectations of $I^\text{mean}$ and $I^\text{max}$, estimated by averaging over a 20-year window. For each indicator, the index dimension of the array is the threshold.

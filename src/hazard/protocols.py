@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator, Iterable, Iterator, List, Optional, Protocol
+from typing import Generator, Iterable, List, Optional, Protocol
 
 import xarray as xr
 
@@ -18,7 +18,7 @@ class OpenDataset(Protocol):
     @contextmanager
     def open_dataset_year(
         self, gcm: str, scenario: str, quantity: str, year: int, chunks=None
-    ) -> Iterator[xr.Dataset]: ...
+    ) -> Generator[xr.Dataset, None, None]: ...
 
 
 class ReadDataArray(Protocol):

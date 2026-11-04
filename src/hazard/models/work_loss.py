@@ -177,11 +177,8 @@ class WorkLossIndicator(MultiYearAverageIndicatorBase[WorkLossBatchItem]):
             )
             for intensity in resource.params["intensity"]
         ]
-        assert isinstance(resource.map, MapInfo)
         result = [
-            Indicator(
-                array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds
-            )
+            Indicator(array=array, path=PurePosixPath(paths[i]))
             for i, array in enumerate(results)
         ]
         logger.info(f"Calculation complete for year {year}")

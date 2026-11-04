@@ -16,7 +16,7 @@ from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import (
     BatchItem,
     Indicator,
-    ThresholdBasedAverageIndicator,
+    MultiYearAverageIndicatorBase,
 )
 from hazard.protocols import Averageable, OpenDataset
 from hazard.sources.osc_zarr import OscZarr
@@ -149,7 +149,7 @@ class FutureStreamsSource(OpenDataset):
                     f.write(chunk)
 
 
-class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
+class WaterTemperatureAboveIndicator(MultiYearAverageIndicatorBase[BatchItem]):
     """Calculates indicators of weeks with water temperatures above given thresholds.
 
     Attributes
@@ -226,7 +226,23 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
 
     def batch_items(self) -> Iterable[BatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
-        items = [item for item in super().batch_items() if item.gcm != "E2O"]
+        resource = self._resource()
+        items = [
+            BatchItem(
+                resource=resource,
+                gcm=gcm,
+                scenario=scenario,
+                central_year=central_year,
+            )
+            for gcm in self.gcms
+            if gcm != "E2O"
+            for scenario in self.scenarios
+            for central_year in (
+                [self.central_year_historical]
+                if scenario == "historical"
+                else self.central_years
+            )
+        ]
         if "E2O" in self.gcms and "historical" in self.scenarios:
             items.append(
                 BatchItem(
@@ -295,14 +311,7 @@ class WaterTemperatureAboveIndicator(ThresholdBasedAverageIndicator):
                 gcm=item.gcm, scenario=item.scenario, year=item.central_year
             )
         )
-        assert item.resource.map is not None
-        return [
-            Indicator(
-                results,
-                PurePosixPath(path),
-                item.resource.map.bounds,
-            )
-        ]
+        return [Indicator(results, PurePosixPath(path))]
 
     def _weeks_water_temp_above_indicators(
         self, input: xr.DataArray, correction: float

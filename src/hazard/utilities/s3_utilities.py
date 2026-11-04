@@ -543,6 +543,177 @@ def sync_local_to_prod(
     )
 
 
+def _local_file_matches(path: pathlib.Path, etag: str, size: int) -> bool:
+    """Check whether a local file has the same content as an S3 object with the given ETag and size.
+
+    The size is checked first so that the (more expensive) MD5 is only computed when
+    the sizes agree. An ETag containing "-" comes from a multipart upload and is not
+    an MD5 of the body, so for those objects matching size is taken as matching content.
+    """
+    if path.stat().st_size != size:
+        return False
+    if "-" in etag:
+        return True
+    return _local_etag(path) == etag
+
+
+def _sync_bucket_to_local(
+    s3_source_client,
+    source_bucket_name: str,
+    zarr_group_prefix: str,
+    zarr_dir: str,
+    array_path: str = "",
+    dry_run: bool = True,
+) -> Tuple[Set[str], Set[str], Set[str]]:
+    """Synchronize a bucket's Zarr group (or an array within it) to a local directory.
+
+    The reverse of _sync_local_to_bucket: only objects that are missing locally, or whose
+    local copy differs (see _local_file_matches), are downloaded. The bucket is only ever
+    read from. Local files with no counterpart in the bucket are reported but not removed.
+
+    Args:
+        s3_source_client: boto3 S3 client to sync from.
+        source_bucket_name (str): Name of the source bucket.
+        zarr_group_prefix (str): Bucket-side location of the zarr group (see
+        _get_boto3_client_and_bucket).
+        zarr_dir (str): Local directory of the Zarr group, i.e. /<path>/hazard.zarr.
+        array_path (str, optional): Path of the array or data set within the group to
+        sync. Defaults to "", i.e. the whole group.
+        dry_run (bool, optional): If True, log actions without executing them. Defaults to True.
+
+    Returns:
+        Tuple[Set[str], Set[str], Set[str]]: (checked, missing, different), each a
+        set of paths relative to zarr_dir. checked is every object in the bucket under
+        array_path; missing is present in the bucket but not locally; different is
+        present in both but with differing content.
+    """
+    root_path = pathlib.Path(zarr_dir)
+    # trailing "/" so that e.g. "hazard.zarr" does not also match "hazard.zarr_old"
+    prefix = _hazard_zarr_key(array_path, zarr_group_prefix).rstrip("/") + "/"
+
+    logger.info(
+        f"Syncing Bucket {source_bucket_name}/{prefix} to local path {zarr_dir}/{array_path} (dry_run={dry_run})"
+    )
+
+    objects: dict = {}  # relative path -> (key, etag, size)
+    for obj in list_objects_parallel(s3_source_client, source_bucket_name, prefix):
+        if obj["Key"].endswith("/"):
+            continue  # "directory" marker
+        path = pathlib.PurePosixPath(obj["Key"]).relative_to(zarr_group_prefix)
+        objects[path.as_posix()] = (obj["Key"], obj["ETag"], obj["Size"])
+
+    checked = set(objects)
+    missing = set(path for path in checked if not (root_path / path).is_file())
+    different = set(
+        path
+        for path in checked - missing
+        if not _local_file_matches(root_path / path, *objects[path][1:])
+    )
+    local_root = root_path / array_path
+    local_only = (
+        set(
+            (pathlib.Path(dir_path) / f).relative_to(root_path).as_posix()
+            for dir_path, _, files in os.walk(local_root)
+            for f in files
+        )
+        - checked
+        if local_root.exists()
+        else set()
+    )
+
+    def size(paths: Iterable[str]) -> int:
+        return sum(objects[path][2] for path in paths)
+
+    logger.info(
+        f"Bucket {source_bucket_name}/{prefix} contains {len(checked)} files, total size {format_size(size(checked))}"
+    )
+    logger.info(
+        f"Downloading {len(missing)} missing files ({format_size(size(missing))}) to {zarr_dir}: "
+        + _first_5_last_5(sorted(missing))
+    )
+    logger.info(
+        f"Downloading {len(different)} different files ({format_size(size(different))}) to {zarr_dir}: "
+        + _first_5_last_5(sorted(different))
+    )
+    logger.info(
+        f"Total to download: {len(missing | different)} files, {format_size(size(missing | different))}"
+    )
+    if local_only:
+        logger.info(
+            f"{len(local_only)} local files are not in the bucket (not removed): "
+            + _first_5_last_5(sorted(local_only))
+        )
+
+    if not dry_run:
+        to_download = sorted(missing | different)
+
+        def download_file(path: str):
+            local_path = root_path / path
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            # download_file writes to a temporary file and renames it on completion,
+            # so an interrupted run does not leave partial files behind
+            s3_source_client.download_file(
+                source_bucket_name, objects[path][0], str(local_path)
+            )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
+            futures = [executor.submit(download_file, path) for path in to_download]
+            completed = 0
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
+                completed += 1
+                if completed % 1000 == 0:
+                    logger.info(f"Completed {completed}/{len(to_download)}")
+        logger.info(f"Completed {completed}/{len(to_download)}")
+
+    return checked, missing, different
+
+
+def sync_prod_to_local(
+    zarr_dir: str, array_path: str = "", dry_run: bool = True
+) -> Tuple[Set[str], Set[str], Set[str]]:
+    """Synchronize the production bucket's Zarr group to a local directory, e.g. as a back-up.
+
+    Only files that are missing locally or differ from the bucket are downloaded, so the
+    first run copies everything and subsequent runs bring the copy up to date. Local files
+    no longer in the bucket are reported but kept.
+
+    The production bucket is public, so no credentials are needed: an anonymous (unsigned)
+    client is used, which also guarantees that the bucket can only be read from. The bucket
+    and zarr group prefix default to "os-climate-physical-risk" and
+    "hazard-indicators/hazard.zarr" and can be overridden by OSC_S3_BUCKET and
+    OSC_S3_HAZARD_PATH.
+
+    Args:
+        zarr_dir (str): Local directory of the Zarr group, i.e. /<path>/hazard.zarr.
+        array_path (str, optional): Path of the array or data set within the group to
+        sync. Defaults to "", i.e. the whole group.
+        dry_run (bool, optional): If True, log actions without executing them. Defaults to True.
+
+    Returns:
+        Tuple[Set[str], Set[str], Set[str]]: (checked, missing, different) relative
+        file paths, as described in _sync_bucket_to_local.
+    """
+    s3_source_client = boto3.client(
+        "s3",
+        config=botocore.client.Config(
+            signature_version=botocore.UNSIGNED, max_pool_connections=32
+        ),
+    )
+    source_bucket_name = os.environ.get("OSC_S3_BUCKET", "os-climate-physical-risk")
+    zarr_group_prefix = os.environ.get(
+        "OSC_S3_HAZARD_PATH", "hazard-indicators/hazard.zarr"
+    )
+    return _sync_bucket_to_local(
+        s3_source_client,
+        source_bucket_name,
+        zarr_group_prefix,
+        zarr_dir,
+        array_path,
+        dry_run,
+    )
+
+
 def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
     """Copy files with a specified prefix from development S3 to production S3.
 
@@ -611,6 +782,67 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
                 target_bucket_name,
                 rename=rename,
             )
+
+
+def list_objects_parallel(
+    client, bucket_name: str, prefix: str, max_workers: int = 32
+) -> List[dict]:
+    """List all objects in an S3 bucket with a given prefix, fetching pages in parallel.
+
+    list_objects_v2 returns at most 1000 keys per page and each page needs the previous
+    page's continuation token, so a single listing of a large prefix is sequential and
+    slow (around 6 minutes for the ~1M objects of the production hazard.zarr). Instead,
+    the listing is split by sub-prefix: prefixes are listed with Delimiter="/", and each
+    sub-prefix ("directory") is queued to be listed in the same way as soon as it is
+    found. The result is the same as a single listing of prefix, but in no particular
+    order. Note that parsing the responses is CPU-bound (around 0.1s per 1000 keys), which
+    limits what can be gained from threads: around 3 minutes for the production bucket.
+    For a prefix containing many small "directories" (e.g. many small Zarr arrays) this
+    makes more requests than a single listing and can be slower, so it is only worth
+    using for large listings, such as the whole bucket.
+
+    Args:
+        client : boto3.Client
+            The S3 client used for listing objects.
+        bucket_name : str
+            The name of the S3 bucket.
+        prefix : str
+            The prefix to filter objects by.
+        max_workers : int, optional
+            Number of listings to run concurrently. Defaults to 32.
+
+    Returns:
+        List[dict]
+            The listed objects, as returned in the "Contents" of list_objects_v2
+            (i.e. with "Key", "Size", "ETag" etc.).
+
+    """
+
+    def list_prefix(prefix: str) -> Tuple[List[dict], List[str]]:
+        objects: List[dict] = []
+        sub_prefixes: List[str] = []
+        for page in client.get_paginator("list_objects_v2").paginate(
+            Bucket=bucket_name, Prefix=prefix, Delimiter="/"
+        ):
+            objects.extend(page.get("Contents", []))
+            sub_prefixes.extend(cp["Prefix"] for cp in page.get("CommonPrefixes", []))
+        return objects, sub_prefixes
+
+    all_objects: List[dict] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        pending = {executor.submit(list_prefix, prefix)}
+        while pending:
+            done, pending = concurrent.futures.wait(
+                pending, return_when=concurrent.futures.FIRST_COMPLETED
+            )
+            for future in done:
+                objects, sub_prefixes = future.result()
+                all_objects.extend(objects)
+                pending |= {
+                    executor.submit(list_prefix, sub_prefix)
+                    for sub_prefix in sub_prefixes
+                }
+    return all_objects
 
 
 def list_objects(client, bucket_name, prefix):

@@ -21,11 +21,14 @@ from fsspec import FSMap  # type: ignore
 from fsspec.implementations.local import LocalFileSystem
 from pydantic import TypeAdapter
 
-from hazard.models.days_tas_above import DaysTasAboveIndicator
-from hazard.models.degree_days import DegreeDays, HeatingCoolingDegreeDays
+from hazard.models.degree_days import DegreeDays
+from hazard.models.deprecated_v2 import (
+    DaysTasAboveIndicatorDeprecated,
+    HeatingCoolingDegreeDaysDeprecated,
+    WetBulbGlobeTemperatureAboveIndicator,
+)
 from hazard.models.drought_index import DroughtIndicator
 from hazard.models.water_temp import WaterTemperatureAboveIndicator
-from hazard.models.wet_bulb_globe_temp import WetBulbGlobeTemperatureAboveIndicator
 from hazard.models.work_loss import WorkLossIndicator
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
@@ -208,9 +211,9 @@ class DocStore:
             DegreeDays(),
             Jupiter(),
             WorkLossIndicator(),
-            DaysTasAboveIndicator(),
+            DaysTasAboveIndicatorDeprecated(),
             IRISIndicator(default_root),
-            HeatingCoolingDegreeDays(),
+            HeatingCoolingDegreeDaysDeprecated(),
             WaterTemperatureAboveIndicator(),
             WetBulbGlobeTemperatureAboveIndicator(),
             WRIAqueductWaterRisk(),

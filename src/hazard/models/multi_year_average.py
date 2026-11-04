@@ -1,10 +1,21 @@
 """Module for calculating multi-year average indicators for climate hazard models."""
 
 import logging
+import time
 from abc import abstractmethod
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing_extensions import Iterable, List, Tuple, TypeVar
+from typing_extensions import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 import xarray as xr
 from dask.distributed import Client
@@ -12,27 +23,32 @@ from rasterio.crs import CRS  # type: ignore
 
 
 from hazard.indicator_model import IndicatorModel
-from hazard.inventory import HazardResource, MapInfo
+from hazard.inventory import HazardResource
 from hazard.protocols import (
     Averageable,
     OpenDataset,
     ReadWriteDataArray,
     WriteDataArray,
 )
+from hazard.sources import get_source_dataset_default_resolution
+from hazard.sources.osc_zarr import OscZarr
+from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=Averageable)
 
+# 'GCM' identifier of the mean over the GCMs of a multi-model set of indicators
+MULTI_MODEL_ID = "multi_model_0"
+
 
 @dataclass
 class Indicator:
-    """Representation of a climate hazard indicator with a DataArray, file path, and geographic bounds."""
+    """Representation of a climate hazard indicator with a DataArray and file path."""
 
     array: xr.DataArray  # Union[xr.DataArray, Sequence[xr.DataArray]]
     path: PurePosixPath
-    bounds: List[Tuple[float, float]]
 
 
 class MultiYearAverageIndicatorBase(IndicatorModel[T]):
@@ -65,6 +81,9 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     _default_central_year_historical: int = 2005
     _default_central_years: Iterable[int] = [2030, 2040, 2050]
     _default_source_dataset: str = "NEX-GDDP-CMIP6"
+    # if set, arrays are written in chunks of this size in latitude and longitude, the whole of the
+    # index dimension being in each chunk; otherwise the target's default chunking is used
+    chunk_size_lat_lon: Optional[int] = None
 
     def __init__(
         self,
@@ -106,8 +125,19 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
-            logger.info(f"Writing array to {str(indicator.path)}")
-            target.write(str(indicator.path), indicator.array)
+            logger.info(
+                f"{type(self).__name__}: writing array to {str(indicator.path)}"
+            )
+            target.write(
+                str(indicator.path),
+                indicator.array,
+                chunks=self._write_chunks(indicator.array),
+            )
+
+    def _write_chunks(self, array: xr.DataArray) -> Optional[List[int]]:
+        if self.chunk_size_lat_lon is None:
+            return None
+        return [array.shape[0], self.chunk_size_lat_lon, self.chunk_size_lat_lon]
 
     def _years(self, _: OpenDataset, item: Averageable):
         return range(
@@ -125,7 +155,8 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = self._years(source, item)
         logger.info(
-            f"Calculating average indicator for batch item {str(item)}, years={list(years)}"
+            f"{type(self).__name__}: calculating average indicator for batch item {str(item)}, "
+            f"years={list(years)}"
         )
         futures = []
         for year in years:
@@ -141,11 +172,12 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         for i in range(indics_per_year):
             average = sum(set[i].array for set in single_year_sets) / float(len(years))
             assert isinstance(average, xr.DataArray)  # must be non-zero
+            # arithmetic drops the attributes (e.g. units) of the single-year arrays
+            average.attrs = dict(single_year_sets[0][i].array.attrs)
             res.append(
                 Indicator(
                     array=enforce_conventions_lat_lon(average),
                     path=single_year_sets[0][i].path,
-                    bounds=single_year_sets[0][i].bounds,
                 )
             )
         return res
@@ -185,62 +217,321 @@ class BatchItem:
         return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
 
 
-class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[BatchItem]):
-    """Model for calculating threshold-based multi-year average indicators."""
+@dataclass(frozen=True)
+class RunConfig:
+    """Settings for a run of a ThresholdBasedAverageIndicator: GCMs, scenarios, periods and source dataset.
 
-    def batch_items(self) -> Iterable[BatchItem]:
+    The defaults are those of the v3 indicators. A RunConfig cannot be modified once created, so
+    the same one can be shared by several indicators.
+
+    Attributes:
+        gcms (Sequence[str]): Global Circulation Models to include in calculation.
+            Defaults to ["ACCESS-CM2", "CNRM-CM6-1", "EC-Earth3", "GFDL-ESM4", "MRI-ESM2-0", "TaiESM1"].
+        scenarios (Sequence[str]): Scenarios to include in calculation.
+            Defaults to ["historical", "ssp126", "ssp245", "ssp585"].
+        central_year_historical (int): Central year for historical scenario. Defaults to 2005.
+        central_years (Sequence[int]): Central years for other scenarios. Defaults to [2030, 2040, 2050, 2080].
+        window_years (int): Number of years for average. Defaults to 20.
+        source_dataset (str): Source dataset. Defaults to "NEX-GDDP-CMIP6".
+        multi_model (bool): If True, calculate the multi-model mean over the GCMs at the end of run_all.
+            Defaults to True.
+        resolution (Optional[str]): Resolution of the indicators, e.g. "0.25°". Defaults to that of the
+            source dataset with its default arguments; set this if the source has other arguments (e.g.
+            UKCP18 at 2.2 km). run_all checks that it matches the source, if the source gives one.
+    """
+
+    gcms: Sequence[str] = tuple(MultiYearAverageIndicatorBase._europe_gcms)
+    scenarios: Sequence[str] = ("historical", "ssp126", "ssp245", "ssp585")
+    central_year_historical: int = (
+        MultiYearAverageIndicatorBase._default_central_year_historical
+    )
+    central_years: Sequence[int] = (2030, 2040, 2050, 2080)
+    window_years: int = MultiYearAverageIndicatorBase._default_window_years
+    source_dataset: str = MultiYearAverageIndicatorBase._default_source_dataset
+    multi_model: bool = True
+    resolution: Optional[str] = None
+
+    def __post_init__(self):
+        # store sequences as tuples, so that they cannot be modified either
+        for name in ["gcms", "scenarios", "central_years"]:
+            object.__setattr__(self, name, tuple(getattr(self, name)))
+        if self.resolution is None:
+            object.__setattr__(
+                self,
+                "resolution",
+                get_source_dataset_default_resolution(self.source_dataset),
+            )
+        if MULTI_MODEL_ID in self.gcms:
+            raise ValueError(
+                f"'{MULTI_MODEL_ID}' is the mean over the GCMs, so cannot be one of them"
+            )
+
+    def scenario_years(self) -> List[Tuple[str, int]]:
+        """(Scenario, central year) pairs of the run: central_year_historical for the historical scenario."""
+        return [
+            (scenario, central_year)
+            for scenario in self.scenarios
+            for central_year in (
+                [self.central_year_historical]
+                if scenario == "historical"
+                else self.central_years
+            )
+        ]
+
+
+@dataclass
+class ThresholdBatchItem:
+    """Batch item of a ThresholdBasedAverageIndicator: a GCM, scenario and central year."""
+
+    gcm: str
+    scenario: str
+    central_year: int
+
+    def __str__(self):
+        """Return a descriptive string representation of the batch item."""
+        return f"gcm={self.gcm}, scenario={self.scenario}, central_year={self.central_year}"
+
+
+class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatchItem]):
+    """Model for calculating threshold-based multi-year average indicators, the thresholds being the index dimension.
+
+    For each GCM, scenario and central year, one array per resource (see _resources) is
+    written, of shape (index, lat, lon): one slice per threshold. A model can have more
+    than one resource where these are calculated from the same inputs (e.g. degree days
+    above and below thresholds); all are calculated in a single pass over the inputs.
+
+    Unless run.multi_model is False, run_all then calculates the multi-model mean of each
+    array over the GCMs, written with gcm=MULTI_MODEL_ID.
+
+    Subclasses provide the input quantities, the calculation of the single-year arrays
+    and the resources.
+    """
+
+    # thresholds used if none are given to the constructor
+    default_thresholds: Sequence[float]
+    # units of the thresholds, i.e. of the values of the "threshold" dimension
+    threshold_units: str = "°C"
+    # small chunks, for fast look-up of the indicators at single locations
+    chunk_size_lat_lon = 500
+
+    def __init__(
+        self,
+        thresholds: Optional[Sequence[float]] = None,
+        run: Optional[RunConfig] = None,
+    ):
+        """Construct the model.
+
+        Args:
+            thresholds (Optional[Sequence[float]], optional): Thresholds, i.e. the values of the index
+                dimension. Defaults to the default_thresholds of the class.
+            run (Optional[RunConfig], optional): GCMs, scenarios, periods and source dataset of the
+                run. Defaults to RunConfig(), i.e. the v3 settings.
+
+        """
+        run = RunConfig() if run is None else run
+        super().__init__(
+            window_years=run.window_years,
+            gcms=list(run.gcms),
+            scenarios=list(run.scenarios),
+            central_year_historical=run.central_year_historical,
+            central_years=list(run.central_years),
+            source_dataset=run.source_dataset,
+        )
+        self.run = run
+        self.thresholds = list(
+            self.default_thresholds if thresholds is None else thresholds
+        )
+        self.resources = self._resources()
+
+    def resource_thresholds(self, key: str) -> List[float]:
+        """Thresholds of the resource with key (see _resources): by default, the thresholds of the model."""
+        return self.thresholds
+
+    @property
+    @abstractmethod
+    def quantities(self) -> Sequence[str]:
+        """Input quantities (e.g. "tas") opened for each year."""
+        ...
+
+    @abstractmethod
+    def _single_year_arrays(
+        self, inputs: Dict[str, xr.DataArray]
+    ) -> Dict[str, xr.DataArray]:
+        """Calculate the arrays for a single year.
+
+        Args:
+            inputs (Dict[str, xr.DataArray]): Daily data for the year, keyed by quantity.
+
+        Returns:
+            Dict[str, xr.DataArray]: Arrays of shape (index, lat, lon), with the same keys
+            as _resources. See _stack_thresholds.
+        """
+        ...
+
+    @abstractmethod
+    def _resources(self) -> Dict[str, HazardResource]:
+        """Resources of the model; see hazard.models.indicator_conventions.threshold_indicator_resource."""
+        ...
+
+    def batch_items(self) -> Iterable[ThresholdBatchItem]:
         """Get batch items (batch items can be calculated independently from one another)."""
-        resource = self._resource()
-        for gcm in self.gcms:
-            for scenario in self.scenarios:
-                central_years = (
-                    [self.central_year_historical]
-                    if scenario == "historical"
-                    else self.central_years
-                )
-                for central_year in central_years:
-                    yield BatchItem(
-                        resource=resource,
-                        gcm=gcm,
-                        scenario=scenario,
-                        central_year=central_year,
-                    )
+        return [
+            ThresholdBatchItem(gcm, scenario, central_year)
+            for gcm in self.gcms
+            for scenario, central_year in self.run.scenario_years()
+        ]
 
     def inventory(self) -> Iterable[HazardResource]:
         """Get the inventory item(s)."""
-        return [self._resource()]  # .expand()
+        return list(self.resources.values())
 
-    def _get_indicators(
-        self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
-    ) -> List[Indicator]:
-        """Generate a list of indicators for given thresholds and data arrays.
+    def inputs(self, source: OpenDataset) -> List[Tuple[str, str, str, int]]:
+        """(GCM, scenario, quantity, year) of each input of the run, as opened from source; each once."""
+        return sorted(
+            {
+                (item.gcm, item.scenario, quantity, year)
+                for item in self.batch_items()
+                for year in self._years(source, item)
+                for quantity in self.quantities
+            }
+        )
 
-        Args:
-            item (BatchItem): _description_
-            data_arrays (List[xr.DataArray]): _description_
-            param (str): _description_
+    def create_maps(self, source: OscZarr, target: OscZarr):
+        """Create map images."""
+        for resource in self.inventory():
+            create_tiles_for_resource(source, target, resource)
 
-        Returns:
-            List[Indicator]: _description_
-
-        """
-        resource = item.resource
-        paths = [
-            item.resource.path.format(
-                temp_c=threshold,
-                gcm=item.gcm,
-                scenario=item.scenario,
-                year=item.central_year,
+    def run_all(
+        self,
+        source: OpenDataset,
+        target: ReadWriteDataArray,
+        client: Optional[Client] = None,
+        debug_mode=False,
+    ):
+        """Run all items in the batch, then calculate the multi-model mean (if multi_model)."""
+        source_resolution = getattr(source, "resolution", None)
+        if source_resolution is not None and source_resolution != self.run.resolution:
+            raise ValueError(
+                f"resolution of source ({source_resolution}) does not match that of the run "
+                f"({self.run.resolution}); set RunConfig.resolution"
             )
-            for threshold in resource.params[param]
-        ]
-        assert isinstance(resource.map, MapInfo)
+        name = type(self).__name__
+        logger.info(
+            f"{name}: starting run of {len(list(self.batch_items()))} batch items, indicators "
+            + ", ".join(
+                f"{r.indicator_id} (thresholds {self.resource_thresholds(key)})"
+                for key, r in self.resources.items()
+            )
+        )
+        start = time.perf_counter()
+        super().run_all(source, target, client=client, debug_mode=debug_mode)
+        if self.run.multi_model:
+            logger.info(f"{name}: calculating multi-model mean")
+            self.calculate_multi_model(target)
+        logger.info(f"{name}: run complete in {time.perf_counter() - start:.0f} s")
+
+    def calculate_multi_model(self, target: ReadWriteDataArray):
+        """Calculate the mean over the GCMs of each array, written with gcm=MULTI_MODEL_ID.
+
+        Raises an error, before anything is written, if the array of any GCM is missing
+        (e.g. because its batch item failed).
+        """
+        paths = {
+            (key, scenario, central_year): [
+                resource.path.format(gcm=gcm, scenario=scenario, year=central_year)
+                for gcm in self.gcms
+            ]
+            for key, resource in self.resources.items()
+            for scenario, central_year in self.run.scenario_years()
+        }
+        arrays: Dict[str, xr.DataArray] = {}
+        missing: List[str] = []
+        for gcm_paths in paths.values():
+            for path in gcm_paths:
+                try:
+                    arrays[path] = target.read(path)
+                except KeyError:
+                    missing.append(path)
+        if missing:
+            raise ValueError(
+                f"cannot calculate multi-model mean; missing arrays: {', '.join(missing)}"
+            )
+        for (key, scenario, central_year), gcm_paths in paths.items():
+            # join="exact" so that arrays with mismatched coordinates raise an error
+            gcm_arrays = xr.align(*(arrays[path] for path in gcm_paths), join="exact")
+            mean = sum(gcm_arrays[1:], gcm_arrays[0]) / len(gcm_arrays)
+            mean.attrs["units"] = self.resources[key].units
+            mean.attrs["crs"] = CRS.from_epsg(4326)
+            path = self.resources[key].path.format(
+                gcm=MULTI_MODEL_ID, scenario=scenario, year=central_year
+            )
+            logger.info(
+                f"{type(self).__name__}: writing multi-model mean array to {path}"
+            )
+            target.write(path, mean, chunks=self._write_chunks(mean))
+
+    def _calculate_single_year_indicators(
+        self, source: OpenDataset, item: ThresholdBatchItem, year: int
+    ) -> List[Indicator]:
+        logger.info(
+            f"{type(self).__name__}: starting calculation for {item}, year {year}"
+        )
+        with ExitStack() as stack:
+            inputs = {
+                quantity: stack.enter_context(
+                    source.open_dataset_year(item.gcm, item.scenario, quantity, year)
+                )[quantity]
+                for quantity in self.quantities
+            }
+            for da in inputs.values():
+                self._check_input(da, year)
+            # inputs must be on identical grids: raise rather than silently align
+            with xr.set_options(arithmetic_join="exact"):
+                arrays = self._single_year_arrays(inputs)
+        logger.info(
+            f"{type(self).__name__}: calculation complete for {item}, year {year}"
+        )
         return [
             Indicator(
-                array=array, path=PurePosixPath(paths[i]), bounds=resource.map.bounds
+                array=arrays[key].assign_attrs(units=resource.units),
+                path=PurePosixPath(
+                    resource.path.format(
+                        gcm=item.gcm, scenario=item.scenario, year=item.central_year
+                    )
+                ),
             )
-            for i, array in enumerate(data_arrays)
+            for key, resource in self.resources.items()
         ]
 
-    @abstractmethod
-    def _resource(self) -> HazardResource: ...  # noqa:E704
+    def _check_input(self, da: xr.DataArray, year: int):
+        if any(coord not in da.coords.keys() for coord in ["lat", "lon", "time"]):
+            raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
+        if (da["time"].dt.year != year).any():
+            raise ValueError("unexpected year found")
+
+    def _stack_thresholds(
+        self,
+        threshold_fn: Callable[[float], xr.DataArray],
+        thresholds: Optional[Sequence[float]] = None,
+    ) -> xr.DataArray:
+        """Stack the (lat, lon) arrays given by threshold_fn for each threshold along a new "threshold" dimension.
+
+        The thresholds default to those of the model.
+        """
+        thresholds = self.thresholds if thresholds is None else list(thresholds)
+        return xr.concat(
+            [threshold_fn(threshold) for threshold in thresholds],
+            dim=xr.DataArray(
+                thresholds,
+                dims="threshold",
+                name="threshold",
+                attrs={"units": self.threshold_units},
+            ),
+        ).astype("float32")
+
+    def _days_above(self, da: xr.DataArray) -> xr.DataArray:
+        """Days per year (normalized to 365 days) for which daily values of da are above each threshold."""
+        scale = 365.0 / len(da["time"])
+        return self._stack_thresholds(
+            lambda threshold: scale * (da > threshold).sum(dim="time")
+        )

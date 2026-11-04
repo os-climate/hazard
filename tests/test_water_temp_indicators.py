@@ -3,7 +3,7 @@ import xarray as xr
 
 from hazard.models.water_temp import FutureStreamsSource, WaterTemperatureAboveIndicator
 
-from .conftest import TestSource, TestTarget, _create_test_datasets_tas
+from tests.mocks import TestSource, TestTarget, create_test_datasets_tas
 
 
 def test_future_streams_source():
@@ -31,7 +31,7 @@ def test_water_temp_above_mocked():
     scenario = "rcp2p6"
     quantity = "waterTemperature"
     threshold_temps_c = 27.0
-    dataset = _create_test_datasets_tas(quantity)
+    dataset = create_test_datasets_tas(quantity)
     dataset = dict(
         zip(
             dataset.keys(),

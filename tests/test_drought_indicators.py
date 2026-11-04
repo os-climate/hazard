@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 import xarray as xr
 import zarr  # type: ignore
-from .conftest import test_dir
 
 from hazard.docs_store import DocStore
 from hazard.models.drought_index import (

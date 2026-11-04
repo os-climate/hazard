@@ -32,6 +32,7 @@ def get_indicator_period_descriptions(
 
 
 def _get_period_years(year: int, historical: bool, window_years: int) -> str:
-    window_years_max = year + window_years // 2 + (window_years % 2)
+    # inclusive range of the years averaged; see MultiYearAverageIndicatorBase._years
+    window_years_max = year + window_years // 2 + (window_years % 2) - 1
     window_years_min = year - window_years // 2
     return f"({'averaged over ' if historical else ''}{window_years_min}-{window_years_max})"

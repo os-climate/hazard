@@ -39,7 +39,10 @@ class IndicatorModel(ABC, Generic[T]):
                         item=item, source=source, target=target, client=client
                     )
                 except Exception:
-                    logger.error("Batch item failed", exc_info=True)
+                    logger.error(
+                        f"{type(self).__name__}: batch item {item} failed",
+                        exc_info=True,
+                    )
 
     @abstractmethod
     def batch_items(self) -> Iterable[T]:
