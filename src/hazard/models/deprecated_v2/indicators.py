@@ -12,8 +12,10 @@ import numpy as np
 import xarray as xr
 from typing_extensions import Dict, Iterable, List, deprecated
 
-from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.inventory import Colormap, Deprecation, HazardResource, MapInfo, Scenario
+from hazard.models.indicator_conventions import PATH_PREFIX_V3
 from hazard.models.multi_year_average import (
+    MULTI_MODEL_ID,
     BatchItem,
     Indicator,
     MultiYearAverageIndicatorBase,
@@ -258,7 +260,6 @@ class WetBulbGlobeTemperatureAboveIndicator(
                     max_index=255,
                     units="days/year",
                 ),
-                bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
                 bbox=[-180.0, -85.0, 180.0, 85.0],
                 path="maps/chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}_map",
                 index_values=self.threshold_temps_c,
@@ -272,6 +273,13 @@ class WetBulbGlobeTemperatureAboveIndicator(
                 Scenario(id="ssp370", years=list(self.central_years)),
                 Scenario(id="ssp585", years=list(self.central_years)),
             ],
+            # not all the v2 GCMs are in v3, so point to the v3 multi-model mean
+            deprecation=Deprecation(
+                superseded_by=f"{PATH_PREFIX_V3}/days_wbgt_mean_above_{MULTI_MODEL_ID}"
+                + "_{scenario}_{year}",
+                message="Superseded by the v3 indicators, which also give days with daily-maximum "
+                "WBGT and ILO 4+4+4 working days above threshold, for each v3 GCM and their mean.",
+            ),
         )
         return resource
 
@@ -413,7 +421,6 @@ class DaysTasAboveIndicatorDeprecated(ThresholdBasedAverageIndicatorDeprecated):
                     max_index=255,
                     units="days/year",
                 ),
-                bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -60.0), (-180.0, -60.0)],
                 bbox=[-180.0, -60.0, 180.0, 85.0],
                 index_values=None,
                 path="chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
@@ -422,6 +429,13 @@ class DaysTasAboveIndicatorDeprecated(ThresholdBasedAverageIndicatorDeprecated):
             units="days/year",
             store_netcdf_coords=False,
             scenarios=scenarios,
+            # not all the v2 GCMs are in v3, so point to the v3 multi-model mean
+            deprecation=Deprecation(
+                superseded_by=f"{PATH_PREFIX_V3}/days_tas_above_{MULTI_MODEL_ID}"
+                + "_{scenario}_{year}",
+                message="Superseded by the v3 indicator, in which the thresholds are the index "
+                "dimension of a single array, for each v3 GCM and their mean.",
+            ),
         )
         return resource
 
@@ -618,12 +632,7 @@ class HeatingCoolingDegreeDaysDeprecated(ThresholdBasedAverageIndicatorDeprecate
                         max_value=2000.0,
                         units="degree days",
                     ),
-                    bounds=[
-                        (-180.0, 85.0),
-                        (180.0, 85.0),
-                        (180.0, -60.0),
-                        (-180.0, -60.0),
-                    ],
+                    bbox=[-180.0, -60.0, 180.0, 85.0],
                     index_values=self.threshold_temps_c,
                     path=path + "_map",
                     source="map_array",
@@ -635,6 +644,11 @@ class HeatingCoolingDegreeDaysDeprecated(ThresholdBasedAverageIndicatorDeprecate
                     Scenario(id="ssp245", years=list(self.central_years)),
                     Scenario(id="ssp585", years=list(self.central_years)),
                 ],
+                deprecation=Deprecation(
+                    superseded_by=f"{PATH_PREFIX_V3}/cooling_degree_days"
+                    + "_{gcm}_{scenario}_{year}",
+                    message="Superseded by the v3 cooling (and heating) degree days indicators.",
+                ),
             )
             resources[above_below] = resource
         return resources

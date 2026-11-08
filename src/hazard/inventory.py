@@ -106,6 +106,17 @@ class Scenario(BaseModel):
     # periods: Optional[List[Period]]
 
 
+class Deprecation(BaseModel):
+    """Marks a resource as deprecated, optionally pointing to its replacement."""
+
+    superseded_by: Optional[str] = Field(
+        None, description="Path of the resource that supersedes this one."
+    )
+    message: Optional[str] = Field(
+        None, description="Reason for deprecation or migration notes."
+    )
+
+
 class HazardResource(BaseModel):
     """Provides information about a set of hazard indicators, including available scenarios and years."""
 
@@ -182,6 +193,23 @@ class HazardResource(BaseModel):
         description="Climate change scenarios for which the indicator is available."
     )
     units: str = Field(description="Units of the hazard indicator.")
+    deprecation: Optional[Deprecation] = Field(
+        None,
+        description="If present, the resource is deprecated, e.g. in favour of a newer data set. \
+            Omitted from the inventory if None.",
+    )
+
+    @property
+    def deprecated(self) -> bool:
+        return self.deprecation is not None
+
+    @model_serializer(mode="wrap")
+    def _omit_deprecation_if_none(self, handler):
+        # most resources are not deprecated: leave the field out of the inventory unless given
+        data = handler(self)
+        if data.get("deprecation") is None:
+            data.pop("deprecation", None)
+        return data
 
     def expand(self):
         """Expand the resource using its parameters.
@@ -261,6 +289,17 @@ def expand_resource(
                             else item.map.copy(
                                 deep=True,
                                 update={"path": expand(item.map.path, key, param)},
+                            )
+                        ),
+                        "deprecation": (
+                            None
+                            if item.deprecation is None
+                            else item.deprecation.model_copy(
+                                update={
+                                    "superseded_by": expand(
+                                        item.deprecation.superseded_by, key, param
+                                    )
+                                }
                             )
                         ),
                     },
