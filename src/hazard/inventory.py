@@ -20,24 +20,26 @@ class Colormap(BaseModel):
     """Provides details of colormap."""
 
     min_index: Optional[int] = Field(
-        1,
+        default=1,
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison.",
     )
     min_value: float = Field(
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison."
     )
     max_index: Optional[int] = Field(
-        255,
+        default=255,
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison.",
     )
     max_value: float = Field(
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison."
     )
     name: str = Field(description="Name of colormap, e.g. 'flare', 'heating'.")
-    nodata_index: Optional[int] = Field(0, description="Index used for no data.")
+    nodata_index: Optional[int] = Field(
+        default=0, description="Index used for no data."
+    )
     units: str = Field(description="Units, e.g. 'degree days', 'metres'.")
     scaling: Literal["linear", "log"] = Field(
-        "linear",
+        default="linear",
         description="Preferred value-to-colour scaling: 'linear' (default) or 'log'. "
         "'log' requires min_value > 0.",
     )
@@ -63,7 +65,7 @@ class MapInfo(BaseModel):
         description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
     )
     bounds: Optional[List[Tuple[float, float]]] = Field(
-        None,
+        default=None,
         description="Deprecated: use bbox. Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS. Omitted from the inventory if None.",  # noqa
     )
     bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
@@ -110,10 +112,10 @@ class Deprecation(BaseModel):
     """Marks a resource as deprecated, optionally pointing to its replacement."""
 
     superseded_by: Optional[str] = Field(
-        None, description="Path of the resource that supersedes this one."
+        default=None, description="Path of the resource that supersedes this one."
     )
     message: Optional[str] = Field(
-        None, description="Reason for deprecation or migration notes."
+        default=None, description="Reason for deprecation or migration notes."
     )
 
 
@@ -122,7 +124,7 @@ class HazardResource(BaseModel):
 
     hazard_type: str = Field(description="Type of hazard.")
     group_id: Optional[str] = Field(
-        "public",
+        default="public",
         description="Identifier of the resource group (used for authentication).",
     )
     path: str = Field(
@@ -141,11 +143,12 @@ class HazardResource(BaseModel):
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )
     params: Dict[str, Sequence[str]] = Field(
-        {}, description="Parameters used to expand wild-carded fields."
+        default={}, description="Parameters used to expand wild-carded fields."
     )
     display_name: str = Field(description="Text used to display indicator.")
     display_groups: List[str] = Field(
-        [], description="Text used to group the (expanded) indicators for display."
+        default=[],
+        description="Text used to group the (expanded) indicators for display.",
     )
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
@@ -184,7 +187,7 @@ class HazardResource(BaseModel):
     )
 
     store_netcdf_coords: bool = Field(
-        False,
+        default=False,
         description="If True, NetCDF-style coordinates are also stored, which allows XArray to read the array \
             natively. By convention, the hazard indicator data array is named 'indicator' and the path to \
             the Zarr array is then path/indicator (not path).",
@@ -194,7 +197,7 @@ class HazardResource(BaseModel):
     )
     units: str = Field(description="Units of the hazard indicator.")
     deprecation: Optional[Deprecation] = Field(
-        None,
+        default=None,
         description="If present, the resource is deprecated, e.g. in favour of a newer data set. \
             Omitted from the inventory if None.",
     )
@@ -241,7 +244,7 @@ class HazardResources(BaseModel):
     resources: List[HazardResource]
 
 
-def expand(item: str, key: str, param: str):
+def expand(item: Optional[str], key: str, param: str):
     """Replace a placeholder in a string with a given parameter.
 
     Args:
