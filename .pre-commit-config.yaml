@@ -57,6 +57,8 @@ repos:
         args: ["--fix=lf"]
       - id: name-tests-test
         args: ["--pytest-test-first"]
+        # shared test helpers, not tests
+        exclude: ^tests/mocks\.py$
       # Disabled; TOX lint will otherwise fail
       # - id: no-commit-to-branch
       # - id: pretty-format-json
