@@ -5,10 +5,13 @@ import fsspec.implementations.local as local  # type: ignore
 import pytest
 import tempfile as temp
 
-from hazard import get_inventory_hazards
+from hazard import get_inventory_resources
 from hazard.docs_store import DocStore
 from hazard.inventory import Colormap, MapInfo
-from hazard.onboard.general_onboarding import initialize_class
+from hazard.models.deprecated_v2 import (
+    DaysTasAboveIndicatorDeprecated,
+    HeatingCoolingDegreeDaysDeprecated,
+)
 from hazard.utilities import zarr_utilities
 from hazard.utilities.s3_utilities import get_store  # type: ignore
 
@@ -17,9 +20,10 @@ def test_create_inventory(test_output_dir):
     """Create inventory for the published hazards and write into the test output
     directory (see hazard.get_inventory_hazards for which hazards are included).
 
-    With heat_v3, the v3 chronic heat indicators replace the v2 ones.
+    With include_deprecated, deprecated resources (e.g. the v2 chronic heat indicators) are
+    included alongside the resources that supersede them.
     """
-    heat_v3 = True
+    include_deprecated = True
     # zarr_utilities.set_credential_env_variables()
 
     docs_store = DocStore(
@@ -28,16 +32,25 @@ def test_create_inventory(test_output_dir):
         )
     )
 
-    hazard_map = get_inventory_hazards(heat_v3=heat_v3)
-    models = [
-        initialize_class(hazard, hazard_map, source_dir_base=test_output_dir)
-        for hazard in hazard_map
-    ]
+    resources = get_inventory_resources(
+        test_output_dir, include_deprecated=include_deprecated
+    )
 
     docs_store.write_new_empty_inventory()
     # docs_store.write_inventory_json(json_str)
-    for model in models:
-        docs_store.update_inventory(model.inventory())
+    docs_store.update_inventory(resources)
+
+
+def test_inventory_resources_exclude_deprecated(test_output_dir):
+    """Both v2 (deprecated) and v3 chronic heat resources are included by default; with
+    include_deprecated=False, only the v3 ones are."""
+    all_paths = {r.path for r in get_inventory_resources(test_output_dir)}
+    current = get_inventory_resources(test_output_dir, include_deprecated=False)
+    v2 = "chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}"
+    v3 = "chronic_heat/osc/v3/days_tas_above_{gcm}_{scenario}_{year}"
+    assert {v2, v3} <= all_paths
+    assert not any(r.deprecated for r in current)
+    assert v3 in {r.path for r in current} and v2 not in {r.path for r in current}
 
 
 def test_colormap_scaling():
@@ -63,6 +76,25 @@ def test_map_info_bounds_omitted_if_none():
         bounds=[(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
     )
     assert with_bounds.model_dump()["bounds"] == with_bounds.bounds
+
+
+def test_deprecation_expanded():
+    """superseded_by is expanded along with path; deprecation is in the inventory JSON only if given."""
+    resource = DaysTasAboveIndicatorDeprecated()._resource()
+    expanded = list(resource.expand())
+    assert all(r.deprecated for r in expanded)
+    assert {r.deprecation.superseded_by for r in expanded} == {  # type: ignore[union-attr]
+        "chronic_heat/osc/v3/days_tas_above_multi_model_0_{scenario}_{year}"
+    }
+    degree_days = HeatingCoolingDegreeDaysDeprecated()._resource()["above"]
+    assert [r.deprecation.superseded_by for r in degree_days.expand()] == [  # type: ignore[union-attr]
+        "chronic_heat/osc/v3/cooling_degree_days_ACCESS-CM2_{scenario}_{year}"
+    ]
+    assert "deprecation" in resource.model_dump()
+    assert (
+        "deprecation"
+        not in resource.model_copy(update={"deprecation": None}).model_dump()
+    )
 
 
 @pytest.mark.skip(reason="just example")

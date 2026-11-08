@@ -3,8 +3,9 @@
 Contains the get_hazards_onboarding functions.
 """
 
-from typing import Dict, Type
+from typing import Dict, List, Type
 
+from hazard.inventory import HazardResource
 from hazard.onboarder import Onboarder
 from hazard.onboard.csm_subsidence import DavydzenkaEtAlLandSubsidence
 from hazard.onboard.ethz_litpop import ETHZurichLitPop
@@ -80,10 +81,13 @@ _inventory_classes: list[Type[Onboarder]] = [
     Jupiter,
     WorkLossIndicator,
     DaysTasAboveIndicatorDeprecated,
+    DaysTasAboveIndicator,
     IRISIndicator,
     HeatingCoolingDegreeDaysDeprecated,
+    HeatingCoolingDegreeDays,
     WaterTemperatureAboveIndicator,
     WetBulbGlobeTemperatureAboveIndicator,
+    DaysWBGTAboveIndicator,
     WRIAqueductWaterRisk,
     DroughtIndicator,
     TUDelftRiverFlood,
@@ -93,14 +97,6 @@ _inventory_classes: list[Type[Onboarder]] = [
     FireRiskIndicators,
     JRCRiverFlood,
 ]
-
-# v3 replacements of the v2 chronic heat indicators: used in place of these in the inventory
-# when get_inventory_hazards is called with heat_v3=True
-_inventory_heat_v3_replacements: Dict[Type[Onboarder], Type[Onboarder]] = {
-    DaysTasAboveIndicatorDeprecated: DaysTasAboveIndicator,
-    HeatingCoolingDegreeDaysDeprecated: HeatingCoolingDegreeDays,
-    WetBulbGlobeTemperatureAboveIndicator: DaysWBGTAboveIndicator,
-}
 
 hazard_map: Dict[str, Type[Onboarder]] = {
     cls.__name__: cls for cls in _onboarder_classes
@@ -115,17 +111,28 @@ def get_hazards_onboarding() -> Dict[str, Type[Onboarder]]:
     return hazard_map
 
 
-def get_inventory_hazards(heat_v3: bool = False) -> Dict[str, Type[Onboarder]]:
+def get_inventory_hazards() -> Dict[str, Type[Onboarder]]:
     """Return the subset of onboardable hazards considered ready to be published in
-    the inventory/catalog -- see _inventory_classes.
+    the inventory/catalog -- see _inventory_classes. Some of these provide deprecated
+    resources (e.g. the v2 chronic heat indicators); see get_inventory_resources.
+    """
+    return inventory_hazard_map
+
+
+def get_inventory_resources(
+    source_dir_base: str, include_deprecated: bool = True
+) -> List[HazardResource]:
+    """Return the resources of the hazards published in the inventory/catalog (see get_inventory_hazards).
 
     Args:
-        heat_v3 (bool, optional): If True, the v3 chronic heat indicators replace the v2 ones
-            (see _inventory_heat_v3_replacements), in the same positions. Defaults to False.
+        source_dir_base (str): Base directory passed to the onboarders.
+        include_deprecated (bool, optional): If True, resources marked as deprecated (e.g. the
+            v2 chronic heat indicators, superseded by v3) are included alongside the resources that
+            supersede them. Defaults to True.
     """
-    if not heat_v3:
-        return inventory_hazard_map
-    classes = [
-        _inventory_heat_v3_replacements.get(cls, cls) for cls in _inventory_classes
+    resources = [
+        resource
+        for cls in _inventory_classes
+        for resource in cls(source_dir_base).inventory()  # type: ignore[call-arg]
     ]
-    return {cls.__name__: cls for cls in classes}
+    return [r for r in resources if include_deprecated or not r.deprecated]
