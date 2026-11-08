@@ -91,7 +91,10 @@ def test_deprecation_expanded():
         "chronic_heat/osc/v3/cooling_degree_days_ACCESS-CM2_{scenario}_{year}"
     ]
     assert "deprecation" in resource.model_dump()
-    assert "deprecation" not in resource.model_copy(update={"deprecation": None}).model_dump()
+    assert (
+        "deprecation"
+        not in resource.model_copy(update={"deprecation": None}).model_dump()
+    )
 
 
 @pytest.mark.skip(reason="just example")
