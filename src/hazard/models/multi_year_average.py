@@ -3,24 +3,18 @@
 import logging
 import time
 from abc import abstractmethod
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing_extensions import (
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-)
+from typing import Dict, List, Optional, Tuple
 
 import xarray as xr
 from dask.distributed import Client
 from rasterio.crs import CRS  # type: ignore
-
+from typing_extensions import (
+    TypeVar,
+)
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource
@@ -83,7 +77,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     _default_source_dataset: str = "NEX-GDDP-CMIP6"
     # if set, arrays are written in chunks of this size in latitude and longitude, the whole of the
     # index dimension being in each chunk; otherwise the target's default chunking is used
-    chunk_size_lat_lon: Optional[int] = None
+    chunk_size_lat_lon: int | None = None
 
     def __init__(
         self,
@@ -125,16 +119,14 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         averaged_indicators = self._averaged_indicators(client, source, target, item)
         for indicator in averaged_indicators:
             indicator.array.attrs["crs"] = CRS.from_epsg(4326)
-            logger.info(
-                f"{type(self).__name__}: writing array to {str(indicator.path)}"
-            )
+            logger.info(f"{type(self).__name__}: writing array to {indicator.path!s}")
             target.write(
                 str(indicator.path),
                 indicator.array,
                 chunks=self._write_chunks(indicator.array),
             )
 
-    def _write_chunks(self, array: xr.DataArray) -> Optional[List[int]]:
+    def _write_chunks(self, array: xr.DataArray) -> list[int] | None:
         if self.chunk_size_lat_lon is None:
             return None
         return [array.shape[0], self.chunk_size_lat_lon, self.chunk_size_lat_lon]
@@ -151,11 +143,11 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
         source: OpenDataset,
         target: WriteDataArray,
         item: Averageable,
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """Calculate average annual degree days for given window for the GCM and scenario specified."""
         years = self._years(source, item)
         logger.info(
-            f"{type(self).__name__}: calculating average indicator for batch item {str(item)}, "
+            f"{type(self).__name__}: calculating average indicator for batch item {item!s}, "
             f"years={list(years)}"
         )
         futures = []
@@ -164,11 +156,11 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
                 self._calculate_single_year_indicators, source, item, year
             )
             futures.append(future)
-        single_year_sets: List[List[Indicator]] = list(
+        single_year_sets: list[list[Indicator]] = list(
             client.gather(futures)
         )  # indicators for each year
         indics_per_year = len(single_year_sets[0])  # number of indicators for each year
-        res: List[Indicator] = []
+        res: list[Indicator] = []
         for i in range(indics_per_year):
             average = sum(set[i].array for set in single_year_sets) / float(len(years))
             assert isinstance(average, xr.DataArray)  # must be non-zero
@@ -195,7 +187,7 @@ class MultiYearAverageIndicatorBase(IndicatorModel[T]):
     @abstractmethod
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: T, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """Calculate indicators for a single year for a single batch item.
 
         If just a single indicator per batch, a list of length one is expected.
@@ -249,7 +241,7 @@ class RunConfig:
     window_years: int = MultiYearAverageIndicatorBase._default_window_years
     source_dataset: str = MultiYearAverageIndicatorBase._default_source_dataset
     multi_model: bool = True
-    resolution: Optional[str] = None
+    resolution: str | None = None
 
     def __post_init__(self):
         # store sequences as tuples, so that they cannot be modified either
@@ -266,7 +258,7 @@ class RunConfig:
                 f"'{MULTI_MODEL_ID}' is the mean over the GCMs, so cannot be one of them"
             )
 
-    def scenario_years(self) -> List[Tuple[str, int]]:
+    def scenario_years(self) -> list[tuple[str, int]]:
         """(Scenario, central year) pairs of the run: central_year_historical for the historical scenario."""
         return [
             (scenario, central_year)
@@ -316,8 +308,8 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
 
     def __init__(
         self,
-        thresholds: Optional[Sequence[float]] = None,
-        run: Optional[RunConfig] = None,
+        thresholds: Sequence[float] | None = None,
+        run: RunConfig | None = None,
     ):
         """Construct the model.
 
@@ -343,7 +335,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
         )
         self.resources = self._resources()
 
-    def resource_thresholds(self, key: str) -> List[float]:
+    def resource_thresholds(self, key: str) -> list[float]:
         """Thresholds of the resource with key (see _resources): by default, the thresholds of the model."""
         return self.thresholds
 
@@ -355,8 +347,8 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
 
     @abstractmethod
     def _single_year_arrays(
-        self, inputs: Dict[str, xr.DataArray]
-    ) -> Dict[str, xr.DataArray]:
+        self, inputs: dict[str, xr.DataArray]
+    ) -> dict[str, xr.DataArray]:
         """Calculate the arrays for a single year.
 
         Args:
@@ -369,7 +361,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
         ...
 
     @abstractmethod
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         """Resources of the model; see hazard.models.indicator_conventions.threshold_indicator_resource."""
         ...
 
@@ -385,7 +377,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
         """Get the inventory item(s)."""
         return list(self.resources.values())
 
-    def inputs(self, source: OpenDataset) -> List[Tuple[str, str, str, int]]:
+    def inputs(self, source: OpenDataset) -> list[tuple[str, str, str, int]]:
         """(GCM, scenario, quantity, year) of each input of the run, as opened from source; each once."""
         return sorted(
             {
@@ -405,7 +397,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
         self,
         source: OpenDataset,
         target: ReadWriteDataArray,
-        client: Optional[Client] = None,
+        client: Client | None = None,
         debug_mode=False,
     ):
         """Run all items in the batch, then calculate the multi-model mean (if multi_model)."""
@@ -444,8 +436,8 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
             for key, resource in self.resources.items()
             for scenario, central_year in self.run.scenario_years()
         }
-        arrays: Dict[str, xr.DataArray] = {}
-        missing: List[str] = []
+        arrays: dict[str, xr.DataArray] = {}
+        missing: list[str] = []
         for gcm_paths in paths.values():
             for path in gcm_paths:
                 try:
@@ -472,7 +464,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: ThresholdBatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         logger.info(
             f"{type(self).__name__}: starting calculation for {item}, year {year}"
         )
@@ -512,7 +504,7 @@ class ThresholdBasedAverageIndicator(MultiYearAverageIndicatorBase[ThresholdBatc
     def _stack_thresholds(
         self,
         threshold_fn: Callable[[float], xr.DataArray],
-        thresholds: Optional[Sequence[float]] = None,
+        thresholds: Sequence[float] | None = None,
     ) -> xr.DataArray:
         """Stack the (lat, lon) arrays given by threshold_fn for each threshold along a new "threshold" dimension.
 

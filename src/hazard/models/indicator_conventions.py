@@ -1,8 +1,7 @@
 """Conventions for the resources and descriptions of indicators derived from ThresholdBasedAverageIndicator."""
 
 import os
-
-from typing_extensions import Sequence
+from collections.abc import Sequence
 
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
 from hazard.models.multi_year_average import MULTI_MODEL_ID, RunConfig

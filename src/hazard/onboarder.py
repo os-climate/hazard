@@ -1,18 +1,16 @@
 # Standard library imports
 import logging
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional, TypeVar
-
+from collections.abc import Iterable
+from typing import Optional, TypeVar
 
 from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
-
 
 # Local application imports
 from hazard.inventory import HazardResource
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
-
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +24,7 @@ class Onboarder(ABC):
     or something more complex.
     """
 
-    def __init__(
-        self, source_dir_base: str = "", fs: Optional[AbstractFileSystem] = None
-    ):
+    def __init__(self, source_dir_base: str = "", fs: AbstractFileSystem | None = None):
         """Create Onboarder instance. The original file set is the starting point on the
         onboarding. This is stored in the (abstract) file system specified.
 
@@ -59,7 +55,7 @@ class Onboarder(ABC):
     @abstractmethod
     def prepare(
         self,
-        download_dir: Optional[str] = None,
+        download_dir: str | None = None,
         force_download: bool = False,
     ) -> None:
         """Create the source files in source_dir_base using abstract file system fs. Typically
@@ -92,4 +88,3 @@ class Onboarder(ABC):
     @abstractmethod
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create maps for the onboarded data."""
-        pass

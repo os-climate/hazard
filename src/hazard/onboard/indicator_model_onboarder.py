@@ -10,11 +10,11 @@ the same onboard_hazards pipeline as any other hazard.
 import logging
 import os
 import time
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from dask.distributed import Client, LocalCluster
-from typing_extensions import Iterable
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import HazardResource
@@ -62,7 +62,7 @@ class IndicatorModelOnboarder(Onboarder):
     model: IndicatorModel
     source: OpenDataset
     # arguments of the dask LocalCluster used by onboard, e.g. to limit the threads (so memory used)
-    dask_cluster_kwargs: Dict[str, Any] = {}
+    dask_cluster_kwargs: dict[str, Any] = {}
 
     def inventory(self) -> Iterable[HazardResource]:
         return self.model.inventory()
@@ -103,7 +103,7 @@ class ThresholdIndicatorOnboarder(IndicatorModelOnboarder):
     def __init__(
         self,
         model: ThresholdBasedAverageIndicator,
-        dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+        dask_cluster_kwargs: dict[str, Any] | None = None,
     ):
         """Construct the onboarder.
 
@@ -141,7 +141,7 @@ class ThresholdIndicatorOnboarder(IndicatorModelOnboarder):
         return False
 
 
-def _run_config(run: Optional[Union[RunConfig, Dict[str, Any]]]) -> Optional[RunConfig]:
+def _run_config(run: RunConfig | dict[str, Any] | None) -> RunConfig | None:
     """The RunConfig of run, which can also be given as a dict of its fields (e.g. parsed from the JSON of the CLI)."""
     return RunConfig(**run) if isinstance(run, dict) else run
 
@@ -149,10 +149,10 @@ def _run_config(run: Optional[Union[RunConfig, Dict[str, Any]]]) -> Optional[Run
 class DaysTasAboveIndicator(ThresholdIndicatorOnboarder):
     def __init__(
         self,
-        source_dir_base: Optional[str] = None,
+        source_dir_base: str | None = None,
         *,
-        run: Optional[Union[RunConfig, Dict[str, Any]]] = None,
-        dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+        run: RunConfig | dict[str, Any] | None = None,
+        dask_cluster_kwargs: dict[str, Any] | None = None,
     ):
         super().__init__(
             _DaysTasAboveIndicator(run=_run_config(run)), dask_cluster_kwargs
@@ -162,13 +162,13 @@ class DaysTasAboveIndicator(ThresholdIndicatorOnboarder):
 class DaysTasAboveIndicatorDeprecated(IndicatorModelOnboarder):
     """Deprecated: superseded by DaysTasAboveIndicator (v3). Kept so that the existing v2 arrays remain in the inventory."""
 
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _DaysTasAboveIndicatorDeprecated()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
 
 class DegreeDays(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _DegreeDays()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
@@ -176,10 +176,10 @@ class DegreeDays(IndicatorModelOnboarder):
 class HeatingCoolingDegreeDays(ThresholdIndicatorOnboarder):
     def __init__(
         self,
-        source_dir_base: Optional[str] = None,
+        source_dir_base: str | None = None,
         *,
-        run: Optional[Union[RunConfig, Dict[str, Any]]] = None,
-        dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+        run: RunConfig | dict[str, Any] | None = None,
+        dask_cluster_kwargs: dict[str, Any] | None = None,
     ):
         super().__init__(
             _HeatingCoolingDegreeDays(run=_run_config(run)), dask_cluster_kwargs
@@ -189,7 +189,7 @@ class HeatingCoolingDegreeDays(ThresholdIndicatorOnboarder):
 class HeatingCoolingDegreeDaysDeprecated(IndicatorModelOnboarder):
     """Deprecated: superseded by HeatingCoolingDegreeDays (v3). Kept so that the existing v2 arrays remain in the inventory."""
 
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _HeatingCoolingDegreeDaysDeprecated()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
@@ -197,7 +197,7 @@ class HeatingCoolingDegreeDaysDeprecated(IndicatorModelOnboarder):
 class WetBulbGlobeTemperatureAboveIndicator(IndicatorModelOnboarder):
     """Deprecated: superseded by DaysWBGTAboveIndicator (v3). Kept so that the existing v2 arrays remain in the inventory."""
 
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _WetBulbGlobeTemperatureAboveIndicator()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 
@@ -205,10 +205,10 @@ class WetBulbGlobeTemperatureAboveIndicator(IndicatorModelOnboarder):
 class DaysWBGTAboveIndicator(ThresholdIndicatorOnboarder):
     def __init__(
         self,
-        source_dir_base: Optional[str] = None,
+        source_dir_base: str | None = None,
         *,
-        run: Optional[Union[RunConfig, Dict[str, Any]]] = None,
-        dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+        run: RunConfig | dict[str, Any] | None = None,
+        dask_cluster_kwargs: dict[str, Any] | None = None,
     ):
         super().__init__(
             _DaysWBGTAboveIndicator(run=_run_config(run)), dask_cluster_kwargs
@@ -216,7 +216,7 @@ class DaysWBGTAboveIndicator(ThresholdIndicatorOnboarder):
 
 
 class WorkLossIndicator(IndicatorModelOnboarder):
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         self.model = _WorkLossIndicator()
         self.source = get_source_dataset_instance("NEX-GDDP-CMIP6", {})
 

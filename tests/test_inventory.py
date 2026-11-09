@@ -1,9 +1,9 @@
 import os
-
-from anyio import Path
-import fsspec.implementations.local as local  # type: ignore
-import pytest
 import tempfile as temp
+
+import pytest
+from anyio import Path
+from fsspec.implementations import local  # type: ignore
 
 from hazard import get_inventory_resources
 from hazard.docs_store import DocStore
@@ -98,7 +98,7 @@ def test_deprecation_expanded():
 
 
 @pytest.mark.skip(reason="just example")
-def test_check_inventory(test_output_dir):  # noqa: F811
+def test_check_inventory(test_output_dir):
     zarr_utilities.set_credential_env_variables()
     temp_dir = temp.TemporaryDirectory()
     local_fs = local.LocalFileSystem(root=temp_dir)

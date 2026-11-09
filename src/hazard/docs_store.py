@@ -12,8 +12,9 @@ Classes:
 import itertools
 import json
 import os
+from collections.abc import Iterable
 from pathlib import Path, PurePath, PurePosixPath
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import s3fs  # type: ignore
@@ -70,8 +71,8 @@ class DocStore:
 
     def __init__(
         self,
-        s3_store: Optional[FSMap] = None,
-        local_path: Optional[str] = None,
+        s3_store: FSMap | None = None,
+        local_path: str | None = None,
     ):
         r"""Initialize the DocStore with the specified parameters.
 
@@ -190,18 +191,18 @@ class DocStore:
         with self._fs.open(path, "w") as f:
             f.write(json_str)
 
-    def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:
+    def read_description_markdown(self, paths: list[str]) -> dict[str, str]:
         """Read description markdown at path provided."""
-        md: Dict[str, str] = {}
+        md: dict[str, str] = {}
         for path in paths:
             try:
                 with self._fs.open(self._full_path_doc(path), "r") as f:
                     md[path] = f.read()
             finally:
-                continue  # noqa: B012
+                continue
         return md
 
-    def create_bucket_inventory(self):  # noqa: F811
+    def create_bucket_inventory(self):
         """Create inventory for all indicators and write into s3 bucket."""
         default_root = str(os.path.join(Path.home(), "Downloads"))
         models = [
@@ -232,7 +233,7 @@ class DocStore:
         for model in models:
             self.update_inventory(model.inventory())
 
-    def find_available_s3_paths(self, store, local_inventory: Optional[str] = None):
+    def find_available_s3_paths(self, store, local_inventory: str | None = None):
         """Find and return available dataset and map paths in the S3 Zarr store.
 
         Args:
@@ -314,7 +315,7 @@ class DocStore:
                                 paths[1].append(map_path)
         return paths
 
-    def check_s3_data(self, extra_s3fs_kwargs: dict):  # noqa: F811
+    def check_s3_data(self, extra_s3fs_kwargs: dict):
         """Check if the datasets and maps in S3 Zarr store are empty.
 
         This function reads datasets and map sets from a Zarr store
@@ -366,8 +367,8 @@ class DocStore:
             return False
 
     def check_inventory_paths(
-        self, extra_s3fs_kwargs: dict, local_inventory: Optional[str]
-    ):  # noqa: F811
+        self, extra_s3fs_kwargs: dict, local_inventory: str | None
+    ):
         """Check if the combinations of inventory paths exist in the S3 Zarr store.
 
         Args:
@@ -440,7 +441,7 @@ class DocStore:
         else:
             return False, missing_paths
 
-    def check_s3_paths(self, extra_s3fs_kwargs: dict, local_inventory: Optional[str]):
+    def check_s3_paths(self, extra_s3fs_kwargs: dict, local_inventory: str | None):
         """Check for missing S3 paths that are not listed in the inventory.
 
         Args:
@@ -495,7 +496,7 @@ class DocStore:
     def _full_path_inventory(self):
         return str(PurePosixPath(self._root, "inventory.json"))
 
-    def get_resolution(self, target: ReadWriteDataArray, path) -> Optional[str]:
+    def get_resolution(self, target: ReadWriteDataArray, path) -> str | None:
         """Return the resolution of the data set.
 
         This is typically the resolution of the
