@@ -3,11 +3,11 @@
 import json
 from typing import List, Optional
 
-from hazard import get_hazards_onboarding
-import hazard.utilities.cli_utilities as cli_u
-from hazard.onboard.general_onboarding import onboard_hazards
 import typer
 
+import hazard.utilities.cli_utilities as cli_u
+from hazard import get_hazards_onboarding
+from hazard.onboard.general_onboarding import onboard_hazards
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -33,19 +33,19 @@ def list_hazards():
 
 @app.command()
 def onboard(
-    local: Optional[bool] = credentials_option_default,
-    credentials_path: Optional[str] = typer.Option(
+    local: bool | None = credentials_option_default,
+    credentials_path: str | None = typer.Option(
         None, help="Path to the credentials for S3 access."
     ),
-    source_dir_base: Optional[str] = typer.Option(None, help="Path to the data."),
-    hazards: List[str] = hazards_option_default,
-    download_dir: Optional[str] = typer.Option(None, help="Path to the data."),
-    store: Optional[str] = typer.Option(
+    source_dir_base: str | None = typer.Option(None, help="Path to the data."),
+    hazards: list[str] = hazards_option_default,
+    download_dir: str | None = typer.Option(None, help="Path to the data."),
+    store: str | None = typer.Option(
         None,
         help="Path of a local directory to onboard to (zarr store and inventory). "
         "Takes precedence over --local and --credentials-path.",
     ),
-    hazard_kwargs: Optional[str] = typer.Option(
+    hazard_kwargs: str | None = typer.Option(
         None,
         help="JSON object of keyword arguments for the constructor of each hazard's onboarder, e.g. "
         '\'{"run": {"gcms": ["ACCESS-CM2"], "scenarios": ["ssp585"], "central_years": [2030]}, '

@@ -1,29 +1,27 @@
 import json
 import os
 
-import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import pytest  # type: ignore
 import s3fs  # type: ignore
+import typer
 import xarray as xr
 import zarr  # type: ignore
-
-from hazard.models.days_tas_above import DaysTasAboveIndicator  # type: ignore
-from hazard.models.degree_days import HeatingCoolingDegreeDays
-import typer
+from fsspec.implementations import local  # type: ignore
 
 from hazard.cli import app
-from hazard.onboard import indicator_model_onboarder as onboarders
-from hazard.onboard.indicator_model_onboarder import ThresholdIndicatorOnboarder
+from hazard.models.days_tas_above import DaysTasAboveIndicator  # type: ignore
+from hazard.models.degree_days import HeatingCoolingDegreeDays
 from hazard.models.deprecated_v2 import (
     DaysTasAboveIndicatorDeprecated,
     WetBulbGlobeTemperatureAboveIndicator,
 )
 from hazard.models.multi_year_average import MULTI_MODEL_ID, RunConfig
 from hazard.models.wet_bulb_globe_temp import DaysWBGTAboveIndicator
+from hazard.onboard import indicator_model_onboarder as onboarders
+from hazard.onboard.indicator_model_onboarder import ThresholdIndicatorOnboarder
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
 from hazard.sources.osc_zarr import OscZarr  # type: ignore
-
 from tests.mocks import (
     TestSource,
     TestTarget,
@@ -84,9 +82,7 @@ def test_days_wbgt_above_mocked():
         )
     model.run_all(source, target, debug_mode=True)
     result = target.datasets[
-        "chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}".format(
-            gcm=gcm, scenario=scenario, year=year
-        )
+        f"chronic_heat/osc/v2/days_wbgt_above_{gcm}_{scenario}_{year}"
     ]
     with source.open_dataset_year(gcm, scenario, "tas", 2029).tas as t0:
         with source.open_dataset_year(gcm, scenario, "hurs", 2029).hurs as h0:
@@ -478,7 +474,7 @@ def test_run_config():
 
 
 @pytest.mark.skip(reason="inputs large and downloading slow")
-def test_days_tas_above(test_output_dir):  # noqa: F811
+def test_days_tas_above(test_output_dir):
     """Test an air temperature indicator that provides days over $x$ degrees."""
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -501,7 +497,7 @@ def test_days_tas_above(test_output_dir):  # noqa: F811
     model.run_all(source, target)
 
 
-def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=None):  # noqa: F811
+def download_test_datasets(test_output_dir, gcm, scenario, years, indicators=None):
     if indicators is None:
         indicators = ["tas"]
     store = NexGddpCmip6()

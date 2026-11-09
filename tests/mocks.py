@@ -1,7 +1,8 @@
 """Mocked sources, targets and datasets for testing indicator models."""
 
+from collections.abc import Iterable, Sequence
 from datetime import datetime
-from typing import Dict, Iterable, Optional, Sequence, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd  # type: ignore
@@ -16,7 +17,7 @@ class TestSource(OpenDataset):
     __test__ = False
 
     def __init__(
-        self, datasets: Dict[Tuple[str, int], xr.Dataset], gcms: Iterable[str]
+        self, datasets: dict[tuple[str, int], xr.Dataset], gcms: Iterable[str]
     ):
         self.datasets = datasets
         self._gcms = gcms
@@ -44,8 +45,8 @@ class TestTarget(ReadWriteDataArray):
         self,
         path: str,
         data_array: xr.DataArray,
-        chunks: Optional[Sequence[int]] = None,
-        spatial_coords: Optional[bool] = True,
+        chunks: Sequence[int] | None = None,
+        spatial_coords: bool | None = True,
     ):
         self.datasets[path] = data_array
 
@@ -68,7 +69,7 @@ def create_test_source_tas_tasmax_hurs(gcms: Iterable[str]) -> TestSource:
 
 def create_test_datasets_hurs(
     quantity: str = "hurs",
-) -> Dict[Tuple[str, int], xr.Dataset]:
+) -> dict[tuple[str, int], xr.Dataset]:
     return {
         (quantity, 2029): _create_test_dataset_hurs(2029, 0, quantity),
         (quantity, 2030): _create_test_dataset_hurs(2030, 0.5, quantity),
@@ -77,7 +78,7 @@ def create_test_datasets_hurs(
 
 def create_test_datasets_tas(
     quantity: str = "tasmax",
-) -> Dict[Tuple[str, int], xr.Dataset]:
+) -> dict[tuple[str, int], xr.Dataset]:
     return {
         (quantity, 2029): _create_test_dataset_tas(2029, 0, quantity),
         (quantity, 2030): _create_test_dataset_tas(2030, 0.5, quantity),
