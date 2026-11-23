@@ -2,9 +2,9 @@
 
 import logging
 import os
+from collections.abc import Iterable, Sequence
 from pathlib import PurePosixPath
-from typing import Sequence
-from typing_extensions import Dict, Iterable, List, Optional
+from typing import Dict, List, Optional
 
 import xarray as xr
 from dask.distributed import Client
@@ -12,17 +12,17 @@ from rasterio.crs import CRS  # type: ignore
 
 from hazard.indicator_model import IndicatorModel
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.models.indicator_conventions import (
+    indicator_description,
+    threshold_indicator_resource,
+)
 from hazard.models.multi_year_average import (
     BatchItem,
     RunConfig,
     ThresholdBasedAverageIndicator,
 )
-from hazard.models.indicator_conventions import (
-    indicator_description,
-    threshold_indicator_resource,
-)
-from hazard.sources.osc_zarr import OscZarr
 from hazard.protocols import OpenDataset, ReadWriteDataArray, WriteDataArray
+from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.description_utilities import get_indicator_period_descriptions
 from hazard.utilities.tiles import create_tiles_for_resource
 from hazard.utilities.xarray_utilities import enforce_conventions_lat_lon
@@ -48,9 +48,9 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
 
     def __init__(
         self,
-        heating_thresholds: Optional[Sequence[float]] = None,
-        cooling_thresholds: Optional[Sequence[float]] = None,
-        run: Optional[RunConfig] = None,
+        heating_thresholds: Sequence[float] | None = None,
+        cooling_thresholds: Sequence[float] | None = None,
+        run: RunConfig | None = None,
     ):
         """Construct the model.
 
@@ -79,29 +79,31 @@ class HeatingCoolingDegreeDays(ThresholdBasedAverageIndicator):
             run=run,
         )
 
-    def resource_thresholds(self, key: str) -> List[float]:
+    def resource_thresholds(self, key: str) -> list[float]:
         """Thresholds of the cooling ("above") or heating ("below") degree days."""
         return self.cooling_thresholds if key == "above" else self.heating_thresholds
 
     def _single_year_arrays(
-        self, inputs: Dict[str, xr.DataArray]
-    ) -> Dict[str, xr.DataArray]:
+        self, inputs: dict[str, xr.DataArray]
+    ) -> dict[str, xr.DataArray]:
         tas_c = inputs["tas"] - 273.15  # convert from K to °C
         scale = 365.0 / len(tas_c["time"])  # normalize to 365 days
         return {
             "above": self._stack_thresholds(
-                lambda threshold: scale
-                * (tas_c - threshold).clip(min=0.0).sum(dim="time"),
+                lambda threshold: (
+                    scale * (tas_c - threshold).clip(min=0.0).sum(dim="time")
+                ),
                 self.cooling_thresholds,
             ),
             "below": self._stack_thresholds(
-                lambda threshold: scale
-                * (threshold - tas_c).clip(min=0.0).sum(dim="time"),
+                lambda threshold: (
+                    scale * (threshold - tas_c).clip(min=0.0).sum(dim="time")
+                ),
                 self.heating_thresholds,
             ),
         }
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         description = indicator_description("heating_cooling_degree_days.md", self.run)
         return {
             key: threshold_indicator_resource(
@@ -130,7 +132,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
     def __init__(
         self,
         threshold: float = 32,
-        window_years: Optional[int] = 20,
+        window_years: int | None = 20,
         gcms: Sequence[str] = [
             "ACCESS-CM2",
             "CMCC-ESM2",
@@ -289,7 +291,7 @@ class DegreeDays(IndicatorModel[BatchItem]):
         average_deg_days = self._average_degree_days(client, source, target, item)
         average_deg_days.attrs["crs"] = CRS.from_epsg(4326)
         pp = self._item_path(item)
-        logger.info(f"Writing array to {str(pp)}")
+        logger.info(f"Writing array to {pp!s}")
         target.write(str(pp), average_deg_days)
 
     def _average_degree_days(

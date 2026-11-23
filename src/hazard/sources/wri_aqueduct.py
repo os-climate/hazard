@@ -1,13 +1,15 @@
 """."""
 
 import logging
+from collections.abc import Iterable
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing_extensions import Generator, Iterable, Optional
+from typing import Optional
 
 import s3fs  # type: ignore
 import xarray as xr
 from botocore import UNSIGNED  # type: ignore
+from typing_extensions import Generator
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class WRIAqueductSource:  # (OpenDataset):
         raise NotImplementedError()
 
     @contextmanager
-    def open_dataset(self, path: str) -> Generator[Optional[xr.DataArray], None, None]:
+    def open_dataset(self, path: str) -> Generator[xr.DataArray | None, None, None]:
         """Open a dataset from the S3 storage and loads it as an xarray DataArray.
 
         This method opens a `.tif` file from the predefined S3 path and loads it
@@ -49,7 +51,7 @@ class WRIAqueductSource:  # (OpenDataset):
 
         """
         logger.info(f"Opening DataArray, relative path={path}")
-        da: Optional[xr.DataArray] = None
+        da: xr.DataArray | None = None
         f = None
         try:
             f = self.fs.open(str(PurePosixPath(self.prefix, path)) + ".tif", "rb")

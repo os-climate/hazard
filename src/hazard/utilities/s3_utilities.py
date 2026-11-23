@@ -7,13 +7,14 @@ and handles parallelized copy operations.
 """
 
 import concurrent.futures
-from glob import iglob
 import hashlib
 import logging
 import os
 import pathlib
 import sys
-from typing import Callable, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from collections.abc import Callable, Iterable, Sequence
+from glob import iglob
+from typing import List, Optional, Set, Tuple, Union
 
 try:
     ## python >3.11 includes tomllib
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_s3_fs(
-    use_dev: bool = True, extra_s3fs_kwargs: Optional[dict] = None, **kwargs
+    use_dev: bool = True, extra_s3fs_kwargs: dict | None = None, **kwargs
 ) -> s3fs.S3FileSystem:
     """Return a S3FileSystem object.
 
@@ -75,10 +76,10 @@ def get_s3_fs(
 
 
 def get_store(
-    s3: Optional[s3fs.S3FileSystem] = None,
+    s3: s3fs.S3FileSystem | None = None,
     use_dev: bool = True,
-    extra_s3fs_kwargs: Optional[dict] = None,
-    bucket: Optional[str] = None,
+    extra_s3fs_kwargs: dict | None = None,
+    bucket: str | None = None,
     group_path_suffix: str = "hazard/hazard.zarr",
     *_,
 ) -> FSMap:
@@ -118,7 +119,7 @@ def get_store(
     return store
 
 
-def load_s3_parameters(toml_path: Optional[str] = None) -> dict:
+def load_s3_parameters(toml_path: str | None = None) -> dict:
     """Load the parameters (mostly credentials) for the S3 utilities from a TOML file.
 
     The env_vars_override dictionary will be poped and use to override the environment.
@@ -202,7 +203,7 @@ def _get_boto3_client_and_bucket(use_dev: bool):
 
 def _local_zarr_relative_file_paths(
     root_path: pathlib.Path, array_path: str
-) -> List[str]:
+) -> list[str]:
     """List files (including dotfiles) under array_path within a local Zarr group.
 
     Returned paths are relative to root_path, using posix separators.
@@ -261,7 +262,7 @@ def _copy_local_to_bucket(
     target_bucket_name: str,
     zarr_group_prefix: str,
     dry_run: bool = False,
-    relative_file_paths: Optional[Sequence[str]] = None,
+    relative_file_paths: Sequence[str] | None = None,
 ):
     """Copy a local Zarr array to the given bucket using the given S3 client.
 
@@ -378,12 +379,12 @@ def copy_local_to_prod(zarr_dir: str, array_path: str, dry_run=False):
 
 def _sync_local_to_bucket(
     zarr_dir: str,
-    array_paths: Union[str, Iterable[str]],
+    array_paths: str | Iterable[str],
     s3_target_client,
     target_bucket_name: str,
     zarr_group_prefix: str,
     dry_run: bool = True,
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize local Zarr arrays to the given bucket based on ETag differences.
 
     Like sync_buckets, but the source is a local directory rather than another S3
@@ -417,9 +418,9 @@ def _sync_local_to_bucket(
     def key(path: str) -> str:
         return _hazard_zarr_key(path, zarr_group_prefix)
 
-    all_checked: Set[str] = set()
-    all_missing: Set[str] = set()
-    all_different: Set[str] = set()
+    all_checked: set[str] = set()
+    all_missing: set[str] = set()
+    all_different: set[str] = set()
     for array_path in array_paths:
         relative_file_paths = _local_zarr_relative_file_paths(root_path, array_path)
         prefix = key(array_path)
@@ -473,8 +474,8 @@ def _sync_local_to_bucket(
 
 
 def sync_local_to_dev(
-    zarr_dir: str, array_paths: Union[str, Iterable[str]], dry_run: bool = True
-) -> Tuple[Set[str], Set[str], Set[str]]:
+    zarr_dir: str, array_paths: str | Iterable[str], dry_run: bool = True
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize local Zarr arrays to the development bucket based on ETag
     differences, only uploading files that are missing or different.
     Requires environment variables:
@@ -506,8 +507,8 @@ def sync_local_to_dev(
 
 
 def sync_local_to_prod(
-    zarr_dir: str, array_paths: Union[str, Iterable[str]], dry_run: bool = True
-) -> Tuple[Set[str], Set[str], Set[str]]:
+    zarr_dir: str, array_paths: str | Iterable[str], dry_run: bool = True
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize local Zarr arrays to the production (public) bucket based on
     ETag differences, only uploading files that are missing or different.
 
@@ -564,7 +565,7 @@ def _sync_bucket_to_local(
     zarr_dir: str,
     array_path: str = "",
     dry_run: bool = True,
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize a bucket's Zarr group (or an array within it) to a local directory.
 
     The reverse of _sync_local_to_bucket: only objects that are missing locally, or whose
@@ -671,7 +672,7 @@ def _sync_bucket_to_local(
 
 def sync_prod_to_local(
     zarr_dir: str, array_path: str = "", dry_run: bool = True
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> tuple[set[str], set[str], set[str]]:
     """Synchronize the production bucket's Zarr group to a local directory, e.g. as a back-up.
 
     Only files that are missing locally or differ from the bucket are downloaded, so the
@@ -786,7 +787,7 @@ def copy_dev_to_prod(prefix: str, dry_run=False, sync=True):
 
 def list_objects_parallel(
     client, bucket_name: str, prefix: str, max_workers: int = 32
-) -> List[dict]:
+) -> list[dict]:
     """List all objects in an S3 bucket with a given prefix, fetching pages in parallel.
 
     list_objects_v2 returns at most 1000 keys per page and each page needs the previous
@@ -818,9 +819,9 @@ def list_objects_parallel(
 
     """
 
-    def list_prefix(prefix: str) -> Tuple[List[dict], List[str]]:
-        objects: List[dict] = []
-        sub_prefixes: List[str] = []
+    def list_prefix(prefix: str) -> tuple[list[dict], list[str]]:
+        objects: list[dict] = []
+        sub_prefixes: list[str] = []
         for page in client.get_paginator("list_objects_v2").paginate(
             Bucket=bucket_name, Prefix=prefix, Delimiter="/"
         ):
@@ -828,7 +829,7 @@ def list_objects_parallel(
             sub_prefixes.extend(cp["Prefix"] for cp in page.get("CommonPrefixes", []))
         return objects, sub_prefixes
 
-    all_objects: List[dict] = []
+    all_objects: list[dict] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         pending = {executor.submit(list_prefix, prefix)}
         while pending:
@@ -921,7 +922,7 @@ def copy_objects(
     source_bucket_name: str,
     s3_target_client,
     target_bucket_name: str,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Copy objects from one S3 bucket to another.
 
@@ -1012,7 +1013,7 @@ def sync_buckets(
     target_bucket_name: str,
     prefix: str,
     dry_run=True,
-    rename: Optional[Callable[[str], str]] = None,
+    rename: Callable[[str], str] | None = None,
 ):
     """Synchronize files between two S3 buckets based on ETag differences.
 

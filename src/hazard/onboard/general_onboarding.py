@@ -3,11 +3,13 @@
 import logging
 import os
 import tempfile as temp
+from collections.abc import Sequence
 from pathlib import Path
-from typing_extensions import Any, Dict, Optional, Sequence, Type, Union
+from typing import Dict, Optional, Type, Union
 
-import fsspec.implementations.local as local
 import zarr
+from fsspec.implementations import local
+from typing_extensions import Any
 
 from hazard import get_hazards_onboarding
 from hazard.docs_store import DocStore
@@ -21,14 +23,14 @@ logger = logging.getLogger(__name__)
 
 def onboard_hazards(
     local: bool = False,
-    credentials_path: Optional[str] = None,
-    source_dir_base: Optional[str] = None,
+    credentials_path: str | None = None,
+    source_dir_base: str | None = None,
     hazards: Sequence[str] = [],
-    download_dir: Optional[str] = None,
+    download_dir: str | None = None,
     force_download=False,
     force_prepare=False,
-    store: Optional[str] = None,
-    hazard_kwargs: Optional[Dict[str, Any]] = None,
+    store: str | None = None,
+    hazard_kwargs: dict[str, Any] | None = None,
 ):
     """Onboards data to a local or S3 target based on the provided paths and for a series of given hazards.
 
@@ -103,11 +105,11 @@ def onboard_hazards_to(
     target: OscZarr,
     doc_store: DocStore,
     source_dir_base: str,
-    hazards: Sequence[Union[str, Onboarder]] = [],
-    download_dir: Optional[str] = None,
+    hazards: Sequence[str | Onboarder] = [],
+    download_dir: str | None = None,
     force_download=False,
     force_prepare=False,
-    hazard_kwargs: Optional[Dict[str, Any]] = None,
+    hazard_kwargs: dict[str, Any] | None = None,
 ) -> None:
     """Onboards a series of given hazards to an explicitly provided target and doc_store.
 
@@ -143,7 +145,7 @@ def onboard_hazards_to(
 
     """
     updt_inv_hazards = []
-    hazard_map: Dict[str, Type[Onboarder]] = get_hazards_onboarding()
+    hazard_map: dict[str, type[Onboarder]] = get_hazards_onboarding()
     failed_hazards = []
 
     for hazard in hazards:
@@ -198,7 +200,7 @@ def onboard_hazards_to(
 
 def initialize_class(
     hazard: str,
-    hazard_map: Dict[str, Type[Onboarder]],
+    hazard_map: dict[str, type[Onboarder]],
     source_dir_base: str,
     **kwargs: Any,
 ) -> Onboarder:

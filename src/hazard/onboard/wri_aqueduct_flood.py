@@ -2,13 +2,15 @@
 
 import logging
 import os
-from typing_extensions import Iterable, List, Optional, override
+from collections.abc import Iterable
+from typing import List, Optional
 
 from affine import Affine
 from pydantic import TypeAdapter
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import HazardResource, Period
+from hazard.onboarder import Onboarder
 from hazard.sources.osc_zarr import OscZarr
 from hazard.sources.wri_aqueduct import WRIAqueductSource
 from hazard.utilities.map_utilities import alphanumeric
@@ -35,7 +37,7 @@ logger = logging.getLogger(__name__)
 class WRIAqueductFlood(Onboarder):
     """On-board the WRI Aqueduct flood model data set from http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html."""
 
-    def __init__(self, source_dir_base: Optional[str] = None):
+    def __init__(self, source_dir_base: str | None = None):
         """WRI Aqueduct Floods model of acute riverine and coastal flood hazards, providing flood intensities as return period maps.
 
         METADATA:
@@ -91,7 +93,7 @@ class WRIAqueductFlood(Onboarder):
         # "inundation/wri/v2/inuncoast_historical_wtsub_hist_0"]]
         return items
 
-    def _get_items_to_process_riverine(self) -> List[dict]:
+    def _get_items_to_process_riverine(self) -> list[dict]:
         """Get a list of all riverine items."""
         gcms = [
             "00000NorESM1-M",
@@ -134,7 +136,7 @@ class WRIAqueductFlood(Onboarder):
         )
         return items
 
-    def _get_items_to_process_coastal(self) -> List[dict]:
+    def _get_items_to_process_coastal(self) -> list[dict]:
         """Get a list of all coastal items."""
         models = ["0", "0_perc_05", "0_perc_50"]
         subs = ["wtsub", "nosub"]
@@ -710,7 +712,7 @@ World Resources Institute Aqueduct Floods coastal model, including subsidence; 5
                 ],
             },
         ]
-        resources = TypeAdapter(List[HazardResource]).validate_python(
+        resources = TypeAdapter(list[HazardResource]).validate_python(
             [
                 {**model, "display_groups": ["Flood depth (WRI)"]}
                 for model in wri_riverine_inundation_models
@@ -719,7 +721,7 @@ World Resources Institute Aqueduct Floods coastal model, including subsidence; 5
         )
         return resources  # self._expand_resources(resources)
 
-    def _expand_resources(self, models: List[HazardResource]) -> List[HazardResource]:
+    def _expand_resources(self, models: list[HazardResource]) -> list[HazardResource]:
         expanded_models = [e for model in models for e in model.expand()]
         # we populate map_id hashes programmatically
         for model in expanded_models:
@@ -746,7 +748,7 @@ World Resources Institute Aqueduct Floods coastal model, including subsidence; 5
                     ):
                         if period.map_id != test_period.map_id:
                             raise Exception(
-                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501
+                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"
                             )
 
         return expanded_models

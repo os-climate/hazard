@@ -1,19 +1,18 @@
 """Module for calculating indicators of days exceeding wet-bulb globe temperature (WBGT) thresholds."""
 
 import logging
-from typing_extensions import Dict
+from typing import Dict
 
 import numpy as np
 import xarray as xr
 
 from hazard.inventory import HazardResource
-
-from hazard.models.multi_year_average import (
-    ThresholdBasedAverageIndicator,
-)
 from hazard.models.indicator_conventions import (
     indicator_description,
     threshold_indicator_resource,
+)
+from hazard.models.multi_year_average import (
+    ThresholdBasedAverageIndicator,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,8 +35,8 @@ class DaysWBGTAboveIndicator(ThresholdBasedAverageIndicator):
     default_thresholds = [20, 24, 26, 28, 30, 32, 34, 36, 38, 40, 44]
 
     def _single_year_arrays(
-        self, inputs: Dict[str, xr.DataArray]
-    ) -> Dict[str, xr.DataArray]:
+        self, inputs: dict[str, xr.DataArray]
+    ) -> dict[str, xr.DataArray]:
         tas_c = inputs["tas"] - 273.15  # convert from K to °C
         # water vapour partial pressure in hPa, from the daily mean temperature and relative
         # humidity; taken to be constant through the day, so used for the maximum as well
@@ -50,7 +49,7 @@ class DaysWBGTAboveIndicator(ThresholdBasedAverageIndicator):
         halfway = self._days_above((wbgt_mean + wbgt_max) / 2.0)
         return {"mean": mean, "max": max_, "444": (mean + halfway + max_) / 3.0}
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         description = indicator_description("wet_bulb_globe_temp.md", self.run)
         display_names = {
             "mean": "Days with daily-mean wet-bulb globe temperature above threshold in °C ({gcm})",
