@@ -2,15 +2,17 @@
 
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import PurePath
-from typing_extensions import Iterable, Optional, override
+from typing import Optional
 
 import xarray as xr
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.spec import AbstractFileSystem
+from typing_extensions import override
 
-from hazard.onboarder import Onboarder
 from hazard.inventory import Colormap, HazardResource, MapInfo, Scenario
+from hazard.onboarder import Onboarder
 from hazard.protocols import ReadWriteDataArray
 from hazard.sources.osc_zarr import OscZarr
 from hazard.utilities.tiles import create_tiles_for_resource
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 class FireRiskIndicators(Onboarder):
     """On-board returns data set from Alpha Klima Wildfire hazard."""
 
-    def __init__(self, source_dir_base: str, fs: Optional[AbstractFileSystem] = None):
+    def __init__(self, source_dir_base: str, fs: AbstractFileSystem | None = None):
         """On-board dataset for fire risk indicators replicating the methodology from the paper:
         "Climate Change Risk Indicators for Central Banking" by Burger, Csaba; Herzberg, Julika;
         and Nuvoli, Thaïs. Climate Change Risk Indicators for Central Banking: Explainable AI
@@ -32,7 +34,7 @@ class FireRiskIndicators(Onboarder):
         - Email: csanmillan@arfimaconsulting.com, vmorales@arfimaconsulting.com
         - GitHub: https://github.com/csanmillan, https://github.com/vmorales
 
-        """  # noqa: D205
+        """
         self.fs = fs if fs else LocalFileSystem()
         self.source_dir = (
             PurePath(source_dir_base, "European_Wildfire_Hazard_Datasets").as_posix()

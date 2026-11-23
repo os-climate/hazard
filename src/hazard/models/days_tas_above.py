@@ -1,18 +1,17 @@
 """Climate Hazard Indicator: Days Above Threshold Temperature."""
 
 import logging
-from typing_extensions import Dict
+from typing import Dict
 
 import xarray as xr
 
 from hazard.inventory import HazardResource
-
-from hazard.models.multi_year_average import (
-    ThresholdBasedAverageIndicator,
-)
 from hazard.models.indicator_conventions import (
     indicator_description,
     threshold_indicator_resource,
+)
+from hazard.models.multi_year_average import (
+    ThresholdBasedAverageIndicator,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,15 +30,15 @@ class DaysTasAboveIndicator(ThresholdBasedAverageIndicator):
     default_thresholds = [25, 30, 35, 40, 45, 50, 55]
 
     def _single_year_arrays(
-        self, inputs: Dict[str, xr.DataArray]
-    ) -> Dict[str, xr.DataArray]:
+        self, inputs: dict[str, xr.DataArray]
+    ) -> dict[str, xr.DataArray]:
         # convert from K to °C
         return {
             "mean": self._days_above(inputs["tas"] - 273.15),
             "max": self._days_above(inputs["tasmax"] - 273.15),
         }
 
-    def _resources(self) -> Dict[str, HazardResource]:
+    def _resources(self) -> dict[str, HazardResource]:
         description = indicator_description("days_tas_above.md", self.run)
         return {
             key: threshold_indicator_resource(

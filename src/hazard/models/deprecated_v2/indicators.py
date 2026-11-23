@@ -3,14 +3,15 @@
 import logging
 import os
 from abc import abstractmethod
+from collections.abc import Iterable, Sequence
 from contextlib import ExitStack
 from enum import Enum
 from pathlib import PurePosixPath
-from typing import Sequence
+from typing import Dict, List
 
 import numpy as np
 import xarray as xr
-from typing_extensions import Dict, Iterable, List, deprecated
+from typing_extensions import deprecated
 
 from hazard.inventory import Colormap, Deprecation, HazardResource, MapInfo, Scenario
 from hazard.models.indicator_conventions import PATH_PREFIX_V3
@@ -61,8 +62,8 @@ class ThresholdBasedAverageIndicatorDeprecated(
         return [self._resource()]  # .expand()
 
     def _get_indicators(
-        self, item: BatchItem, data_arrays: List[xr.DataArray], param: str
-    ) -> List[Indicator]:
+        self, item: BatchItem, data_arrays: list[xr.DataArray], param: str
+    ) -> list[Indicator]:
         """Generate a list of indicators for given thresholds and data arrays.
 
         Args:
@@ -185,7 +186,7 @@ class WetBulbGlobeTemperatureAboveIndicator(
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
             tas = stack.enter_context(
@@ -342,7 +343,7 @@ class DaysTasAboveIndicatorDeprecated(ThresholdBasedAverageIndicatorDeprecated):
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
@@ -356,7 +357,7 @@ class DaysTasAboveIndicatorDeprecated(ThresholdBasedAverageIndicatorDeprecated):
 
     def _days_tas_above_indicators(
         self, tas: xr.DataArray, year: int, threshold_temps_c: Sequence[float]
-    ) -> List[xr.DataArray]:
+    ) -> list[xr.DataArray]:
         """Create DataArrays containing indicators the thresholds for a single year."""
         if any(coord not in tas.coords.keys() for coord in ["lat", "lon", "time"]):
             raise ValueError("expect coordinates: 'lat', 'lon' and 'time'")
@@ -372,7 +373,6 @@ class DaysTasAboveIndicatorDeprecated(ThresholdBasedAverageIndicatorDeprecated):
 
     def create_maps(self, source: OscZarr, target: OscZarr):
         """Create map images."""
-        ...
         create_tiles_for_resource(source, target, self.resource)
 
     def _resource(self) -> HazardResource:
@@ -533,7 +533,7 @@ class HeatingCoolingDegreeDaysDeprecated(ThresholdBasedAverageIndicatorDeprecate
 
     def _calculate_single_year_indicators(
         self, source: OpenDataset, item: BatchItem, year: int
-    ) -> List[Indicator]:
+    ) -> list[Indicator]:
         """For a single year and batch item calculate the indicators (i.e. one per threshold temperature)."""
         logger.info(f"Starting calculation for year {year}")
         with ExitStack() as stack:
@@ -596,9 +596,9 @@ class HeatingCoolingDegreeDaysDeprecated(ThresholdBasedAverageIndicatorDeprecate
         for resource in self.inventory():
             create_tiles_for_resource(source, target, resource)
 
-    def _resource(self) -> Dict[str, HazardResource]:  # type: ignore[override]
+    def _resource(self) -> dict[str, HazardResource]:  # type: ignore[override]
         # Unsure why this returns a dict vs a single resource
-        resources: Dict[str, HazardResource] = {}
+        resources: dict[str, HazardResource] = {}
         # for above_below in ["above", "below"]:
         for above_below in ["above"]:
             with open(

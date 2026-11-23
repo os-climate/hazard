@@ -1,28 +1,25 @@
-from concurrent import futures
-from contextlib import contextmanager
-from datetime import datetime
-import time
 import logging
 import os
 import threading
+import time
+from collections.abc import Generator, Iterable, MutableMapping, Sequence
+from concurrent import futures
+from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import (
     Any,
     Dict,
-    Generator,
-    Iterable,
     List,
-    MutableMapping,
     Protocol,
-    Sequence,
     Tuple,
 )
 
 import boto3
-from botocore import UNSIGNED
-from botocore.client import Config
 import pandas as pd
 import xarray as xr
+from botocore import UNSIGNED
+from botocore.client import Config
 
 from hazard.protocols import OpenDataset
 from hazard.sources.nex_gddp_cmip6 import NexGddpCmip6
@@ -60,7 +57,6 @@ def download_single(path: str, cache_dir: Path, client: Any):
                 else:
                     logger.info(f"Retrying download, attempt {attempt}: {e}")
                     time.sleep(5 * 2**attempt)
-                    pass
     os.rename(str(local_file) + ".download", str(local_file))
     logger.info(f"Completed download {path}")
     return local_file
@@ -96,7 +92,7 @@ def download_paths(paths: Sequence[str], cache_dir: Path, client: Any):
 # One lock per cached file, so that a file is downloaded only once if opened by several threads.
 # These are module-level so that they are shared by all copies of a NexGddpCmip6CachedSource in
 # the process (dask, for example, gives each task its own copy of the arguments).
-_download_locks: Dict[str, threading.Lock] = {}
+_download_locks: dict[str, threading.Lock] = {}
 _download_locks_lock = threading.Lock()
 
 
@@ -177,8 +173,8 @@ class NexGddpCmip6CachedSource(CachingSource):
         download_paths(paths, self.cache_dir, self.client)
 
     def download_inputs(
-        self, inputs: Iterable[Tuple[str, str, str, int]], dry_run: bool = False
-    ) -> List[str]:
+        self, inputs: Iterable[tuple[str, str, str, int]], dry_run: bool = False
+    ) -> list[str]:
         """Download, in parallel, the files of inputs (GCM, scenario, quantity, year) not already in the cache.
 
         Returns:
@@ -196,7 +192,7 @@ class NexGddpCmip6CachedSource(CachingSource):
             download_paths(missing, self.cache_dir, self.client)
         return missing
 
-    def remove_stale_downloads(self, max_age_s: float = 3600) -> List[Path]:
+    def remove_stale_downloads(self, max_age_s: float = 3600) -> list[Path]:
         """Remove the partial (.download) files of interrupted downloads not modified for max_age_s.
 
         Partial files are never used (a download starts again from the beginning), so this only

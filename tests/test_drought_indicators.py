@@ -1,8 +1,8 @@
 import json
 import os
+import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
-import warnings
 
 import dask.array
 import numpy as np
@@ -42,8 +42,8 @@ def create_test_data_sets(model: DroughtIndicator, test_inputs: Path):
     )
     time = [np.datetime_as_string(t, unit="D") for t in ds_tas.time.values]
     data = {
-        "tas": list(ds_tas.tas.values.astype("float64").reshape((len(time)))),
-        "pr": list(ds_pr.pr.values.astype("float64").reshape((len(time)))),
+        "tas": list(ds_tas.tas.values.astype("float64").reshape(len(time))),
+        "pr": list(ds_pr.pr.values.astype("float64").reshape(len(time))),
         "time": time,
     }
     (test_inputs / "drought").mkdir(exist_ok=True, parents=True)
@@ -209,7 +209,7 @@ def test_partial_write_zarr(test_output_dir):
     ).chunk(chunks={"lat": 40, "lon": 40, "time": 100000})
     ds_spei = da_spei.to_dataset(name="spei")
     ds_spei.to_zarr(store=zarr_store, mode="w", compute=False, consolidated=False)
-    # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores # noqa: E501
+    # see https://docs.xarray.dev/en/stable/user-guide/io.html?appending-to-existing-zarr-stores=#appending-to-existing-zarr-stores
     sliced = ds_spei.sel(lat=slice(10, 20), lon=slice(30, 40))
     lat_indexes = np.where(
         np.logical_and(ds_spei["lat"].values >= 10, ds_spei["lat"].values <= 20)

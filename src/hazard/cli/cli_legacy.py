@@ -12,8 +12,9 @@ New indicators should not be added here.
 """
 
 import logging
+from collections.abc import Sequence
 from enum import Enum
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import fire
 from dask.distributed import Client, LocalCluster
@@ -32,18 +33,18 @@ class SourceDataset(str, Enum):
 
 def days_tas_above_indicator(
     source_dataset: SourceDataset = SourceDataset.NEX_GDDP_CMIP6,
-    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
+    source_dataset_kwargs: dict[str, Any] | None = None,
     gcm_list: Sequence[str] = ["NorESM2-MM"],
     scenario_list: Sequence[str] = ["ssp585"],
     threshold_list: Sequence[float] = [20],
     central_year_list: Sequence[int] = [2090],
     central_year_historical: int = 2005,
     window_years: int = 1,
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
     **kwargs,  # To allow for extra parameters to the cli, due to how CWL will provide all input parameters
 ):
     """Run the days_tas_above indicator generation for a list of models,scenarios, thresholds, central years and a given size of years window over which to compute the average.
@@ -75,18 +76,18 @@ def days_tas_above_indicator(
 
 def degree_days_indicator(
     source_dataset: SourceDataset = SourceDataset.NEX_GDDP_CMIP6,
-    source_dataset_kwargs: Optional[Dict[str, Any]] = None,
+    source_dataset_kwargs: dict[str, Any] | None = None,
     gcm_list: Sequence[str] = ["NorESM2-MM"],
     scenario_list: Sequence[str] = ["ssp585"],
     threshold_temperature: float = 32,
     central_year_list: Sequence[int] = [2090],
     central_year_historical: int = 2005,
     window_years: int = 1,
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
     **kwargs,  # To allow for extra parameters to the cli, due to how CWL will provide all input parameters
 ):
     """Run the degree days indicator generation for a list of models,scenarios, a threshold temperature, central years and a given size of years window over which to compute the average.
@@ -117,12 +118,12 @@ def degree_days_indicator(
 
 
 def setup(
-    bucket: Optional[str] = None,
-    prefix: Optional[str] = None,
-    store: Optional[str] = None,
-    store_netcdf_coords: Optional[bool] = False,
-    dask_cluster_kwargs: Optional[Dict[str, Any]] = None,
-) -> Tuple[DocStore, OscZarr, Client]:
+    bucket: str | None = None,
+    prefix: str | None = None,
+    store: str | None = None,
+    store_netcdf_coords: bool | None = False,
+    dask_cluster_kwargs: dict[str, Any] | None = None,
+) -> tuple[DocStore, OscZarr, Client]:
     """Initialize output store, docs store and local dask client."""
     if store is not None:
         docs_store = DocStore(local_path=store)
@@ -147,7 +148,7 @@ def setup(
     return docs_store, target, client
 
 
-class Cli(object):
+class Cli:
     def __init__(self) -> None:
         self.days_tas_above_indicator = days_tas_above_indicator
         self.degree_days_indicator = degree_days_indicator

@@ -1,17 +1,18 @@
 import logging
 import os
-from resource import RUSAGE_SELF, getrusage
 import sys
+import tempfile as temp
 import threading
 from pathlib import Path, PurePosixPath
+from resource import RUSAGE_SELF, getrusage
 
-import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import psutil
 import pytest
 import s3fs
-import tempfile as temp
 import zarr
+from fsspec.implementations import local  # type: ignore
+
 from hazard import get_hazards_onboarding
 from hazard.docs_store import DocStore
 from hazard.models.days_tas_above import DaysTasAboveIndicator

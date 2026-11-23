@@ -132,8 +132,10 @@ def test_download_paths_interrupted(tmp_path: Path):
     def interrupt(fs, *args, **kwargs):
         raise KeyboardInterrupt
 
-    with mock.patch.object(futures, "as_completed", interrupt):
-        with pytest.raises(KeyboardInterrupt):
-            download_paths(paths, tmp_path, client)
+    with (
+        mock.patch.object(futures, "as_completed", interrupt),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        download_paths(paths, tmp_path, client)
     # at most the 8 downloads started before the interrupt
     assert len(client.downloaded_keys) <= 8
